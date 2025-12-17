@@ -10,7 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.ugtours.R;
 import java.lang.NullPointerException;
@@ -22,12 +21,6 @@ public final class FragmentProfileBinding implements ViewBinding {
   private final ScrollView rootView;
 
   @NonNull
-  public final TextView contactEmail;
-
-  @NonNull
-  public final MaterialButton logoutButton;
-
-  @NonNull
   public final TextView userEmailText;
 
   @NonNull
@@ -36,12 +29,9 @@ public final class FragmentProfileBinding implements ViewBinding {
   @NonNull
   public final MaterialCardView userProfileCard;
 
-  private FragmentProfileBinding(@NonNull ScrollView rootView, @NonNull TextView contactEmail,
-      @NonNull MaterialButton logoutButton, @NonNull TextView userEmailText,
+  private FragmentProfileBinding(@NonNull ScrollView rootView, @NonNull TextView userEmailText,
       @NonNull TextView userNameText, @NonNull MaterialCardView userProfileCard) {
     this.rootView = rootView;
-    this.contactEmail = contactEmail;
-    this.logoutButton = logoutButton;
     this.userEmailText = userEmailText;
     this.userNameText = userNameText;
     this.userProfileCard = userProfileCard;
@@ -74,18 +64,6 @@ public final class FragmentProfileBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
-      id = R.id.contact_email;
-      TextView contactEmail = ViewBindings.findChildViewById(rootView, id);
-      if (contactEmail == null) {
-        break missingId;
-      }
-
-      id = R.id.logout_button;
-      MaterialButton logoutButton = ViewBindings.findChildViewById(rootView, id);
-      if (logoutButton == null) {
-        break missingId;
-      }
-
       id = R.id.user_email_text;
       TextView userEmailText = ViewBindings.findChildViewById(rootView, id);
       if (userEmailText == null) {
@@ -104,8 +82,8 @@ public final class FragmentProfileBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentProfileBinding((ScrollView) rootView, contactEmail, logoutButton,
-          userEmailText, userNameText, userProfileCard);
+      return new FragmentProfileBinding((ScrollView) rootView, userEmailText, userNameText,
+          userProfileCard);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

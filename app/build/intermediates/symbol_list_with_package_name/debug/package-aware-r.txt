@@ -2971,6 +2971,7 @@ dimen mtrl_tooltip_minHeight
 dimen mtrl_tooltip_minWidth
 dimen mtrl_tooltip_padding
 dimen mtrl_transition_shared_axis_slide_distance
+dimen nav_header_height
 dimen notification_action_icon_size
 dimen notification_action_text_size
 dimen notification_big_circle_margin
@@ -3271,6 +3272,7 @@ id action_divider
 id action_image
 id action_login_to_home
 id action_login_to_register
+id action_logout
 id action_menu_divider
 id action_menu_presenter
 id action_mode_bar
@@ -3417,6 +3419,7 @@ id dragLeft
 id dragRight
 id dragStart
 id dragUp
+id drawer_layout
 id dropdown_menu
 id easeIn
 id easeInOut
@@ -3469,7 +3472,9 @@ id glide_custom_view_target_tag
 id gone
 id graph
 id graph_wrap
+id group_actions
 id group_divider
+id group_settings
 id grouping
 id groups
 id guests_count
@@ -3514,7 +3519,6 @@ id locale
 id location_text
 id login_button
 id login_text_view
-id logout_button
 id ltr
 id m3_side_sheet
 id marquee
@@ -3581,6 +3585,7 @@ id nav_controller_view_tag
 id nav_graph
 id nav_host_fragment
 id nav_host_fragment_container
+id nav_view
 id navigation_about
 id navigation_attractions
 id navigation_bar_item_active_indicator_view
@@ -3594,7 +3599,9 @@ id navigation_favorites
 id navigation_header_container
 id navigation_home
 id navigation_login
+id navigation_profile
 id navigation_register
+id navigation_settings
 id never
 id neverCompleteToEnd
 id neverCompleteToStart
@@ -3944,6 +3951,7 @@ layout design_navigation_menu_item
 layout design_text_input_end_icon
 layout design_text_input_start_icon
 layout dialog_create_booking
+layout fragment_about
 layout fragment_attractions_list
 layout fragment_bookings
 layout fragment_favorites
@@ -4012,6 +4020,7 @@ layout mtrl_picker_text_input_date
 layout mtrl_picker_text_input_date_range
 layout mtrl_search_bar
 layout mtrl_search_view
+layout nav_header
 layout notification_action
 layout notification_action_tombstone
 layout notification_template_custom_big
@@ -4024,6 +4033,7 @@ layout select_dialog_singlechoice_material
 layout support_simple_spinner_dropdown_item
 menu attraction_detail_menu
 menu bottom_nav_menu
+menu drawer_menu
 mipmap ic_launcher
 mipmap ic_launcher_round
 navigation nav_graph
@@ -4227,6 +4237,9 @@ string nav_app_bar_open_drawer_description
 string nav_attractions
 string nav_favorites
 string nav_home
+string nav_profile
+string navigation_drawer_close
+string navigation_drawer_open
 string nearby_accommodations
 string no_attractions_found
 string no_favorites

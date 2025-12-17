@@ -41,7 +41,6 @@ class ProfileFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         setupObservers()
-        setupClickListeners()
         loadUserData()
     }
     
@@ -59,13 +58,6 @@ class ProfileFragment : Fragment() {
                 // Navigate to login screen
                 findNavController().navigate(R.id.navigation_login)
             }
-        }
-    }
-    
-    private fun setupClickListeners() {
-        // Setup logout button
-        binding.logoutButton.setOnClickListener {
-            viewModel.logout()
         }
     }
     

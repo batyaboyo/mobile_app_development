@@ -51,8 +51,7 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
                 ProfileViewModel(authRepository, attractionsRepository, preferencesRepository) as T
             }
             modelClass.isAssignableFrom(BookingsViewModel::class.java) -> {
-                val userId = preferencesRepository.getUserId()
-                BookingsViewModel(bookingsRepository, userId) as T
+                BookingsViewModel(bookingsRepository, preferencesRepository) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

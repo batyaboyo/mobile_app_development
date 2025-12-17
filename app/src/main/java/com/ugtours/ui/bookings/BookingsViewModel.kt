@@ -3,12 +3,14 @@ package com.ugtours.ui.bookings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ugtours.data.repository.BookingsRepository
+import com.ugtours.data.repository.UserPreferencesRepository
 import com.ugtours.models.Booking
 import com.ugtours.models.BookingStatus
 import com.ugtours.ui.common.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -17,7 +19,7 @@ import kotlinx.coroutines.launch
  */
 class BookingsViewModel(
     private val bookingsRepository: BookingsRepository,
-    private val userId: Long
+    private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
     
     private val _bookingsState = MutableStateFlow<UiState<List<Booking>>>(UiState.Loading)
@@ -44,6 +46,7 @@ class BookingsViewModel(
         viewModelScope.launch {
             _bookingsState.value = UiState.Loading
             try {
+                val userId = preferencesRepository.currentUserIdFlow.first() ?: -1L
                 bookingsRepository.getUserBookings(userId).collect { bookings ->
                     _bookingsState.value = UiState.Success(bookings)
                 }
@@ -60,6 +63,7 @@ class BookingsViewModel(
         viewModelScope.launch {
             _bookingsState.value = UiState.Loading
             try {
+                val userId = preferencesRepository.currentUserIdFlow.first() ?: -1L
                 bookingsRepository.getUserBookingsByStatus(userId, status).collect { bookings ->
                     _bookingsState.value = UiState.Success(bookings)
                 }
@@ -76,6 +80,7 @@ class BookingsViewModel(
         viewModelScope.launch {
             _bookingsState.value = UiState.Loading
             try {
+                val userId = preferencesRepository.currentUserIdFlow.first() ?: -1L
                 bookingsRepository.getUpcomingBookings(userId).collect { bookings ->
                     _bookingsState.value = UiState.Success(bookings)
                 }
@@ -159,6 +164,7 @@ class BookingsViewModel(
     private fun loadStats() {
         viewModelScope.launch {
             try {
+                val userId = preferencesRepository.currentUserIdFlow.first() ?: -1L
                 val activeCount = bookingsRepository.getActiveBookingsCount(userId)
                 val totalSpent = bookingsRepository.getTotalSpentUSD(userId)
                 _statsState.value = BookingStats(

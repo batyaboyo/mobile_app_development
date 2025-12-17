@@ -13,14 +13,14 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginBottom="32dp"
-        android:src="@android:drawable/ic_menu_compass"
-        app:tint="?attr/colorPrimary" />
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="@string/app_name" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
-        android:text="Welcome Back"
+        android:text="Welcome Back to UG Tours"
         android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
         android:textStyle="bold" />
 

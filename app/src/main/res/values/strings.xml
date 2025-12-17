@@ -6,6 +6,7 @@
     <string name="nav_home">Home</string>
     <string name="nav_attractions">Attractions</string>
     <string name="nav_favorites">Favorites</string>
+    <string name="nav_profile">Profile</string>
     <string name="nav_about">About</string>
     
     <!-- Attractions List -->
@@ -72,4 +73,8 @@
     <!-- About Uganda -->
     <string name="about_uganda">About UG Tours</string>
     <string name="about_uganda_description">UG Tours is your ultimate offline companion for exploring Uganda, the Pearl of Africa. Designed for adventurers, nature lovers, and cultural enthusiasts, this app works completely without internet connection.\n\n🌍 Discover Uganda\'s Treasures:\nFrom the mist-covered mountains of Bwindi Impenetrable Forest, home to endangered mountain gorillas, to the thundering Murchison Falls and the serene waters of Lake Victoria - Uganda offers unparalleled natural beauty and wildlife experiences.\n\n✨ Key Features:\n• 100% Offline Access - Explore without data or WiFi\n• Comprehensive Attraction Database - National parks, waterfalls, cultural sites, and adventure spots\n• Smart Trip Planning - Save favorites and create personalized itineraries\n• Accommodation Finder - Discover nearby hotels, lodges, and campsites\n• Recently Viewed History - Never lose track of places you\'ve explored\n\n🦍 Whether you\'re tracking mountain gorillas in Bwindi, white-water rafting on the Nile in Jinja, spotting tree-climbing lions in Queen Elizabeth National Park, or immersing yourself in the rich Buganda Kingdom heritage, UG Tours is your trusted travel companion.\n\nDeveloped with ❤️ for Uganda travelers by passionate explorers who believe everyone should experience the magic of the Pearl of Africa.</string>
+    
+    <!-- Navigation Drawer -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

@@ -47,8 +47,18 @@
         android:label="Bookings" />
 
     <fragment
-        android:id="@+id/navigation_about"
+        android:id="@+id/navigation_profile"
         android:name="com.ugtours.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+    <fragment
+        android:id="@+id/navigation_about"
+        android:name="com.ugtours.ui.about.AboutFragment"
         android:label="@string/nav_about" />
+
+    <fragment
+        android:id="@+id/navigation_settings"
+        android:name="com.ugtours.ui.settings.SettingsFragment"
+        android:label="Settings" />
 
 </navigation>

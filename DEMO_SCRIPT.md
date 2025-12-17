@@ -27,8 +27,12 @@ UGTours solves these challenges. It's an offline-first mobile application that s
 ## 0:35 - 1:10 | User Authentication & Security
 
 **Visual:**
-- App opens to login screen
-- Tap "Create Account"
+- App opens to login screen showing:
+  - UG Tours app icon (launch icon)
+  - "Welcome Back to UG Tours" heading
+  - Email and password input fields
+- Tap "Don't have an account? Register"
+- Registration screen appears
 - Fill in registration form:
   - Name: "Batya Tonny"
   - Email: "batya@example.com"
@@ -40,9 +44,9 @@ UGTours solves these challenges. It's an offline-first mobile application that s
 
 **Voiceover:**
 
-"Let's start by creating an account. Security is fundamental to UGTours.
+"The login screen welcomes users with the UG Tours app icon and a friendly 'Welcome Back to UG Tours' message, creating an immediate connection to the brand.
 
-I'll register with my name, email, and password. Behind the scenes, the app uses BCrypt hashing to securely store credentials - plain text passwords are never saved to the database.
+Let's create a new account by tapping the registration link. Security is fundamental to UGTours - I'll register with my name, email, and password. Behind the scenes, the app uses BCrypt hashing to securely store credentials. Plain text passwords are never saved to the database.
 
 Once registered, I'm automatically logged in. This authentication system enables personalized features like saving favorites and managing bookings, all tied securely to my account."
 
@@ -159,38 +163,46 @@ When I tap 'Book Now', I can select my dates, specify the number of guests, and 
 
 ---
 
-## 4:10 - 4:45 | Booking Management & Profile
+## 4:10 - 4:50 | Booking Management & Drawer Navigation
 
 **Visual:**
 - Complete the booking (tap "Confirm Booking")
 - Success message appears
-- Navigate to "Bookings" tab
+- Navigate to "Bookings" tab (4th tab in bottom navigation)
 - Show the newly created booking with:
   - Accommodation name
   - Dates
   - Total price in both currencies
   - Status: "Pending"
-- Navigate to "Profile" tab
-- Show user information displayed
-- Scroll to show settings options
-- Tap "Logout" button
-- Confirmation dialog appears
-- Confirm logout
-- Return to login screen
+- Tap the hamburger menu icon (☰) in the top-left toolbar
+- Navigation Drawer opens showing:
+  - App Header
+  - Profile
+  - About
+  - Settings
+  - Logout
+- Tap "Settings"
+- Toggle "Dark Mode" switch
+- App theme changes to dark mode
+- Toggle back to light mode
+- Open Drawer again and tap "Logout"
+- User session clears and returns to login screen
 
 **Voiceover:**
 
-"After confirming the booking, it's saved to my account. In the Bookings tab, I can see all my reservations with complete details - dates, pricing, and status.
+"After confirming the booking, it's saved to the Bookings tab, where I can track all my reservations.
 
-This booking management system helps tourists keep track of their entire trip in one place.
+For account management, we've implemented a modern Navigation Drawer. By tapping the menu icon, I can access my Profile, learn more About the app, or adjust Settings.
 
-In the Profile section, I can view and edit my account information. When I'm ready, I can securely log out.
+Let's check the Settings. Here I can toggle between Dark and Light modes, allowing users to customize their viewing experience - perfect for night-time planning or saving battery.
 
-The beauty of this system is that all my data - favorites, bookings, and preferences - is safely stored. When I log back in, everything is exactly as I left it, thanks to secure local data persistence."
+The drawer also houses the Logout option. This keeps the main interface clean while ensuring essential account features are always just a swipe away.
+
+Tapping Logout securely clears my session and returns me to the login screen, ensuring my data remains private."
 
 ---
 
-## 4:45 - 5:00 | Conclusion
+## 4:50 - 5:00 | Conclusion
 
 **Visual:**
 - Login screen visible

@@ -1,11 +1,27 @@
 [
     {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\fragment_about.xml",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_about.xml"
+    },
+    {
         "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\fragment_settings.xml",
         "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_settings.xml"
     },
     {
         "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\item_feature.xml",
         "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_feature.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\dialog_create_booking.xml",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\dialog_create_booking.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\nav_header.xml",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\nav_header.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\fragment_bookings.xml",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_bookings.xml"
     },
     {
         "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\item_category.xml",
@@ -24,6 +40,10 @@
         "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_attraction.xml"
     },
     {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\item_booking.xml",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_booking.xml"
+    },
+    {
         "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\activity_attraction_detail.xml",
         "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\activity_attraction_detail.xml"
     },
@@ -36,16 +56,8 @@
         "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_home.xml"
     },
     {
-        "merged": "com.ugtours.app-mergeDebugResources-56:/layout/fragment_bookings.xml",
-        "source": "com.ugtours.app-main-59:/layout/fragment_bookings.xml"
-    },
-    {
         "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\fragment_login.xml",
         "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_login.xml"
-    },
-    {
-        "merged": "com.ugtours.app-mergeDebugResources-56:/layout/item_booking.xml",
-        "source": "com.ugtours.app-main-59:/layout/item_booking.xml"
     },
     {
         "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\item_accommodation.xml",
@@ -64,12 +76,8 @@
         "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\activity_main.xml"
     },
     {
-        "merged": "com.ugtours.app-mergeDebugResources-56:/layout/item_accommodation.xml",
-        "source": "com.ugtours.app-main-59:/layout/item_accommodation.xml"
-    },
-    {
-        "merged": "com.ugtours.app-mergeDebugResources-56:/layout/dialog_create_booking.xml",
-        "source": "com.ugtours.app-main-59:/layout/dialog_create_booking.xml"
+        "merged": "com.ugtours.app-mergeDebugResources-56:/layout/fragment_profile.xml",
+        "source": "com.ugtours.app-main-59:/layout/fragment_profile.xml"
     },
     {
         "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-mergeDebugResources-56:\\layout\\fragment_profile.xml",
