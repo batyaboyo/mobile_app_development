@@ -77,8 +77,11 @@ const app = {
         if (!data.quitDate) {
             this.router.showOnboarding();
         } else {
+            document.getElementById('main-nav').classList.remove('hidden');
+            document.getElementById('app').classList.remove('hidden');
             this.router.go('dashboard');
             this.startLiveTimer();
+            this.initTheme(); // NEW
         }
     },
 
@@ -101,6 +104,35 @@ const app = {
 
         this.router.go('dashboard');
         this.startLiveTimer();
+        this.initTheme(); // NEW
+    },
+
+    // --- Theme Logic ---
+    initTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        this.updateThemeIcon(savedTheme);
+    },
+
+    toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        this.updateThemeIcon(next);
+    },
+
+    updateThemeIcon(theme) {
+        const btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+
+        if (theme === 'dark') {
+            // Sun icon for dark mode
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>`;
+        } else {
+            // Moon icon for light mode
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>`;
+        }
     },
 
     router: {
@@ -324,6 +356,53 @@ const app = {
         Store.reset();
     },
 
+    exportData() {
+        const dataStr = JSON.stringify(Store.data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sober-streak-backup-${Utils.getToday()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+
+    importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    // Simple validation
+                    if (!imported.quitDate || !imported.dailyCheckIns) {
+                        throw new Error("Invalid data format");
+                    }
+
+                    if (confirm("This will overwrite your current data. Are you sure?")) {
+                        Store.data = { ...Store.data, ...imported };
+                        Store.save();
+                        alert("Data imported successfully!");
+                        location.reload();
+                    }
+                } catch (err) {
+                    alert("Error importing data: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        input.click();
+    },
+
     resetQuitDate() {
         if (confirm("Change your quit date to today?")) {
             Store.data.quitDate = new Date().toISOString();
@@ -522,6 +601,9 @@ const app = {
 
                 const qDate = new Date(Store.data.quitDate);
                 document.getElementById('dash-start-date').innerText = `Started ${qDate.toLocaleDateString()}`;
+
+                // Render Chart
+                setTimeout(() => app.renderAnalyticsChart(), 100);
             }
         },
         calendar: {
@@ -753,6 +835,146 @@ const Confetti = {
         }
         animate();
     }
+};
+
+// --- Analytics Chart ---
+app.renderAnalyticsChart = function () {
+    const canvas = document.getElementById('analytics-chart');
+    if (!canvas) return;
+
+    // Resize for high DPI
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+
+    // Clear
+    ctx.clearRect(0, 0, width, height);
+
+    // Config
+    const daysToShow = 14;
+    const padding = { top: 20, bottom: 30, left: 30, right: 20 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+
+    // Data Prep
+    const today = new Date();
+    const labels = [];
+    const moodData = [];
+    const urgeData = [];
+
+    for (let i = daysToShow - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const dateStr = Utils.formatDate(d);
+
+        labels.push(d.getDate() + '/' + (d.getMonth() + 1));
+
+        // Map Mood: 😊=4, 🙂=3, 😐=2, 😔=1
+        const mood = Store.data.moodEntries[dateStr];
+        if (mood === '😊') moodData.push(4);
+        else if (mood === '🙂') moodData.push(3);
+        else if (mood === '😐') moodData.push(2);
+        else if (mood === '😔') moodData.push(1);
+        else moodData.push(null);
+
+        // Map Urge: High=4, Strong=3, Mild=2, None=1 (Wait, let's align with chart Y axis 0-4)
+        // Let's use: High=3, Strong=2, Mild=1, None=0
+        const urge = Store.data.urgeEntries[dateStr];
+        if (urge === 'High') urgeData.push(3);
+        else if (urge === 'Strong') urgeData.push(2);
+        else if (urge === 'Mild') urgeData.push(1);
+        else if (urge === 'None') urgeData.push(0);
+        else urgeData.push(null);
+    }
+
+    if (moodData.every(x => x === null) && urgeData.every(x => x === null)) {
+        ctx.fillStyle = 'var(--color-text-muted)';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("No data yet for the last 14 days", width / 2, height / 2);
+        return;
+    }
+
+    // Helpers
+    const getX = (i) => padding.left + (i / (daysToShow - 1)) * chartWidth;
+    const getY = (val, max) => padding.top + chartHeight - (val / max) * chartHeight; // val 0-4
+
+    // Draw Grid
+    ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--color-border').trim() || '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i <= 4; i++) {
+        const y = getY(i, 4);
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+    }
+    ctx.stroke();
+
+    // Labels X
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--color-text-muted').trim();
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    for (let i = 0; i < daysToShow; i += 2) {
+        ctx.fillText(labels[i], getX(i), height - 10);
+    }
+
+    // Draw Lines
+    const drawLine = (data, color, isDashed) => {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        if (isDashed) ctx.setLineDash([5, 5]);
+        else ctx.setLineDash([]);
+
+        let first = true;
+        for (let i = 0; i < data.length; i++) {
+            if (data[i] !== null) {
+                const x = getX(i);
+                const y = getY(data[i], 4);
+                if (first) {
+                    ctx.moveTo(x, y);
+                    first = false;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+        }
+        ctx.stroke();
+
+        // Dots
+        ctx.setLineDash([]);
+        for (let i = 0; i < data.length; i++) {
+            if (data[i] !== null) {
+                ctx.beginPath();
+                ctx.arc(getX(i), getY(data[i], 4), 3, 0, Math.PI * 2);
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--color-surface').trim();
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+    };
+
+    // Mood (Primary Color)
+    const primaryColor = getComputedStyle(document.body).getPropertyValue('--color-primary').trim();
+    drawLine(moodData, primaryColor, false);
+
+    // Urge (Warning/Danger Color mixed or just distinct)
+    const dangerColor = getComputedStyle(document.body).getPropertyValue('--color-danger').trim();
+    drawLine(urgeData, dangerColor, true); // Dashed for urges
+
+    // Legend
+    ctx.textAlign = 'left';
+    ctx.fillStyle = primaryColor;
+    ctx.fillText('● Mood', padding.left, 10);
+    ctx.fillStyle = dangerColor;
+    ctx.fillText('--- Urge', padding.left + 50, 10);
 };
 
 // Initialize

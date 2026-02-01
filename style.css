@@ -32,6 +32,40 @@
     --nav-height: 60px;
 }
 
+[data-theme="dark"] {
+    --color-bg: #0f172a;
+    --color-surface: #1e293b;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
+    --color-border: #334155;
+    --color-primary-light: #0c4a6e; /* Sky 900 */
+    --color-success-bg: #064e3b;   /* Emerald 900 */
+    --color-success-light: #065f46; /* Emerald 800 */
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: var(--color-text-muted);
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle:hover {
+    color: var(--color-primary);
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
