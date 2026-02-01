@@ -66,6 +66,12 @@ h2 {
     font-weight: 600;
 }
 
+h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
 p {
     line-height: 1.5;
     color: var(--color-text-muted);
@@ -106,6 +112,10 @@ p {
     text-align: center;
 }
 
+.text-muted {
+    color: var(--color-text-muted);
+}
+
 .flex {
     display: flex;
 }
@@ -143,6 +153,10 @@ p {
     margin-top: 1rem;
 }
 
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
 .mb-4 {
     margin-bottom: 1rem;
 }
@@ -173,6 +187,7 @@ p {
     border: none;
     transition: all 0.2s;
     width: 100%;
+    font-family: inherit;
 }
 
 .btn-primary {
@@ -185,15 +200,57 @@ p {
     transform: scale(0.98);
 }
 
+.btn-primary:hover {
+    background-color: #0284c7;
+}
+
+.btn-secondary {
+    background-color: var(--color-text-muted);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #475569;
+}
+
 .btn-outline {
     background-color: transparent;
     border: 2px solid var(--color-border);
     color: var(--color-text-main);
 }
 
+.btn-outline:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline.active {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
 .btn-success {
     background-color: var(--color-success);
     color: white;
+}
+
+.btn-success:hover {
+    background-color: #16a34a;
+}
+
+.btn-danger {
+    background-color: var(--color-danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
+.btn.lg {
+    font-size: 1.1rem;
+    padding: 1rem 1.5rem;
 }
 
 .input-group {
@@ -222,6 +279,30 @@ input:focus,
 textarea:focus {
     outline: 2px solid var(--color-primary-light);
     border-color: var(--color-primary);
+}
+
+/* Lists */
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+}
+
+.list li {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list li:last-child {
+    border-bottom: none;
+}
+
+.list button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
 }
 
 /* Navigation */
@@ -354,6 +435,7 @@ textarea:focus {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     position: relative;
+    cursor: pointer;
 }
 
 .day-sober {
@@ -404,6 +486,95 @@ textarea:focus {
     box-shadow: 0 0 0 4px var(--color-success-light);
 }
 
+/* NEW: Breathing Exercise Styles */
+.breathing-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.breathing-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    transition: transform 4s ease-in-out;
+    margin: 1rem auto;
+}
+
+.breathing-circle.inhale {
+    transform: scale(1.4);
+}
+
+.breathing-circle.hold {
+    transform: scale(1.4);
+}
+
+.breathing-circle.exhale {
+    transform: scale(1.0);
+}
+
+/* NEW: Emergency Timer */
+.timer-display {
+    background-color: var(--color-primary-light);
+    padding: 2rem 1rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.emergency-timer {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 0.5rem;
+}
+
+/* NEW: Urge Selector */
+.urge-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.urge-btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.25rem;
+}
+
+.urge-btn[data-level="None"].active {
+    background-color: var(--color-success);
+    color: white;
+    border-color: var(--color-success);
+}
+
+.urge-btn[data-level="Mild"].active {
+    background-color: #fbbf24;
+    color: white;
+    border-color: #fbbf24;
+}
+
+.urge-btn[data-level="Strong"].active {
+    background-color: #f59e0b;
+    color: white;
+    border-color: #f59e0b;
+}
+
+.urge-btn[data-level="High"].active {
+    background-color: var(--color-danger);
+    color: white;
+    border-color: var(--color-danger);
+}
+
+/* Confetti Canvas */
 .confetti-canvas {
     position: fixed;
     top: 0;
@@ -455,4 +626,24 @@ textarea:focus {
 
 .fade-in {
     animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .urge-selector {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

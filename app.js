@@ -1,3 +1,6 @@
+// --- Enhanced Sobriety Tracker (Version 3 Improved) ---
+// Combines best features from all three versions
+
 // --- Data Store ---
 const DB_KEY = 'soberStreakData';
 
@@ -6,16 +9,21 @@ const Store = {
         quitDate: null,
         weeklySpend: 50,
         personalReasons: [],
-        dailyCheckIns: {}, // 'YYYY-MM-DD': 'sober' | 'slip' | null
+        dailyCheckIns: {}, // 'YYYY-MM-DD': 'sober' | 'slip'
         journalEntries: {},
         moodEntries: {},
-        longestStreak: 0
+        urgeEntries: {}, // NEW: 'YYYY-MM-DD': 'None' | 'Mild' | 'Strong' | 'High'
+        longestStreak: 0,
+        distractions: ['Go for a walk', 'Drink water', 'Call a friend', 'Read 5 pages', 'Do 10 pushups'], // NEW
+        emergencyContacts: [] // NEW: [{name, info}]
     },
 
     load() {
         const saved = localStorage.getItem(DB_KEY);
         if (saved) {
-            this.data = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            // Merge with defaults to ensure new fields exist
+            this.data = { ...this.data, ...parsed };
         }
         return this.data;
     },
@@ -35,7 +43,6 @@ const Store = {
 // --- Utils ---
 const Utils = {
     formatDate(date) {
-        // Returns YYYY-MM-DD local
         const offset = date.getTimezoneOffset();
         const local = new Date(date.getTime() - (offset * 60 * 1000));
         return local.toISOString().split('T')[0];
@@ -59,6 +66,10 @@ const Utils = {
 const app = {
     currentCheckInStatus: null,
     selectedMood: null,
+    selectedUrge: null, // NEW
+    breathingInterval: null, // NEW
+    isBreathing: false, // NEW
+    emergencyTimerInterval: null, // NEW
 
     init() {
         const data = Store.load();
@@ -108,7 +119,6 @@ const app = {
 
             // Update Nav
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // Note: Simple heuristic to highlight correct nav item
             const navItem = document.querySelector(`.nav-item[onclick*="'${viewName}'"]`);
             if (navItem) navItem.classList.add('active');
 
@@ -126,47 +136,30 @@ const app = {
 
     getCurrentStreak() {
         const today = Utils.getToday();
-        let checkDate = new Date(); // Start today
+        let checkDate = new Date();
         let streak = 0;
 
-        // Loop backwards
-        // If today is tracked as 'slip', streak is 0. 
-        // If today is not tracked, we check yesterday.
-        // If consecutive 'sober', add to streak.
-        // Stop at 'slip' or quitDate.
-
         const qDate = new Date(Store.data.quitDate);
-        // Reset time for comparison
         qDate.setHours(0, 0, 0, 0);
 
-        // Safety cap of 3650 days to prevent infinite loops in bad states
         for (let i = 0; i < 3650; i++) {
             const dateStr = Utils.formatDate(checkDate);
             const status = Store.data.dailyCheckIns[dateStr];
 
-            if (checkDate < qDate) break; // Before quit date
+            if (checkDate < qDate) break;
 
             if (i === 0) { // Today
                 if (status === 'slip') return 0;
                 if (status === 'sober') streak++;
-                // If null, we just continue to yesterday, streak is currently 0 from today's perspective but might be X from yesterday
             } else {
                 if (status === 'slip') break;
                 if (status === 'sober') streak++;
-                else break; // missed check-in breaks streak logic usually, or we can be forgiving. Let's be strict: missed checkin breaks streak unless handled? 
-                // User request: "current streak = consecutive sober days ending today (or yesterday if not checked in)"
-                // So if today is null, we can count from yesterday.
-                // If yesterday is also null, streak is 0? Or do we assume sober? 
-                // Let's assume missed checkin = break for accurate tracking, but maybe user wants leniency.
-                // Impl: If today is null, we don't increment streak for today, but check yesterday. 
-                // If yesterday is sober, we continue.
-                // If yesterday is null, streak ends.
+                else break;
             }
 
             checkDate.setDate(checkDate.getDate() - 1);
         }
 
-        // Update longest
         if (streak > Store.data.longestStreak) {
             Store.data.longestStreak = streak;
             Store.save();
@@ -178,21 +171,15 @@ const app = {
     startLiveTimer() {
         const timerEl = document.getElementById('dash-timer');
 
-        // We calculate time from the last slip OR quit date.
-        // Find most recent slip
         let lastResetDate = new Date(Store.data.quitDate);
         const sortedDates = Object.keys(Store.data.dailyCheckIns).sort();
         for (let d of sortedDates) {
             if (Store.data.dailyCheckIns[d] === 'slip') {
-                // Reset date is the day AFTER the slip, or the slip day itself for tracking?
-                // Usually clean time starts after the slip.
                 const slipDate = new Date(d);
                 lastResetDate = new Date(slipDate);
                 lastResetDate.setDate(slipDate.getDate() + 1);
             }
         }
-
-        // If last reset in future (e.g. today slipped), timer is 0
 
         const update = () => {
             const now = new Date();
@@ -215,11 +202,45 @@ const app = {
     },
 
     // --- Modals ---
-    openCheckInModal() {
+    currentCheckInDate: null, // NEW: Track which date we're checking in for
+
+    openCheckInModal(showDatePicker = false) {
         const today = Utils.getToday();
-        if (Store.data.dailyCheckIns[today]) {
-            // Already checked in, show edit/view?
-            // For simplicity, allow overwrite
+        this.currentCheckInDate = today; // Default to today
+
+        // Set up date picker
+        const dateSelector = document.getElementById('checkin-date-selector');
+        const dateInput = document.getElementById('checkin-date-input');
+        const dayLabel = document.getElementById('day-label');
+
+        if (showDatePicker) {
+            // Show date picker for past days
+            dateSelector.classList.remove('hidden');
+            dateInput.value = today;
+
+            // Set max to today, min to 7 days ago
+            const maxDate = new Date();
+            const minDate = new Date();
+            minDate.setDate(minDate.getDate() - 7);
+
+            dateInput.max = Utils.formatDate(maxDate);
+            dateInput.min = Utils.formatDate(minDate);
+
+            // Listen for date changes
+            dateInput.onchange = () => {
+                this.currentCheckInDate = dateInput.value;
+                const selectedDate = new Date(dateInput.value);
+                const display = selectedDate.toLocaleDateString();
+                document.getElementById('checkin-date-display').innerText = display;
+
+                // Update label
+                const isToday = dateInput.value === Utils.getToday();
+                dayLabel.innerText = isToday ? 'today' : 'that day';
+            };
+        } else {
+            // Hide date picker for quick today check-in
+            dateSelector.classList.add('hidden');
+            dayLabel.innerText = 'today';
         }
 
         document.getElementById('checkin-date-display').innerText = new Date().toLocaleDateString();
@@ -231,7 +252,9 @@ const app = {
         // Reset form
         document.getElementById('checkin-note').value = '';
         document.querySelectorAll('.mood-opt').forEach(el => el.style.opacity = '0.5');
+        document.querySelectorAll('.urge-btn').forEach(el => el.classList.remove('active'));
         this.selectedMood = null;
+        this.selectedUrge = null;
     },
 
     processCheckIn(status) {
@@ -257,20 +280,27 @@ const app = {
         event.target.style.opacity = '1';
     },
 
+    // NEW: Select urge intensity
+    selectUrge(level) {
+        this.selectedUrge = level;
+        document.querySelectorAll('.urge-btn').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+    },
+
     saveCheckInDetails() {
-        const today = Utils.getToday();
+        const checkInDate = this.currentCheckInDate || Utils.getToday(); // Use selected date or today
         const note = document.getElementById('checkin-note').value;
 
-        Store.data.dailyCheckIns[today] = this.currentCheckInStatus;
-        if (note) Store.data.journalEntries[today] = note;
-        if (this.selectedMood) Store.data.moodEntries[today] = this.selectedMood;
+        Store.data.dailyCheckIns[checkInDate] = this.currentCheckInStatus;
+        if (note) Store.data.journalEntries[checkInDate] = note;
+        if (this.selectedMood) Store.data.moodEntries[checkInDate] = this.selectedMood;
+        if (this.selectedUrge) Store.data.urgeEntries[checkInDate] = this.selectedUrge; // NEW
 
         Store.save();
         this.closeModals();
-        this.router.go('dashboard'); // Refresh dash
+        this.router.go('dashboard');
 
         if (this.currentCheckInStatus === 'sober') {
-            // Check for milestone?
             this.checkMilestone();
         }
     },
@@ -280,7 +310,9 @@ const app = {
         const milestones = [7, 30, 90, 180, 365];
         if (milestones.includes(streak)) {
             Confetti.fire();
-            alert(`Congratulations! You've reached a ${streak}-day milestone!`);
+            setTimeout(() => {
+                alert(`🎉 Congratulations! You've reached a ${streak}-day milestone!`);
+            }, 500);
         }
     },
 
@@ -289,9 +321,7 @@ const app = {
     },
 
     resetData() {
-        if (confirm("Are you sure you want to delete all data? This cannot be undone.")) {
-            Store.reset();
-        }
+        Store.reset();
     },
 
     resetQuitDate() {
@@ -304,6 +334,154 @@ const app = {
         }
     },
 
+    // --- NEW: Emergency Modal ---
+    openEmergencyModal() {
+        document.getElementById('modal-emergency').classList.remove('hidden');
+
+        // Show user's reasons
+        const reasonsDiv = document.getElementById('emergency-reasons');
+        if (Store.data.personalReasons.length > 0) {
+            reasonsDiv.innerHTML = '<ul>' +
+                Store.data.personalReasons.map(r => `<li style="margin-bottom: 0.5rem;">• ${r}</li>`).join('') +
+                '</ul>';
+        } else {
+            reasonsDiv.innerHTML = '<p style="font-style: italic;">Remember why you started this journey.</p>';
+        }
+
+        // Start 5-minute timer
+        this.startEmergencyTimer(300); // 5 minutes
+    },
+
+    closeEmergencyModal() {
+        document.getElementById('modal-emergency').classList.add('hidden');
+        if (this.emergencyTimerInterval) {
+            clearInterval(this.emergencyTimerInterval);
+        }
+    },
+
+    startEmergencyTimer(duration) {
+        let timer = duration;
+        const timerEl = document.getElementById('emergency-timer');
+
+        if (this.emergencyTimerInterval) {
+            clearInterval(this.emergencyTimerInterval);
+        }
+
+        const updateDisplay = (t) => {
+            let minutes = parseInt(t / 60, 10);
+            let seconds = parseInt(t % 60, 10);
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+            timerEl.textContent = minutes + ":" + seconds;
+        };
+
+        updateDisplay(timer);
+
+        this.emergencyTimerInterval = setInterval(() => {
+            timer--;
+            updateDisplay(timer);
+
+            if (timer <= 0) {
+                clearInterval(this.emergencyTimerInterval);
+                timerEl.textContent = "Done!";
+                timerEl.style.color = 'var(--color-success)';
+            }
+        }, 1000);
+    },
+
+    // --- NEW: Breathing Exercise ---
+    toggleBreathing() {
+        const btn = document.getElementById('breathing-btn');
+        const circle = document.getElementById('breathing-circle');
+
+        if (this.isBreathing) {
+            // Stop
+            if (this.breathingInterval) clearInterval(this.breathingInterval);
+            this.isBreathing = false;
+            btn.textContent = 'Start';
+            circle.textContent = 'Ready';
+            circle.className = 'breathing-circle';
+        } else {
+            // Start
+            this.isBreathing = true;
+            btn.textContent = 'Stop';
+            this.runBreathingCycle(circle);
+        }
+    },
+
+    runBreathingCycle(circle) {
+        if (!this.isBreathing) return;
+
+        // Inhale (4 seconds)
+        circle.textContent = 'Inhale';
+        circle.className = 'breathing-circle inhale';
+
+        setTimeout(() => {
+            if (!this.isBreathing) return;
+            // Hold (7 seconds)
+            circle.textContent = 'Hold';
+            circle.className = 'breathing-circle hold';
+
+            setTimeout(() => {
+                if (!this.isBreathing) return;
+                // Exhale (8 seconds)
+                circle.textContent = 'Exhale';
+                circle.className = 'breathing-circle exhale';
+
+                setTimeout(() => {
+                    if (this.isBreathing) {
+                        this.runBreathingCycle(circle); // Repeat
+                    }
+                }, 8000);
+            }, 7000);
+        }, 4000);
+    },
+
+    // --- NEW: Coping Tools ---
+    addDistraction() {
+        const input = document.getElementById('new-distraction');
+        const value = input.value.trim();
+
+        if (value) {
+            Store.data.distractions.push(value);
+            Store.save();
+            this.views.coping.render();
+            input.value = '';
+        }
+    },
+
+    removeDistraction(index) {
+        if (confirm('Remove this distraction?')) {
+            Store.data.distractions.splice(index, 1);
+            Store.save();
+            this.views.coping.render();
+        }
+    },
+
+    addContact() {
+        const nameInput = document.getElementById('contact-name');
+        const infoInput = document.getElementById('contact-info');
+        const name = nameInput.value.trim();
+        const info = infoInput.value.trim();
+
+        if (name && info) {
+            Store.data.emergencyContacts.push({ name, info });
+            Store.save();
+            this.views.coping.render();
+            nameInput.value = '';
+            infoInput.value = '';
+        }
+    },
+
+    removeContact(index) {
+        if (confirm('Remove this contact?')) {
+            Store.data.emergencyContacts.splice(index, 1);
+            Store.save();
+            this.views.coping.render();
+        }
+    },
+
+    // --- Views ---
     views: {
         dashboard: {
             render() {
@@ -333,7 +511,6 @@ const app = {
                     "You don't have to control your thoughts. You just have to stop letting them control you."
                 ];
 
-                // Mix reasons and quotes
                 let msg = "";
                 if (reasons.length > 0 && Math.random() > 0.5) {
                     msg = "Remember: " + Utils.randomElement(reasons);
@@ -365,21 +542,16 @@ const app = {
                 const firstDay = new Date(year, month, 1);
                 const lastDay = new Date(year, month + 1, 0);
                 const daysInMonth = lastDay.getDate();
-                const startDayIndex = firstDay.getDay(); // 0 = Sun
+                const startDayIndex = firstDay.getDay();
 
                 const grid = document.getElementById('cal-grid');
                 grid.innerHTML = '';
 
-                // Empty cells
                 for (let i = 0; i < startDayIndex; i++) {
                     const e = document.createElement('div');
                     e.className = 'calendar-day day-empty';
                     grid.appendChild(e);
                 }
-
-                const todayYear = new Date().getFullYear();
-                const todayMonth = new Date().getMonth();
-                const todayDate = new Date().getDate();
 
                 for (let d = 1; d <= daysInMonth; d++) {
                     const dateObj = new Date(year, month, d);
@@ -390,7 +562,6 @@ const app = {
                     cell.className = 'calendar-day';
                     cell.innerText = d;
 
-                    // Check future
                     if (dateObj > new Date()) {
                         cell.classList.add('day-future');
                     } else if (status === 'sober') {
@@ -399,7 +570,6 @@ const app = {
                         cell.classList.add('day-slip');
                     }
 
-                    // Indicator for journal/mood
                     if (Store.data.moodEntries[dateStr]) {
                         const mood = document.createElement('span');
                         mood.innerText = Store.data.moodEntries[dateStr];
@@ -411,10 +581,10 @@ const app = {
                     }
 
                     cell.onclick = () => {
-                        // Could show mini modal with day details
                         const note = Store.data.journalEntries[dateStr];
-                        if (note || status) {
-                            alert(`Date: ${dateStr}\nStatus: ${status || 'No Check-in'}\nMood: ${Store.data.moodEntries[dateStr] || ''}\nNote: ${note || ''}`);
+                        const urge = Store.data.urgeEntries[dateStr];
+                        if (note || status || urge) {
+                            alert(`Date: ${dateStr}\nStatus: ${status || 'No Check-in'}\nMood: ${Store.data.moodEntries[dateStr] || ''}\nUrges: ${urge || ''}\nNote: ${note || ''}`);
                         }
                     };
 
@@ -433,7 +603,7 @@ const app = {
                     { d: 30, t: "Weight Loss", desc: "Liver fat decreases, mood stabilizes." },
                     { d: 90, t: "Liver Recovery", desc: "Significant liver healing and cognitive improvement." },
                     { d: 180, t: "Lower Cancer Risk", desc: "Risk of alcohol-related cancers drops." },
-                    { d: 365, t: "Rennewed Health", desc: "Major health risks significantly reduced." }
+                    { d: 365, t: "Renewed Health", desc: "Major health risks significantly reduced." }
                 ];
 
                 const container = document.getElementById('health-list');
@@ -450,6 +620,41 @@ const app = {
                     `;
                     container.appendChild(el);
                 });
+            }
+        },
+        // NEW: Coping Tools View
+        coping: {
+            render() {
+                // Render distractions
+                const distList = document.getElementById('distraction-list');
+                distList.innerHTML = '';
+                Store.data.distractions.forEach((dist, idx) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${dist}</span>
+                        <button class="btn btn-outline" style="width:auto; padding: 0.25rem 0.5rem;" onclick="app.removeDistraction(${idx})">Remove</button>
+                    `;
+                    distList.appendChild(li);
+                });
+
+                // Render contacts
+                const contactList = document.getElementById('contact-list');
+                contactList.innerHTML = '';
+                if (Store.data.emergencyContacts.length === 0) {
+                    contactList.innerHTML = '<li style="color: var(--color-text-muted); font-style: italic;">No contacts added yet</li>';
+                } else {
+                    Store.data.emergencyContacts.forEach((contact, idx) => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <div>
+                                <strong>${contact.name}</strong><br>
+                                <a href="tel:${contact.info}" style="color: var(--color-primary);">${contact.info}</a>
+                            </div>
+                            <button class="btn btn-outline" style="width:auto; padding: 0.25rem 0.5rem;" onclick="app.removeContact(${idx})">Remove</button>
+                        `;
+                        contactList.appendChild(li);
+                    });
+                }
             }
         },
         milestones: {
@@ -493,6 +698,7 @@ const app = {
                     dates.forEach(d => {
                         const note = entries[d];
                         const mood = Store.data.moodEntries[d] || '';
+                        const urge = Store.data.urgeEntries[d] || '';
                         const card = document.createElement('div');
                         card.className = 'card';
                         card.innerHTML = `
@@ -500,6 +706,7 @@ const app = {
                                 <strong>${d}</strong>
                                 <span>${mood}</span>
                             </div>
+                            ${urge ? `<div style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.5rem;">Urges: ${urge}</div>` : ''}
                             <p style="color: var(--color-text-main);">${note}</p>
                         `;
                         container.appendChild(card);
@@ -530,7 +737,6 @@ const Confetti = {
             });
         }
 
-        let frame = 0;
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             particles.forEach(p => {
