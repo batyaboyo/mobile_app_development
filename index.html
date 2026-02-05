@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Sober Streak</title>
+    <title>Sobriety</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,16 +17,16 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 
 <body>
 
     <!-- Onboarding View -->
     <div id="view-onboarding" class="hidden w-full p-4 flex-col justify-center" style="min-height: 100vh;">
-        <div class="card fade-in">
-            <h1 class="text-center mb-4" style="color: var(--color-primary);">Min Søber Streak</h1>
-            <p class="text-center mb-4">Welcome to your new beginning. Let's set up your journey.</p>
+        <div class="card glass fade-in">
+            <h1 class="text-center mb-4" style="color: var(--color-primary); font-size: 2.25rem;">Sobriety</h1>
+            <p class="text-center mb-6">Welcome to your new beginning. Let's set up your journey.</p>
 
             <div class="input-group">
                 <label>When did you start your journey?</label>
@@ -101,7 +101,7 @@
 
     <div id="app" class="p-4 hidden">
         <header class="flex justify-between items-center mb-4">
-            <h1 style="color: var(--color-primary); font-size: 1.25rem;">My Sober Streak</h1>
+            <h1 style="color: var(--color-primary); font-size: 1.25rem;">Sobriety</h1>
             <button id="theme-toggle" class="theme-toggle" onclick="app.toggleTheme()" aria-label="Toggle Dark Mode">
                 <!-- Icon injected by JS -->
             </button>
@@ -131,14 +131,16 @@
                 </p>
             </div>
 
-            <div class="flex flex-col gap-2">
-                <button class="btn btn-primary lg" onclick="app.openCheckInModal()">
+            <div class="flex flex-col gap-3">
+                <button id="btn-checkin-today" class="btn btn-primary lg" onclick="app.openCheckInModal()"
+                    aria-label="Check In Today">
                     Check In Today
                 </button>
-                <button class="btn btn-outline" onclick="app.openCheckInModal(true)" style="font-size: 0.9rem;">
+                <button id="btn-log-past" class="btn btn-outline" onclick="app.openCheckInModal(true)"
+                    style="font-size: 0.9rem;" aria-label="Log a Past Day">
                     Log a Past Day
                 </button>
-                <button class="btn btn-danger" onclick="app.openEmergencyModal()">
+                <button class="btn btn-danger" onclick="app.openEmergencyModal()" aria-label="I Need Help Now">
                     🚨 I Need Help Now
                 </button>
             </div>
@@ -264,7 +266,21 @@
             <h2 class="mb-4">Support Resources</h2>
 
             <div class="card">
-                <h3>Immediate Help</h3>
+                <h3>Support in Uganda 🇺🇬</h3>
+                <p class="mt-4"><strong>Mental Health Uganda:</strong><br>
+                    <a href="tel:0800212121" style="color: var(--color-primary); font-size: 1.1rem;">0800 212 121
+                        (Toll-Free)</a>
+                </p>
+                <p class="mt-4"><strong>Safe Places Uganda:</strong><br>
+                    <a href="tel:+256782740522" style="color: var(--color-primary);">+256 782 740 522</a>
+                </p>
+                <p class="mt-4"><strong>Kampala Youth Recovery:</strong><br>
+                    <a href="tel:+256774306896" style="color: var(--color-primary);">+256 774 306 896</a>
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>Immediate Help (International)</h3>
                 <p class="mt-4"><strong>US National Helpline:</strong> <br> <a href="tel:18006624357"
                         style="color: var(--color-primary); font-size: 1.2rem;">1-800-662-HELP (4357)</a></p>
                 <p style="font-size: 0.8rem; margin-top: 0.5rem;">Free, confidential, 24/7, 365-day-a-year treatment
@@ -328,11 +344,15 @@
 
             <div id="checkin-step-2" class="hidden">
                 <p class="text-center mb-4" id="checkin-mood-label">How are you feeling?</p>
-                <div class="flex justify-center gap-4 mb-4" style="font-size: 2rem;">
-                    <span onclick="app.selectMood('😊')" style="cursor:pointer; opacity: 0.5" class="mood-opt">😊</span>
-                    <span onclick="app.selectMood('🙂')" style="cursor:pointer; opacity: 0.5" class="mood-opt">🙂</span>
-                    <span onclick="app.selectMood('😐')" style="cursor:pointer; opacity: 0.5" class="mood-opt">😐</span>
-                    <span onclick="app.selectMood('😔')" style="cursor:pointer; opacity: 0.5" class="mood-opt">😔</span>
+                <div class="flex justify-center gap-4 mb-4" style="font-size: 2.5rem;">
+                    <span onclick="app.selectMood(this, '😊')" style="cursor:pointer; opacity: 0.4" class="mood-opt"
+                        title="Great">😊</span>
+                    <span onclick="app.selectMood(this, '🙂')" style="cursor:pointer; opacity: 0.4" class="mood-opt"
+                        title="Good">🙂</span>
+                    <span onclick="app.selectMood(this, '😐')" style="cursor:pointer; opacity: 0.4" class="mood-opt"
+                        title="Okay">😐</span>
+                    <span onclick="app.selectMood(this, '😔')" style="cursor:pointer; opacity: 0.4" class="mood-opt"
+                        title="Struggling">😔</span>
                 </div>
 
                 <!-- NEW: Urge Intensity Selector -->
@@ -340,13 +360,13 @@
                     <label>How strong were your urges today?</label>
                     <div class="urge-selector flex gap-2">
                         <button class="btn btn-outline urge-btn" data-level="None"
-                            onclick="app.selectUrge('None')">None</button>
+                            onclick="app.selectUrge(this, 'None')">None</button>
                         <button class="btn btn-outline urge-btn" data-level="Mild"
-                            onclick="app.selectUrge('Mild')">Mild</button>
+                            onclick="app.selectUrge(this, 'Mild')">Mild</button>
                         <button class="btn btn-outline urge-btn" data-level="Strong"
-                            onclick="app.selectUrge('Strong')">Strong</button>
+                            onclick="app.selectUrge(this, 'Strong')">Strong</button>
                         <button class="btn btn-outline urge-btn" data-level="High"
-                            onclick="app.selectUrge('High')">High</button>
+                            onclick="app.selectUrge(this, 'High')">High</button>
                     </div>
                 </div>
 

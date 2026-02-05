@@ -86,13 +86,22 @@ const app = {
     },
 
     completeOnboarding() {
-        const qDate = document.getElementById('input-quit-date').value;
+        const qDateInput = document.getElementById('input-quit-date');
+        const qDate = qDateInput.value;
         const spend = document.getElementById('input-spend').value;
         const reasons = document.getElementById('input-reasons').value;
 
         if (!qDate) return alert("Please select a date.");
 
-        Store.data.quitDate = new Date(qDate).toISOString();
+        const selectedDate = new Date(qDate);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // Allow today
+
+        if (selectedDate > today) {
+            return alert("The quit date cannot be in the future. Please select today or a past date.");
+        }
+
+        Store.data.quitDate = selectedDate.toISOString();
         Store.data.weeklySpend = Number(spend) || 0;
         Store.data.personalReasons = reasons.split('\n').filter(r => r.trim() !== '');
 
@@ -104,7 +113,7 @@ const app = {
 
         this.router.go('dashboard');
         this.startLiveTimer();
-        this.initTheme(); // NEW
+        this.initTheme();
     },
 
     // --- Theme Logic ---
@@ -120,6 +129,8 @@ const app = {
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
         this.updateThemeIcon(next);
+        // Re-render chart to pick up new theme colors
+        if (app.views.dashboard.render) app.views.dashboard.render();
     },
 
     updateThemeIcon(theme) {
@@ -127,11 +138,9 @@ const app = {
         if (!btn) return;
 
         if (theme === 'dark') {
-            // Sun icon for dark mode
-            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>`;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
         } else {
-            // Moon icon for light mode
-            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>`;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
         }
     },
 
@@ -167,8 +176,9 @@ const app = {
     // --- Features ---
 
     getCurrentStreak() {
-        const today = Utils.getToday();
-        let checkDate = new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let checkDate = new Date(today);
         let streak = 0;
 
         const qDate = new Date(Store.data.quitDate);
@@ -180,13 +190,16 @@ const app = {
 
             if (checkDate < qDate) break;
 
-            if (i === 0) { // Today
-                if (status === 'slip') return 0;
-                if (status === 'sober') streak++;
+            if (status === 'slip') break;
+
+            // Increment streak if 'sober' OR if there's no data for the day but it's >= qDate
+            // This is more user-friendly for missing a check-in day
+            if (status === 'sober') {
+                streak++;
+            } else if (status === 'slip') {
+                break;
             } else {
-                if (status === 'slip') break;
-                if (status === 'sober') streak++;
-                else break;
+                streak++;
             }
 
             checkDate.setDate(checkDate.getDate() - 1);
@@ -202,14 +215,16 @@ const app = {
 
     startLiveTimer() {
         const timerEl = document.getElementById('dash-timer');
+        if (!timerEl) return;
 
         let lastResetDate = new Date(Store.data.quitDate);
         const sortedDates = Object.keys(Store.data.dailyCheckIns).sort();
+
         for (let d of sortedDates) {
             if (Store.data.dailyCheckIns[d] === 'slip') {
                 const slipDate = new Date(d);
-                lastResetDate = new Date(slipDate);
-                lastResetDate.setDate(slipDate.getDate() + 1);
+                slipDate.setHours(23, 59, 59, 999); // Reset happens after the slip day
+                lastResetDate = new Date(slipDate.getTime() + 1);
             }
         }
 
@@ -226,11 +241,12 @@ const app = {
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / (1000 * 60)) % 60);
 
-            timerEl.innerText = `${days}d ${hours}h ${minutes}m`;
+            timerEl.innerText = `${days.toString().padStart(2, '0')}d ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m`;
         };
 
         update();
-        setInterval(update, 60000);
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerInterval = setInterval(update, 30000); // Update every 30s
     },
 
     // --- Modals ---
@@ -238,39 +254,31 @@ const app = {
 
     openCheckInModal(showDatePicker = false) {
         const today = Utils.getToday();
-        this.currentCheckInDate = today; // Default to today
+        this.currentCheckInDate = today;
 
-        // Set up date picker
         const dateSelector = document.getElementById('checkin-date-selector');
         const dateInput = document.getElementById('checkin-date-input');
         const dayLabel = document.getElementById('day-label');
 
         if (showDatePicker) {
-            // Show date picker for past days
             dateSelector.classList.remove('hidden');
             dateInput.value = today;
 
-            // Set max to today, min to 7 days ago
             const maxDate = new Date();
             const minDate = new Date();
-            minDate.setDate(minDate.getDate() - 7);
+            minDate.setDate(minDate.getDate() - 30); // Allow 30 days backfill
 
             dateInput.max = Utils.formatDate(maxDate);
             dateInput.min = Utils.formatDate(minDate);
 
-            // Listen for date changes
             dateInput.onchange = () => {
                 this.currentCheckInDate = dateInput.value;
                 const selectedDate = new Date(dateInput.value);
-                const display = selectedDate.toLocaleDateString();
-                document.getElementById('checkin-date-display').innerText = display;
-
-                // Update label
+                document.getElementById('checkin-date-display').innerText = selectedDate.toLocaleDateString();
                 const isToday = dateInput.value === Utils.getToday();
                 dayLabel.innerText = isToday ? 'today' : 'that day';
             };
         } else {
-            // Hide date picker for quick today check-in
             dateSelector.classList.add('hidden');
             dayLabel.innerText = 'today';
         }
@@ -281,9 +289,8 @@ const app = {
         document.getElementById('checkin-step-2').classList.add('hidden');
         document.getElementById('checkin-slip-msg').classList.add('hidden');
 
-        // Reset form
         document.getElementById('checkin-note').value = '';
-        document.querySelectorAll('.mood-opt').forEach(el => el.style.opacity = '0.5');
+        document.querySelectorAll('.mood-opt').forEach(el => el.style.opacity = '0.4');
         document.querySelectorAll('.urge-btn').forEach(el => el.classList.remove('active'));
         this.selectedMood = null;
         this.selectedUrge = null;
@@ -306,17 +313,16 @@ const app = {
         document.getElementById('checkin-step-2').classList.remove('hidden');
     },
 
-    selectMood(mood) {
+    selectMood(el, mood) {
         this.selectedMood = mood;
-        document.querySelectorAll('.mood-opt').forEach(el => el.style.opacity = '0.5');
-        event.target.style.opacity = '1';
+        document.querySelectorAll('.mood-opt').forEach(opt => opt.style.opacity = '0.4');
+        el.style.opacity = '1';
     },
 
-    // NEW: Select urge intensity
-    selectUrge(level) {
+    selectUrge(el, level) {
         this.selectedUrge = level;
-        document.querySelectorAll('.urge-btn').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
+        document.querySelectorAll('.urge-btn').forEach(btn => btn.classList.remove('active'));
+        el.classList.add('active');
     },
 
     saveCheckInDetails() {
@@ -474,43 +480,53 @@ const app = {
         const circle = document.getElementById('breathing-circle');
 
         if (this.isBreathing) {
-            // Stop
-            if (this.breathingInterval) clearInterval(this.breathingInterval);
-            this.isBreathing = false;
-            btn.textContent = 'Start';
-            circle.textContent = 'Ready';
-            circle.className = 'breathing-circle';
+            this.stopBreathing();
         } else {
-            // Start
-            this.isBreathing = true;
-            btn.textContent = 'Stop';
-            this.runBreathingCycle(circle);
+            this.startBreathing(btn, circle);
         }
+    },
+
+    startBreathing(btn, circle) {
+        this.isBreathing = true;
+        btn.textContent = 'Stop Exercise';
+        btn.classList.replace('btn-primary', 'btn-outline');
+        this.runBreathingCycle(circle);
+    },
+
+    stopBreathing() {
+        const btn = document.getElementById('breathing-btn');
+        const circle = document.getElementById('breathing-circle');
+
+        this.isBreathing = false;
+        if (this.breathingTimeout) clearTimeout(this.breathingTimeout);
+
+        btn.textContent = 'Start Exercise';
+        btn.classList.replace('btn-outline', 'btn-primary');
+        circle.textContent = 'Ready';
+        circle.className = 'breathing-circle';
     },
 
     runBreathingCycle(circle) {
         if (!this.isBreathing) return;
 
-        // Inhale (4 seconds)
-        circle.textContent = 'Inhale';
+        // Inhale (4s)
+        circle.textContent = 'Inhale...';
         circle.className = 'breathing-circle inhale';
 
-        setTimeout(() => {
+        this.breathingTimeout = setTimeout(() => {
             if (!this.isBreathing) return;
-            // Hold (7 seconds)
+            // Hold (7s)
             circle.textContent = 'Hold';
             circle.className = 'breathing-circle hold';
 
-            setTimeout(() => {
+            this.breathingTimeout = setTimeout(() => {
                 if (!this.isBreathing) return;
-                // Exhale (8 seconds)
-                circle.textContent = 'Exhale';
+                // Exhale (8s)
+                circle.textContent = 'Exhale...';
                 circle.className = 'breathing-circle exhale';
 
-                setTimeout(() => {
-                    if (this.isBreathing) {
-                        this.runBreathingCycle(circle); // Repeat
-                    }
+                this.breathingTimeout = setTimeout(() => {
+                    if (this.isBreathing) this.runBreathingCycle(circle);
                 }, 8000);
             }, 7000);
         }, 4000);
@@ -601,6 +617,30 @@ const app = {
 
                 const qDate = new Date(Store.data.quitDate);
                 document.getElementById('dash-start-date').innerText = `Started ${qDate.toLocaleDateString()}`;
+
+                // Update Button Status
+                const today = Utils.getToday();
+                const checkInBtn = document.getElementById('btn-checkin-today');
+                const logPastBtn = document.getElementById('btn-log-past');
+                const hasCheckedInToday = Store.data.dailyCheckIns[today];
+
+                if (hasCheckedInToday) {
+                    checkInBtn.innerText = 'Checked In for Today ✓';
+                    checkInBtn.classList.remove('btn-primary');
+                    checkInBtn.classList.add('btn-success-solid');
+                    checkInBtn.disabled = true;
+                    checkInBtn.style.opacity = '0.8';
+                    
+                    if (logPastBtn) logPastBtn.style.opacity = '0.7';
+                } else {
+                    checkInBtn.innerText = 'Check In Today';
+                    checkInBtn.classList.add('btn-primary');
+                    checkInBtn.classList.remove('btn-success-solid');
+                    checkInBtn.disabled = false;
+                    checkInBtn.style.opacity = '1';
+                    
+                    if (logPastBtn) logPastBtn.style.opacity = '1';
+                }
 
                 // Render Chart
                 setTimeout(() => app.renderAnalyticsChart(), 100);
@@ -842,139 +882,118 @@ app.renderAnalyticsChart = function () {
     const canvas = document.getElementById('analytics-chart');
     if (!canvas) return;
 
-    // Resize for high DPI
+    const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
-
-    const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
-    const width = rect.width;
-    const height = rect.height;
+    const w = rect.width;
+    const h = rect.height;
+    ctx.clearRect(0, 0, w, h);
 
-    // Clear
-    ctx.clearRect(0, 0, width, height);
+    const days = 14;
+    const padding = { t: 20, b: 30, l: 30, r: 20 };
+    const cw = w - padding.l - padding.r;
+    const ch = h - padding.t - padding.b;
 
-    // Config
-    const daysToShow = 14;
-    const padding = { top: 20, bottom: 30, left: 30, right: 20 };
-    const chartWidth = width - padding.left - padding.right;
-    const chartHeight = height - padding.top - padding.bottom;
-
-    // Data Prep
     const today = new Date();
-    const labels = [];
     const moodData = [];
     const urgeData = [];
+    const labels = [];
 
-    for (let i = daysToShow - 1; i >= 0; i--) {
+    for (let i = days - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(today.getDate() - i);
-        const dateStr = Utils.formatDate(d);
-
+        const ds = Utils.formatDate(d);
         labels.push(d.getDate() + '/' + (d.getMonth() + 1));
 
-        // Map Mood: 😊=4, 🙂=3, 😐=2, 😔=1
-        const mood = Store.data.moodEntries[dateStr];
-        if (mood === '😊') moodData.push(4);
-        else if (mood === '🙂') moodData.push(3);
-        else if (mood === '😐') moodData.push(2);
-        else if (mood === '😔') moodData.push(1);
-        else moodData.push(null);
+        const m = Store.data.moodEntries[ds];
+        const u = Store.data.urgeEntries[ds];
 
-        // Map Urge: High=4, Strong=3, Mild=2, None=1 (Wait, let's align with chart Y axis 0-4)
-        // Let's use: High=3, Strong=2, Mild=1, None=0
-        const urge = Store.data.urgeEntries[dateStr];
-        if (urge === 'High') urgeData.push(3);
-        else if (urge === 'Strong') urgeData.push(2);
-        else if (urge === 'Mild') urgeData.push(1);
-        else if (urge === 'None') urgeData.push(0);
-        else urgeData.push(null);
+        moodData.push(m === '😊' ? 4 : m === '🙂' ? 3 : m === '😐' ? 2 : m === '😔' ? 1 : null);
+        urgeData.push(u === 'High' ? 4 : u === 'Strong' ? 3 : u === 'Mild' ? 2 : u === 'None' ? 1 : null);
     }
 
     if (moodData.every(x => x === null) && urgeData.every(x => x === null)) {
-        ctx.fillStyle = 'var(--color-text-muted)';
-        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#94a3b8';
         ctx.textAlign = 'center';
-        ctx.fillText("No data yet for the last 14 days", width / 2, height / 2);
+        ctx.fillText("Log your mood to see trends", w / 2, h / 2);
         return;
     }
 
-    // Helpers
-    const getX = (i) => padding.left + (i / (daysToShow - 1)) * chartWidth;
-    const getY = (val, max) => padding.top + chartHeight - (val / max) * chartHeight; // val 0-4
+    const getX = (i) => padding.l + (i / (days - 1)) * cw;
+    const getY = (v) => padding.t + ch - ((v - 1) / 3) * ch;
 
-    // Draw Grid
-    ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--color-border').trim() || '#e2e8f0';
+    const bodyStyles = getComputedStyle(document.body);
+    const borderColor = bodyStyles.getPropertyValue('--color-border').trim() || '#e2e8f0';
+    const textColor = bodyStyles.getPropertyValue('--color-text-muted').trim() || '#64748b';
+    const primaryColor = bodyStyles.getPropertyValue('--color-primary').trim() || '#0ea5e9';
+    const dangerColor = bodyStyles.getPropertyValue('--color-danger').trim() || '#ef4444';
+
+    // Grid
+    ctx.strokeStyle = borderColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let i = 0; i <= 4; i++) {
-        const y = getY(i, 4);
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(width - padding.right, y);
+    for (let i = 0; i < 4; i++) {
+        const y = padding.t + (i / 3) * ch;
+        ctx.moveTo(padding.l, y);
+        ctx.lineTo(w - padding.r, y);
     }
     ctx.stroke();
 
     // Labels X
-    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--color-text-muted').trim();
+    ctx.fillStyle = textColor;
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
-    for (let i = 0; i < daysToShow; i += 2) {
-        ctx.fillText(labels[i], getX(i), height - 10);
+    for (let i = 0; i < days; i += 2) {
+        ctx.fillText(labels[i], getX(i), h - 10);
     }
 
-    // Draw Lines
-    const drawLine = (data, color, isDashed) => {
+    const drawLine = (data, color, dash) => {
         ctx.beginPath();
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        if (isDashed) ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 2.5;
+        if (dash) ctx.setLineDash([5, 5]);
         else ctx.setLineDash([]);
 
         let first = true;
-        for (let i = 0; i < data.length; i++) {
-            if (data[i] !== null) {
-                const x = getX(i);
-                const y = getY(data[i], 4);
+        data.forEach((v, i) => {
+            if (v !== null) {
                 if (first) {
-                    ctx.moveTo(x, y);
+                    ctx.moveTo(getX(i), getY(v));
                     first = false;
                 } else {
-                    ctx.lineTo(x, y);
+                    ctx.lineTo(getX(i), getY(v));
                 }
             }
-        }
+        });
         ctx.stroke();
 
         // Dots
         ctx.setLineDash([]);
-        for (let i = 0; i < data.length; i++) {
-            if (data[i] !== null) {
+        data.forEach((v, i) => {
+            if (v !== null) {
                 ctx.beginPath();
-                ctx.arc(getX(i), getY(data[i], 4), 3, 0, Math.PI * 2);
-                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--color-surface').trim();
+                ctx.arc(getX(i), getY(v), 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = bodyStyles.getPropertyValue('--color-surface').trim() || '#fff';
                 ctx.fill();
                 ctx.stroke();
             }
-        }
+        });
     };
 
-    // Mood (Primary Color)
-    const primaryColor = getComputedStyle(document.body).getPropertyValue('--color-primary').trim();
     drawLine(moodData, primaryColor, false);
-
-    // Urge (Warning/Danger Color mixed or just distinct)
-    const dangerColor = getComputedStyle(document.body).getPropertyValue('--color-danger').trim();
-    drawLine(urgeData, dangerColor, true); // Dashed for urges
+    drawLine(urgeData, dangerColor, true);
 
     // Legend
     ctx.textAlign = 'left';
+    ctx.font = '12px sans-serif';
     ctx.fillStyle = primaryColor;
-    ctx.fillText('● Mood', padding.left, 10);
+    ctx.fillText('● Mood', padding.l, 10);
     ctx.fillStyle = dangerColor;
-    ctx.fillText('--- Urge', padding.left + 50, 10);
+    ctx.fillText('--- Urge', padding.l + 60, 10);
 };
 
 // Initialize
