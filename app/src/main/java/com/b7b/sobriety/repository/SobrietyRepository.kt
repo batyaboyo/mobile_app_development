@@ -25,7 +25,7 @@ class SobrietyRepository(
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-    suspend fun calculateCurrentStreak(quitDateStr: String?): Int {
+    suspend fun calculateCurrentStreak(quitDateStr: String?, allCheckIns: List<CheckIn>): Int {
         if (quitDateStr == null) return 0
         
         val quitDate = LocalDate.parse(quitDateStr.split("T")[0], dateFormatter)
@@ -33,7 +33,7 @@ class SobrietyRepository(
         
         if (today.isBefore(quitDate)) return 0
 
-        val checkIns = checkInDao.getAll().associateBy { it.date }
+        val checkIns = allCheckIns.associateBy { it.date }
         
         var currentDay = today
         var streak = 0
@@ -63,7 +63,7 @@ class SobrietyRepository(
         return (weeks * weeklySpend).roundToInt()
     }
 
-    suspend fun getLongestResetDate(quitDateStr: String?): LocalDateTime {
+    fun getLongestResetDate(quitDateStr: String?, allCheckIns: List<CheckIn>): LocalDateTime {
         if (quitDateStr == null) return LocalDateTime.now()
         
         var lastReset = try {
@@ -72,7 +72,7 @@ class SobrietyRepository(
             LocalDate.parse(quitDateStr.split("T")[0], dateFormatter).atStartOfDay()
         }
 
-        val slips = checkInDao.getAll().filter { it.status == "slip" }.sortedBy { it.date }
+        val slips = allCheckIns.filter { it.status == "slip" }.sortedBy { it.date }
         
         for (slip in slips) {
             val slipDate = LocalDate.parse(slip.date, dateFormatter).atTime(23, 59, 59, 999999999)

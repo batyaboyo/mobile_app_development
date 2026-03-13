@@ -34,7 +34,7 @@ class SobrietyViewModel(
                 repository.preferencesFlow,
                 repository.checkInsFlow
             ) { prefs, checkIns ->
-                val streak = repository.calculateCurrentStreak(prefs.quitDate)
+                val streak = repository.calculateCurrentStreak(prefs.quitDate, checkIns)
                 val money = repository.calculateMoneySaved(streak, prefs.weeklySpend)
                 
                 Triple(prefs, checkIns, Pair(streak, money))
@@ -46,22 +46,25 @@ class SobrietyViewModel(
                     repository.setLongestStreak(streak)
                 }
 
-                _uiState.value = SobrietyUiState(
-                    preferences = prefs,
-                    checkIns = checkIns,
-                    currentStreak = streak,
-                    moneySaved = money,
-                    isLoading = false
-                )
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        preferences = prefs,
+                        checkIns = checkIns,
+                        currentStreak = streak,
+                        moneySaved = money,
+                        isLoading = false
+                    )
+                }
             }
         }
 
         // Live Timer Effect
         viewModelScope.launch {
             while (true) {
-                val quitDate = _uiState.value.preferences.quitDate
+                val state = _uiState.value
+                val quitDate = state.preferences.quitDate
                 if (quitDate != null) {
-                    val lastReset = repository.getLongestResetDate(quitDate)
+                    val lastReset = repository.getLongestResetDate(quitDate, state.checkIns)
                     val now = LocalDateTime.now()
                     val diff = java.time.Duration.between(lastReset, now)
 

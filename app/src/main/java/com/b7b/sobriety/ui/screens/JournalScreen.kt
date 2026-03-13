@@ -3,24 +3,45 @@ package com.b7b.sobriety.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.b7b.sobriety.ui.dialogs.JournalEntryDialog
 import com.b7b.sobriety.viewmodel.SobrietyUiState
+import com.b7b.sobriety.viewmodel.SobrietyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JournalScreen(uiState: SobrietyUiState) {
+fun JournalScreen(viewModel: SobrietyViewModel, uiState: SobrietyUiState) {
+    var showAddEntry by remember { mutableStateOf(false) }
+
+    if (showAddEntry) {
+        JournalEntryDialog(
+            onDismiss = { showAddEntry = false },
+            viewModel = viewModel
+        )
+    }
+
     val journalEntries = uiState.checkIns.filter { it.note != null }
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Journal History", fontWeight = FontWeight.Bold) })
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showAddEntry = true },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(Icons.Default.Edit, contentDescription = "Write Entry")
+            }
         }
     ) { padding ->
         if (journalEntries.isEmpty()) {

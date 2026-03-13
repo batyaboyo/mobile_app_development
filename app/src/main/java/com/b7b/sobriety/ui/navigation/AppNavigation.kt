@@ -61,7 +61,7 @@ fun AppNavigation(
             MilestonesScreen(uiState)
         }
         composable(Screen.Journal.route) {
-            JournalScreen(uiState)
+            JournalScreen(viewModel, uiState)
         }
         composable(Screen.Resources.route) {
             ResourcesScreen(viewModel, uiState)
