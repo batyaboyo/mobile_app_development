@@ -73,38 +73,44 @@ class SobrietyViewModel(
         // Live Timer Effect - Only runs when quitDate is present
         viewModelScope.launch {
             while (true) {
+                var currentDelay = 30000L
                 try {
                     val state = _uiState.value
-                    val quitDate = state.preferences.quitDate
                     
-                    if (quitDate != null) {
-                        val lastReset = repository.getLongestResetDate(quitDate, state.checkIns)
-                        val now = LocalDateTime.now()
-                        val diff = java.time.Duration.between(lastReset, now)
+                    if (state.isLoading) {
+                        currentDelay = 500L
+                    } else {
+                        val quitDate = state.preferences.quitDate
+                        
+                        if (quitDate != null) {
+                            val lastReset = repository.getLongestResetDate(quitDate, state.checkIns)
+                            val now = LocalDateTime.now()
+                            val diff = java.time.Duration.between(lastReset, now)
 
-                        if (diff.isNegative) {
-                            if (state.liveTimer != "00d 00h 00m") {
-                                _uiState.update { it.copy(liveTimer = "00d 00h 00m") }
-                            }
-                        } else {
-                            val days = diff.toDays()
-                            val hours = diff.toHours() % 24
-                            val minutes = diff.toMinutes() % 60
-                            val timerStr = java.util.Locale.US.let { locale ->
-                                "%02dd %02dh %02dm".format(locale, days, hours, minutes)
-                            }
-                            val moneySaved = repository.calculateMoneySaved(
-                                state.preferences.quitDate,
-                                state.checkIns,
-                                state.preferences.weeklySpend
-                            )
-                            
-                            if (state.liveTimer != timerStr || state.moneySaved != moneySaved) {
-                                _uiState.update {
-                                    it.copy(
-                                        liveTimer = timerStr,
-                                        moneySaved = moneySaved
-                                    )
+                            if (diff.isNegative) {
+                                if (state.liveTimer != "00d 00h 00m") {
+                                    _uiState.update { it.copy(liveTimer = "00d 00h 00m") }
+                                }
+                            } else {
+                                val days = diff.toDays()
+                                val hours = diff.toHours() % 24
+                                val minutes = diff.toMinutes() % 60
+                                val timerStr = java.util.Locale.US.let { locale ->
+                                    "%02dd %02dh %02dm".format(locale, days, hours, minutes)
+                                }
+                                val moneySaved = repository.calculateMoneySaved(
+                                    state.preferences.quitDate,
+                                    state.checkIns,
+                                    state.preferences.weeklySpend
+                                )
+                                
+                                if (state.liveTimer != timerStr || state.moneySaved != moneySaved) {
+                                    _uiState.update {
+                                        it.copy(
+                                            liveTimer = timerStr,
+                                            moneySaved = moneySaved
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -112,7 +118,7 @@ class SobrietyViewModel(
                 } catch (e: Exception) {
                     // Fail silently for timer
                 }
-                delay(30000) // Update every 30s
+                delay(currentDelay)
             }
         }
     }
