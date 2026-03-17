@@ -18,20 +18,21 @@ data class NavItem(
 val navItems = listOf(
     NavItem("Dashboard", Screen.Dashboard.route, Icons.Default.Dashboard),
     NavItem("Calendar", Screen.Calendar.route, Icons.Default.CalendarMonth),
-    NavItem("Health", Screen.Health.route, Icons.Default.Timeline),
-    NavItem("Coping", Screen.Coping.route, Icons.Default.CheckCircle),
-    NavItem("Milestones", Screen.Milestones.route, Icons.Default.EmojiEvents),
+    NavItem("Progress", Screen.Health.route, Icons.Default.BarChart),
     NavItem("Journal", Screen.Journal.route, Icons.Default.Edit),
-    NavItem("Resources", Screen.Resources.route, Icons.Default.Help)
+    NavItem("Settings", Screen.Settings.route, Icons.Default.Settings)
 )
+
+private const val MAX_BOTTOM_NAV_ITEMS = 5
 
 @Composable
 fun BottomNavBar(navController: NavHostController) {
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
+    val displayedItems = navItems.take(MAX_BOTTOM_NAV_ITEMS)
 
     NavigationBar {
-        navItems.forEach { item ->
+        displayedItems.forEach { item ->
             NavigationBarItem(
                 selected = currentRoute == item.route,
                 onClick = {

@@ -1,29 +1,23 @@
 package com.b7b.sobriety.ui.navigation
 
-import androidx.compose.runtime.Composable
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.b7b.sobriety.viewmodel.SobrietyUiState
 import com.b7b.sobriety.viewmodel.SobrietyViewModel
-import com.b7b.sobriety.ui.screens.OnboardingScreen
-import com.b7b.sobriety.ui.screens.DashboardScreen
-import com.b7b.sobriety.ui.screens.CalendarScreen
-import com.b7b.sobriety.ui.screens.HealthTimelineScreen
-import com.b7b.sobriety.ui.screens.CopingToolsScreen
-import com.b7b.sobriety.ui.screens.MilestonesScreen
-import com.b7b.sobriety.ui.screens.JournalScreen
-import com.b7b.sobriety.ui.screens.ResourcesScreen
+import com.b7b.sobriety.ui.screens.*
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
     object Onboarding : Screen("onboarding")
     object Dashboard : Screen("dashboard")
     object Calendar : Screen("calendar")
-    object Health : Screen("health")
-    object Coping : Screen("coping")
-    object Milestones : Screen("milestones")
+    object Health : Screen("health") // Grouped under Progress in UI but route preserved for simplicity
     object Journal : Screen("journal")
-    object Resources : Screen("resources")
+    object Settings : Screen("settings")
 }
 
 @Composable
@@ -32,18 +26,43 @@ fun AppNavigation(
     viewModel: SobrietyViewModel,
     uiState: SobrietyUiState
 ) {
-    val startDestination = if (uiState.preferences.quitDate == null) {
-        Screen.Onboarding.route
-    } else {
-        Screen.Dashboard.route
-    }
-
-     NavHost(
+    NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = Screen.Splash.route,
+        enterTransition = {
+            slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+        },
+        exitTransition = {
+            slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+        },
+        popEnterTransition = {
+            slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) + fadeIn(animationSpec = tween(300))
+        },
+        popExitTransition = {
+            slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+        }
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen()
+            LaunchedEffect(uiState.isLoading) {
+                if (!uiState.isLoading) {
+                    val destination = if (uiState.preferences.quitDate == null) {
+                        Screen.Onboarding.route
+                    } else {
+                        Screen.Dashboard.route
+                    }
+                    navController.navigate(destination) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            }
+        }
         composable(Screen.Onboarding.route) {
-            OnboardingScreen(viewModel)
+            OnboardingScreen(viewModel) {
+                navController.navigate(Screen.Dashboard.route) {
+                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+                }
+            }
         }
         composable(Screen.Dashboard.route) {
             DashboardScreen(viewModel, uiState)
@@ -52,19 +71,13 @@ fun AppNavigation(
             CalendarScreen(viewModel, uiState)
         }
         composable(Screen.Health.route) {
-            HealthTimelineScreen(uiState)
-        }
-        composable(Screen.Coping.route) {
-            CopingToolsScreen(viewModel, uiState)
-        }
-        composable(Screen.Milestones.route) {
-            MilestonesScreen(uiState)
+            ProgressScreen(uiState)
         }
         composable(Screen.Journal.route) {
             JournalScreen(viewModel, uiState)
         }
-        composable(Screen.Resources.route) {
-            ResourcesScreen(viewModel, uiState)
+        composable(Screen.Settings.route) {
+            SettingsScreen(viewModel, uiState)
         }
     }
 }

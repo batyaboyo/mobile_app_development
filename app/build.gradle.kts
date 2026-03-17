@@ -85,8 +85,8 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // JSON serialization for complex prefs
-    implementation("org.json:json:20231013")
+    // JSON serialization for complex prefs is provided by Android SDK
+    // implementation("org.json:json:20231013")
 
     // Core
     implementation("androidx.core:core-ktx:1.12.0")

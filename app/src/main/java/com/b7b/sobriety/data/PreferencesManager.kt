@@ -11,9 +11,11 @@ import org.json.JSONObject
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "sobriety_prefs")
 
+private const val DEFAULT_WEEKLY_SPEND_UGX = 50000
+
 data class UserPreferences(
     val quitDate: String? = null,
-    val weeklySpend: Int = 50,
+    val weeklySpend: Int = DEFAULT_WEEKLY_SPEND_UGX,
     val personalReasons: List<String> = emptyList(),
     val longestStreak: Int = 0,
     val isDarkTheme: Boolean = false,
@@ -40,7 +42,7 @@ class PreferencesManager(private val context: Context) {
     val preferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { prefs ->
         UserPreferences(
             quitDate = prefs[KEY_QUIT_DATE],
-            weeklySpend = prefs[KEY_WEEKLY_SPEND] ?: 50,
+            weeklySpend = prefs[KEY_WEEKLY_SPEND] ?: DEFAULT_WEEKLY_SPEND_UGX,
             personalReasons = deserializeStringList(prefs[KEY_REASONS]),
             longestStreak = prefs[KEY_LONGEST_STREAK] ?: 0,
             isDarkTheme = prefs[KEY_DARK_THEME] ?: false,

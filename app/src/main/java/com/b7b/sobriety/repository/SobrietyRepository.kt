@@ -3,12 +3,12 @@ package com.b7b.sobriety.repository
 import com.b7b.sobriety.data.PreferencesManager
 import com.b7b.sobriety.data.dao.CheckInDao
 import com.b7b.sobriety.data.model.CheckIn
+import com.b7b.sobriety.util.DateUtils
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import kotlin.math.roundToInt
+import kotlin.math.floor
 
 class SobrietyRepository(
     private val checkInDao: CheckInDao,
@@ -23,12 +23,8 @@ class SobrietyRepository(
 
     suspend fun getCheckInByDate(date: String) = checkInDao.getByDate(date)
 
-    private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
     suspend fun calculateCurrentStreak(quitDateStr: String?, allCheckIns: List<CheckIn>): Int {
-        if (quitDateStr == null) return 0
-        
-        val quitDate = LocalDate.parse(quitDateStr.split("T")[0], dateFormatter)
+        val quitDate = parseLocalDate(quitDateStr) ?: return 0
         val today = LocalDate.now()
         
         if (today.isBefore(quitDate)) return 0
@@ -38,44 +34,50 @@ class SobrietyRepository(
         var currentDay = today
         var streak = 0
         
-        // Loop backwards from today
         while (!currentDay.isBefore(quitDate)) {
-            val dateStr = currentDay.format(dateFormatter)
-            val checkIn = checkIns[dateStr]
+            val dateStr = currentDay.toString()
+            if (checkIns[dateStr]?.status == "slip") break
             
-            if (checkIn?.status == "slip") {
-                break
-            }
-            
-            // In the JS version, missing days are counted as sober if after quit date
-            // status == "sober" OR null counts as sober, status == "slip" breaks
             streak++
             currentDay = currentDay.minusDays(1)
-            
             if (streak > 3650) break // Safety
         }
-        
         return streak
     }
 
-    fun calculateMoneySaved(streakDays: Int, weeklySpend: Int): Int {
-        val weeks = streakDays / 7.0
-        return (weeks * weeklySpend).roundToInt()
+    private fun parseLocalDate(dateStr: String?): LocalDate? = try {
+        DateUtils.parseDate(dateStr)
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun parseLocalDateTime(dateTimeStr: String?): LocalDateTime? = try {
+        DateUtils.parseDateTime(dateTimeStr)
+    } catch (e: Exception) {
+        null
+    }
+
+    fun calculateMoneySaved(quitDateStr: String?, allCheckIns: List<CheckIn>, weeklySpend: Int): Int {
+        if (weeklySpend <= 0) return 0
+
+        val lastReset = getLongestResetDate(quitDateStr, allCheckIns)
+        val now = LocalDateTime.now()
+        val soberMinutes = java.time.Duration.between(lastReset, now).toMinutes()
+
+        if (soberMinutes <= 0) return 0
+
+        val minutesPerWeek = 7.0 * 24 * 60
+        val savedShillings = weeklySpend * (soberMinutes / minutesPerWeek)
+        return floor(savedShillings).toInt()
     }
 
     fun getLongestResetDate(quitDateStr: String?, allCheckIns: List<CheckIn>): LocalDateTime {
-        if (quitDateStr == null) return LocalDateTime.now()
-        
-        var lastReset = try {
-            LocalDateTime.parse(quitDateStr, DateTimeFormatter.ISO_DATE_TIME)
-        } catch (e: Exception) {
-            LocalDate.parse(quitDateStr.split("T")[0], dateFormatter).atStartOfDay()
-        }
+        var lastReset = parseLocalDateTime(quitDateStr) ?: LocalDateTime.now()
 
         val slips = allCheckIns.filter { it.status == "slip" }.sortedBy { it.date }
         
         for (slip in slips) {
-            val slipDate = LocalDate.parse(slip.date, dateFormatter).atTime(23, 59, 59, 999999999)
+            val slipDate = parseLocalDate(slip.date)?.atTime(23, 59, 59, 999999999) ?: continue
             if (slipDate.isAfter(lastReset)) {
                 lastReset = slipDate.plusNanos(1)
             }

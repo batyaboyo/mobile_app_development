@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.b7b.sobriety.R
 import com.b7b.sobriety.data.model.CheckIn
 import com.b7b.sobriety.ui.theme.Primary
 import com.b7b.sobriety.ui.theme.Success
@@ -22,8 +24,11 @@ fun MoodUrgeChart(checkIns: List<CheckIn>) {
     val sortedCheckIns = checkIns.takeLast(7).sortedBy { it.date }
     
     if (sortedCheckIns.size < 2) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            Text("Log at least 2 days to see trends", style = MaterialTheme.typography.bodySmall)
+        Box(
+            modifier = Modifier.fillMaxWidth().height(150.dp),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            Text(stringResource(R.string.log_trends_hint), style = MaterialTheme.typography.bodySmall)
         }
         return
     }

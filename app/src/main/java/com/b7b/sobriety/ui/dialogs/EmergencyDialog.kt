@@ -12,8 +12,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.b7b.sobriety.R
 import androidx.compose.ui.window.Dialog
 import com.b7b.sobriety.ui.theme.Primary
 import com.b7b.sobriety.ui.theme.PrimaryLight
@@ -48,14 +50,14 @@ fun EmergencyDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    "Emergency Support",
+                    stringResource(R.string.emergency_support),
                     style = MaterialTheme.typography.headlineSmall,
                     color = Primary,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
-                    "Breathe. Wait. This feeling will pass.",
+                    stringResource(R.string.breathe_wait),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -75,7 +77,7 @@ fun EmergencyDialog(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Personal Contacts", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.personal_contacts), fontWeight = FontWeight.Bold)
                         uiState.preferences.emergencyContacts.forEach { contact ->
                             Button(
                                 onClick = {
@@ -87,7 +89,7 @@ fun EmergencyDialog(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                             ) {
-                                Text("Call ${contact.name}")
+                                Text(stringResource(R.string.call_contact, contact.name))
                             }
                         }
                     }
@@ -102,14 +104,14 @@ fun EmergencyDialog(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Call International Support Line")
+                    Text(stringResource(R.string.call_intl_support))
                 }
 
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("I'm feeling better")
+                    Text(stringResource(R.string.feeling_better))
                 }
             }
         }

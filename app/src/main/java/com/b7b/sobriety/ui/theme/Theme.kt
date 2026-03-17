@@ -50,10 +50,13 @@ fun SobrietyTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.surface.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            val context = view.context
+            val window = (context as? Activity ?: (context as? android.content.ContextWrapper)?.baseContext as? Activity)?.window
+            window?.let {
+                it.statusBarColor = colorScheme.background.toArgb()
+                it.navigationBarColor = colorScheme.surface.toArgb()
+                WindowCompat.getInsetsController(it, view).isAppearanceLightStatusBars = !darkTheme
+            }
         }
     }
 

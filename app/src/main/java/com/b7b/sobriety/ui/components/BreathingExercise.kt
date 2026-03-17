@@ -14,8 +14,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.b7b.sobriety.R
 import com.b7b.sobriety.ui.theme.Primary
 import com.b7b.sobriety.ui.theme.PrimaryDark
 import kotlinx.coroutines.delay
@@ -23,7 +25,12 @@ import kotlinx.coroutines.delay
 @Composable
 fun BreathingExercise() {
     var isRunning by remember { mutableStateOf(false) }
-    var phase by remember { mutableStateOf("Ready") }
+    val readyText = stringResource(R.string.ready)
+    val inhaleText = stringResource(R.string.inhale)
+    val holdText = stringResource(R.string.hold)
+    val exhaleText = stringResource(R.string.exhale)
+    
+    var phase by remember { mutableStateOf(readyText) }
     
     val scale = remember { Animatable(1f) }
 
@@ -31,19 +38,19 @@ fun BreathingExercise() {
         if (isRunning) {
             while (isRunning) {
                 // Inhale (4s)
-                phase = "Inhale..."
+                phase = inhaleText
                 scale.animateTo(1.6f, animationSpec = tween(4000, easing = LinearOutSlowInEasing))
                 
                 // Hold (7s)
-                phase = "Hold"
+                phase = holdText
                 delay(7000)
                 
                 // Exhale (8s)
-                phase = "Exhale..."
+                phase = exhaleText
                 scale.animateTo(1f, animationSpec = tween(8000, easing = FastOutLinearInEasing))
             }
         } else {
-            phase = "Ready"
+            phase = readyText
             scale.snapTo(1f)
         }
     }
@@ -78,7 +85,7 @@ fun BreathingExercise() {
             onClick = { isRunning = !isRunning },
             modifier = Modifier.width(200.dp)
         ) {
-            Text(if (isRunning) "Stop Exercise" else "Start Exercise")
+            Text(if (isRunning) stringResource(R.string.stop_exercise) else stringResource(R.string.start_exercise))
         }
     }
 }

@@ -13,10 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.b7b.sobriety.R
 import androidx.compose.ui.window.Dialog
 import com.b7b.sobriety.data.model.CheckIn
+import com.b7b.sobriety.util.DateUtils
 import com.b7b.sobriety.viewmodel.SobrietyViewModel
 import java.time.LocalDate
 
@@ -31,9 +34,15 @@ fun JournalEntryDialog(
     var mood by remember { mutableStateOf<String?>(null) }
     var note by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
+    val parsedSelectedDate = remember(selectedDate) {
+        DateUtils.parseDate(selectedDate) ?: LocalDate.now()
+    }
 
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = LocalDate.parse(selectedDate).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        initialSelectedDateMillis = parsedSelectedDate
+            .atStartOfDay(java.time.ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
     )
 
     if (showDatePicker) {
@@ -48,10 +57,10 @@ fun JournalEntryDialog(
                             .toString()
                     }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -73,7 +82,7 @@ fun JournalEntryDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    "New Journal Entry",
+                    stringResource(R.string.new_journal_entry),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -83,20 +92,20 @@ fun JournalEntryDialog(
                     value = selectedDate,
                     onValueChange = { },
                     readOnly = true,
-                    label = { Text("Date") },
+                    label = { Text(stringResource(R.string.date_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     trailingIcon = {
                         IconButton(onClick = { showDatePicker = true }) {
                             Icon(
                                 imageVector = Icons.Default.DateRange,
-                                contentDescription = "Select Date"
+                                contentDescription = stringResource(R.string.select_date)
                             )
                         }
                     }
                 )
 
                 // Mood Selection
-                Text("How are you feeling?", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.how_feeling), style = MaterialTheme.typography.titleSmall)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -117,10 +126,10 @@ fun JournalEntryDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("Journal Note") },
+                    label = { Text(stringResource(R.string.journal_note_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 5,
-                    placeholder = { Text("Write your thoughts here...") }
+                    placeholder = { Text(stringResource(R.string.journal_placeholder)) }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -143,11 +152,11 @@ fun JournalEntryDialog(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = note.isNotBlank()
                 ) {
-                    Text("Save Entry")
+                    Text(stringResource(R.string.save_entry))
                 }
 
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

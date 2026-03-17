@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.b7b.sobriety.R
 import com.b7b.sobriety.ui.components.BreathingExercise
 import com.b7b.sobriety.viewmodel.SobrietyUiState
 import com.b7b.sobriety.viewmodel.SobrietyViewModel
@@ -30,7 +32,7 @@ fun CopingToolsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Coping Tools", fontWeight = FontWeight.Bold) })
+            TopAppBar(title = { Text(stringResource(R.string.coping_tools), fontWeight = FontWeight.Bold) })
         }
     ) { padding ->
         Column(
@@ -47,9 +49,9 @@ fun CopingToolsScreen(
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("4-7-8 Breathing Exercise", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.breathing_exercise_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
-                        "Inhale for 4 seconds, hold for 7 seconds, exhale for 8 seconds.",
+                        stringResource(R.string.breathing_exercise_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -61,7 +63,7 @@ fun CopingToolsScreen(
             // Distractions
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Healthy Distractions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.healthy_distractions), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
                     
                     uiState.preferences.distractions.forEachIndexed { index, distraction ->
@@ -72,7 +74,7 @@ fun CopingToolsScreen(
                         ) {
                             Text(distraction, modifier = Modifier.weight(1f))
                             IconButton(onClick = { viewModel.removeDistraction(index) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.remove), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                         if (index < uiState.preferences.distractions.lastIndex) Divider()
@@ -85,7 +87,7 @@ fun CopingToolsScreen(
                         OutlinedTextField(
                             value = newDistraction,
                             onValueChange = { newDistraction = it },
-                            placeholder = { Text("Add a distraction...") },
+                            placeholder = { Text(stringResource(R.string.add_distraction_placeholder)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true
                         )
@@ -95,7 +97,7 @@ fun CopingToolsScreen(
                                 newDistraction = ""
                             }
                         }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add")
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
                         }
                     }
                 }
@@ -104,7 +106,7 @@ fun CopingToolsScreen(
             // Emergency Contacts
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Emergency Contacts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.emergency_contacts), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
                     
                     uiState.preferences.emergencyContacts.forEachIndexed { index, contact ->
@@ -118,7 +120,7 @@ fun CopingToolsScreen(
                                 Text(contact.info, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                             }
                             IconButton(onClick = { viewModel.removeContact(index) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.remove), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                         if (index < uiState.preferences.emergencyContacts.lastIndex) Divider()
@@ -128,7 +130,7 @@ fun CopingToolsScreen(
                         OutlinedTextField(
                             value = newContactName,
                             onValueChange = { newContactName = it },
-                            placeholder = { Text("Name") },
+                            placeholder = { Text(stringResource(R.string.name_hint)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -136,7 +138,7 @@ fun CopingToolsScreen(
                             OutlinedTextField(
                                 value = newContactInfo,
                                 onValueChange = { newContactInfo = it },
-                                placeholder = { Text("Phone number or info") },
+                                placeholder = { Text(stringResource(R.string.info_hint)) },
                                 modifier = Modifier.weight(1f),
                                 singleLine = true
                             )
@@ -147,7 +149,7 @@ fun CopingToolsScreen(
                                     newContactInfo = ""
                                 }
                             }) {
-                                Icon(Icons.Default.Add, contentDescription = "Add")
+                                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
                             }
                         }
                     }

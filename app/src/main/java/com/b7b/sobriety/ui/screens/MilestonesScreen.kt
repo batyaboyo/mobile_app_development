@@ -12,36 +12,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.b7b.sobriety.R
 import com.b7b.sobriety.ui.theme.Success
 import com.b7b.sobriety.viewmodel.SobrietyUiState
 
-val milestonesList = listOf(7, 30, 60, 90, 180, 365, 730)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MilestonesScreen(uiState: SobrietyUiState) {
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Milestones & Rewards", fontWeight = FontWeight.Bold) })
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(milestonesList) { days ->
-                val achieved = uiState.currentStreak >= days
-                MilestoneCard(days = days, achieved = achieved)
-            }
+    val milestonesList = listOf(1, 3, 7, 14, 30, 60, 90, 180, 270, 365, 730, 1095) // 1d, 3d, 1w, 2w, 1m... 3y
+    
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(milestonesList) { days ->
+            val achieved = uiState.currentStreak >= days
+            MilestoneCard(days = days, achieved = achieved, currentStreak = uiState.currentStreak)
         }
     }
 }
 
 @Composable
-fun MilestoneCard(days: Int, achieved: Boolean) {
+fun MilestoneCard(days: Int, achieved: Boolean, currentStreak: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         border = if (achieved) BorderStroke(1.dp, Success) else null,
@@ -56,16 +49,26 @@ fun MilestoneCard(days: Int, achieved: Boolean) {
         ) {
             Column {
                 Text(
-                    "$days Days",
+                    stringResource(R.string.days_count, days),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = if (achieved) Success else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    if (achieved) "Unlocked!" else "Upcoming",
+                    if (achieved) stringResource(R.string.unlocked) else stringResource(R.string.upcoming),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (!achieved && days > 0) {
+                    val progress = (currentStreak.toFloat() / days).coerceIn(0f, 1f)
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                        color = Success,
+                        trackColor = Success.copy(alpha = 0.1f)
+                    )
+                }
             }
             Text(
                 if (achieved) "🏆" else "🔒",

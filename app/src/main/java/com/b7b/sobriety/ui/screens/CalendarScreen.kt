@@ -24,16 +24,15 @@ import com.b7b.sobriety.ui.dialogs.CheckInDialog
 import com.b7b.sobriety.ui.theme.Danger
 import com.b7b.sobriety.ui.theme.Primary
 import com.b7b.sobriety.ui.theme.Success
+import com.b7b.sobriety.util.DateUtils
 import com.b7b.sobriety.viewmodel.SobrietyUiState
 import com.b7b.sobriety.viewmodel.SobrietyViewModel
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
     viewModel: SobrietyViewModel,
@@ -56,95 +55,87 @@ fun CalendarScreen(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Calendar", fontWeight = FontWeight.Bold) },
-                actions = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Previous Month")
-                        }
-                        Text(
-                            "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-                            fontWeight = FontWeight.Bold
-                        )
-                        IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
-                            Icon(Icons.Default.ArrowForward, contentDescription = "Next Month")
-                        }
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .padding(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Month Selector Header (Integrated as Top Nav is now static)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Days of Week Header
-            Row(modifier = Modifier.fillMaxWidth()) {
-                listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
-                    Text(
-                        day,
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Previous Month")
             }
-
-            Spacer(Modifier.height(8.dp))
-
-            // Calendar Grid
-            val firstDayOfMonth = currentMonth.atDay(1)
-            val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // 0=Sun, 1=Mon...
-            val daysInMonth = currentMonth.lengthOfMonth()
-            
-            val totalCells = (firstDayOfWeek + daysInMonth + 6) / 7 * 7
-            val cells = (0 until totalCells).map { i ->
-                val day = i - firstDayOfWeek + 1
-                if (day in 1..daysInMonth) currentMonth.atDay(day) else null
+            Text(
+                "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
+                Icon(Icons.Default.ArrowForward, contentDescription = "Next Month")
             }
+        }
 
-            val quitDate = try {
-                uiState.preferences.quitDate?.split("T")?.get(0)?.let { LocalDate.parse(it) }
-            } catch (e: Exception) {
-                null
+        // Days of Week Header
+        Row(modifier = Modifier.fillMaxWidth()) {
+            listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
+                Text(
+                    day,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
+        }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(7),
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(cells) { date ->
-                    if (date != null) {
-                        val dateStr = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                        val checkIn = checkInsByDate[dateStr]
-                        CalendarDayCell(date, checkIn, quitDate) {
-                            selectedDateForLog = date
-                            showCheckIn = true
-                        }
-                    } else {
-                        Box(Modifier.aspectRatio(1f))
+        Spacer(Modifier.height(8.dp))
+
+        // Calendar Grid
+        val firstDayOfMonth = currentMonth.atDay(1)
+        val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // 0=Sun, 1=Mon...
+        val daysInMonth = currentMonth.lengthOfMonth()
+        
+        val totalCells = (firstDayOfWeek + daysInMonth + 6) / 7 * 7
+        val cells = (0 until totalCells).map { i ->
+            val day = i - firstDayOfWeek + 1
+            if (day in 1..daysInMonth) currentMonth.atDay(day) else null
+        }
+
+        val quitDate = DateUtils.parseDate(uiState.preferences.quitDate)
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(cells) { date ->
+                if (date != null) {
+                    val dateStr = date.toString()
+                    val checkIn = checkInsByDate[dateStr]
+                    CalendarDayCell(date, checkIn, quitDate) {
+                        selectedDateForLog = date
+                        showCheckIn = true
                     }
+                } else {
+                    Box(Modifier.aspectRatio(1f))
                 }
             }
+        }
 
-            // Legend
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                LegendItem(Success, "Sober")
-                Spacer(Modifier.width(16.dp))
-                LegendItem(Danger, "Slip")
-            }
+        // Legend
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LegendItem(Success, "Sober")
+            Spacer(Modifier.width(16.dp))
+            LegendItem(Danger, "Slip")
         }
     }
 }
@@ -191,7 +182,7 @@ fun CalendarDayCell(date: LocalDate, checkIn: CheckIn?, quitDate: LocalDate?, on
             )
             if (checkIn?.mood != null) {
                 Text(
-                    checkIn.mood!!,
+                    checkIn.mood,
                     fontSize = 10.sp,
                     modifier = Modifier.align(Alignment.BottomEnd).padding(2.dp)
                 )

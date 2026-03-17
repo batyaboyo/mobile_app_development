@@ -13,13 +13,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.b7b.sobriety.R
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.window.Dialog
 import com.b7b.sobriety.data.model.CheckIn
 import com.b7b.sobriety.ui.theme.Primary
 import com.b7b.sobriety.ui.theme.Success
+import com.b7b.sobriety.util.DateUtils
 import com.b7b.sobriety.viewmodel.SobrietyViewModel
 import java.time.LocalDate
 
@@ -53,15 +56,21 @@ fun CheckInDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    if (step == 1) "Check In" else "Details",
+                    if (step == 1) stringResource(R.string.check_in_title) else stringResource(R.string.details_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
 
                 if (isPastLog && step == 1) {
                     var showDatePicker by remember { mutableStateOf(false) }
+                    val parsedSelectedDate = remember(selectedDate) {
+                        DateUtils.parseDate(selectedDate) ?: LocalDate.now()
+                    }
                     val datePickerState = rememberDatePickerState(
-                        initialSelectedDateMillis = LocalDate.parse(selectedDate).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        initialSelectedDateMillis = parsedSelectedDate
+                            .atStartOfDay(java.time.ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli()
                     )
 
                     if (showDatePicker) {
@@ -76,10 +85,10 @@ fun CheckInDialog(
                                             .toString()
                                     }
                                     showDatePicker = false
-                                }) { Text("OK") }
+                                }) { Text(stringResource(R.string.ok)) }
                             },
                             dismissButton = {
-                                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.cancel)) }
                             }
                         ) {
                             DatePicker(state = datePickerState)
@@ -90,13 +99,13 @@ fun CheckInDialog(
                         value = selectedDate,
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text("Log Date") },
+                        label = { Text(stringResource(R.string.log_date_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         trailingIcon = {
                             IconButton(onClick = { showDatePicker = true }) {
                                 Icon(
                                     imageVector = androidx.compose.material.icons.Icons.Default.DateRange,
-                                    contentDescription = "Select Date"
+                                    contentDescription = stringResource(R.string.select_date)
                                 )
                             }
                         }
@@ -105,26 +114,26 @@ fun CheckInDialog(
 
                 when (step) {
                     1 -> {
-                        Text("How did ${if (isPastLog) "that day" else "today"} go?")
+                        Text(stringResource(R.string.how_wait_go, if (isPastLog) stringResource(R.string.that_day) else stringResource(R.string.today)))
                         Button(
                             onClick = { status = "sober"; step = 2 },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(containerColor = Success)
                         ) {
-                            Text("I stayed sober! 🎉")
+                            Text(stringResource(R.string.stayed_sober))
                         }
                         OutlinedButton(
                             onClick = { status = "slip"; step = 3 },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC2410C))
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Text("I had a slip up")
+                            Text(stringResource(R.string.had_slip))
                         }
                     }
 
                     2 -> {
                         // Mood & Urge
-                        Text("How are you feeling?")
+                        Text(stringResource(R.string.how_feeling))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
@@ -141,16 +150,22 @@ fun CheckInDialog(
                             }
                         }
 
-                        Text("Urge Intensity")
+                        Text(stringResource(R.string.urge_intensity))
+                        val intensities = listOf(
+                            stringResource(R.string.intensity_none) to "None",
+                            stringResource(R.string.intensity_mild) to "Mild",
+                            stringResource(R.string.intensity_strong) to "Strong",
+                            stringResource(R.string.intensity_high) to "High"
+                        )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            listOf("None", "Mild", "Strong", "High").forEach { u ->
+                            intensities.forEach { (label, value) ->
                                 FilterChip(
-                                    selected = urge == u,
-                                    onClick = { urge = u },
-                                    label = { Text(u) },
+                                    selected = urge == value,
+                                    onClick = { urge = value },
+                                    label = { Text(label) },
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -159,17 +174,18 @@ fun CheckInDialog(
                         OutlinedTextField(
                             value = note,
                             onValueChange = { note = it },
-                            label = { Text("Journal Note (Optional)") },
+                            label = { Text(stringResource(R.string.journal_note_optional)) },
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 3
                         )
 
                         Button(
                             onClick = {
+                                val selectedStatus = status ?: return@Button
                                 viewModel.checkIn(
                                     CheckIn(
                                         date = selectedDate,
-                                        status = status!!,
+                                        status = selectedStatus,
                                         mood = mood,
                                         urge = urge,
                                         note = note.ifBlank { null }
@@ -179,19 +195,19 @@ fun CheckInDialog(
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Save")
+                            Text(stringResource(R.string.save))
                         }
                     }
 
                     3 -> {
                         // Slip message
                         Text(
-                            "It's okay.",
+                            stringResource(R.string.it_is_okay),
                             style = MaterialTheme.typography.titleLarge,
                             color = Primary
                         )
                         Text(
-                            "Setbacks are part of the process. You are still moving forward. This doesn't erase your progress.",
+                            stringResource(R.string.slip_message),
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -199,28 +215,28 @@ fun CheckInDialog(
                             onClick = { step = 2 },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Log Slip & Continue")
+                            Text(stringResource(R.string.log_slip_continue))
                         }
                         
                         var showResetConfirm by remember { mutableStateOf(false) }
                         if (!showResetConfirm) {
                             TextButton(onClick = { showResetConfirm = true }) {
-                                Text("Start fresh: Set Quit Date to Today", color = Color.Gray, fontSize = 12.sp)
+                                Text(stringResource(R.string.start_fresh_reset), color = Color.Gray, fontSize = 12.sp)
                             }
                         } else {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text("Are you sure?", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                                Text(stringResource(R.string.reset_confirm_q), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                                 TextButton(onClick = { 
                                     viewModel.resetQuitDate()
                                     onDismiss()
                                 }) {
-                                    Text("Yes, Reset", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.yes_reset), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                                 }
                                 TextButton(onClick = { showResetConfirm = false }) {
-                                    Text("Cancel")
+                                    Text(stringResource(R.string.cancel))
                                 }
                             }
                         }
@@ -228,7 +244,7 @@ fun CheckInDialog(
                 }
 
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.cancel), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
