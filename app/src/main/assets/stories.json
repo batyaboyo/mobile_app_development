@@ -1,0 +1,50 @@
+[
+  {
+    "id": "creation",
+    "title": "The Creation of the World",
+    "testament": "old-testament",
+    "reference": "Genesis 1-2",
+    "snippet": "God creates the heavens, the earth, and everything in them.",
+    "moral": "God made everything with love and purpose."
+  },
+  {
+    "id": "noahs-ark",
+    "title": "Noah's Ark",
+    "testament": "old-testament",
+    "reference": "Genesis 6-9",
+    "snippet": "God saves Noah's family and the animals through a great flood.",
+    "moral": "God keeps His promises and cares for those who trust Him."
+  },
+  {
+    "id": "david-goliath",
+    "title": "David and Goliath",
+    "testament": "old-testament",
+    "reference": "1 Samuel 17",
+    "snippet": "A young shepherd defeats a giant with faith in God.",
+    "moral": "With God, no challenge is too big."
+  },
+  {
+    "id": "birth-of-jesus",
+    "title": "The Birth of Jesus",
+    "testament": "new-testament",
+    "reference": "Luke 2",
+    "snippet": "Jesus is born in Bethlehem and laid in a manger.",
+    "moral": "God's greatest gift is Jesus."
+  },
+  {
+    "id": "good-samaritan",
+    "title": "The Good Samaritan",
+    "testament": "new-testament",
+    "reference": "Luke 10:25-37",
+    "snippet": "Jesus teaches us to love our neighbor through action.",
+    "moral": "Compassion has no boundaries."
+  },
+  {
+    "id": "prodigal-son",
+    "title": "The Prodigal Son",
+    "testament": "new-testament",
+    "reference": "Luke 15:11-32",
+    "snippet": "A lost son returns home and is welcomed by his father.",
+    "moral": "God always welcomes us back with love."
+  }
+]

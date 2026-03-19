@@ -1,0 +1,72 @@
+[
+  {
+    "category": "People",
+    "question": "Who built the ark?",
+    "options": ["Moses", "Noah", "Abraham", "David"],
+    "answerIndex": 1,
+    "reference": "Genesis 6:13-14"
+  },
+  {
+    "category": "Scripture",
+    "question": "What is the first book of the Bible?",
+    "options": ["Exodus", "Genesis", "Matthew", "Psalms"],
+    "answerIndex": 1,
+    "reference": ""
+  },
+  {
+    "category": "Events",
+    "question": "How many plagues did God send on Egypt?",
+    "options": ["5", "7", "10", "12"],
+    "answerIndex": 2,
+    "reference": "Exodus 7-12"
+  },
+  {
+    "category": "Miracles",
+    "question": "Who did Jesus raise after four days?",
+    "options": ["Jairus' daughter", "Lazarus", "Tabitha", "Eutychus"],
+    "answerIndex": 1,
+    "reference": "John 11:43-44"
+  },
+  {
+    "category": "Places",
+    "question": "In which city was Jesus born?",
+    "options": ["Nazareth", "Bethlehem", "Jerusalem", "Capernaum"],
+    "answerIndex": 1,
+    "reference": "Matthew 2:1"
+  },
+  {
+    "category": "Teachings",
+    "question": "How many disciples did Jesus choose?",
+    "options": ["7", "10", "12", "70"],
+    "answerIndex": 2,
+    "reference": "Luke 6:13"
+  },
+  {
+    "category": "People",
+    "question": "Who denied Jesus three times?",
+    "options": ["Peter", "John", "Thomas", "Andrew"],
+    "answerIndex": 0,
+    "reference": "Luke 22:61"
+  },
+  {
+    "category": "Scripture",
+    "question": "What is the shortest verse in the Bible?",
+    "options": ["Jesus wept.", "God is love.", "Pray continually.", "Rejoice always."],
+    "answerIndex": 0,
+    "reference": "John 11:35"
+  },
+  {
+    "category": "Events",
+    "question": "What did God create on the first day?",
+    "options": ["Animals", "Light", "Land and sea", "Stars"],
+    "answerIndex": 1,
+    "reference": "Genesis 1:3"
+  },
+  {
+    "category": "Miracles",
+    "question": "Which disciple walked on water with Jesus?",
+    "options": ["James", "Andrew", "Peter", "John"],
+    "answerIndex": 2,
+    "reference": "Matthew 14:29"
+  }
+]
