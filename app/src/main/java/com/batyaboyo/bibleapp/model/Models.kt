@@ -27,7 +27,8 @@ data class Verse(
 data class Bookmark(
     val reference: String,
     val text: String,
-    val version: String
+    val version: String,
+    val collection: String? = null
 )
 
 @Serializable
@@ -61,6 +62,38 @@ data class CachedChapter(
     val translationId: String,
     val bookId: String,
     val chapter: Int,
+    val verses: List<Verse>,
+    val timestamp: Long
+)
+
+@Serializable
+data class Commentary(
+    val id: String,
+    val name: String? = null,
+    val englishName: String? = null,
+    val language: String? = null,
+    val languageEnglishName: String? = null
+)
+
+@Serializable
+data class CommentaryChapter(
+    val commentary: Commentary? = null,
+    val book: Book? = null,
+    val chapter: CommentaryChapterDetail? = null
+)
+
+@Serializable
+data class CommentaryChapterDetail(
+    val number: Int,
+    val introduction: String? = null,
+    val content: List<CommentaryEntry>? = null
+)
+
+@Serializable
+data class CommentaryEntry(
+    val type: String,
+    val number: String? = null,
+    val content: List<String>? = null
 )
 
 @Serializable

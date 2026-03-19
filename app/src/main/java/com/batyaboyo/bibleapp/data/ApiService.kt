@@ -43,6 +43,18 @@ class ApiService private constructor(
         parseChapter(bookId, chapter, service.getChapter(enc(translationId), enc(bookId), chapter))
     }
 
+    override suspend fun fetchCommentaries(): List<com.batyaboyo.bibleapp.model.Commentary> = withContext(Dispatchers.IO) {
+        parseCommentaries(service.getCommentaries())
+    }
+
+    override suspend fun fetchCommentaryChapter(commentaryId: String, bookId: String, chapter: Int): com.batyaboyo.bibleapp.model.CommentaryChapter? = withContext(Dispatchers.IO) {
+        parseCommentaryChapter(service.getCommentaryChapter(enc(commentaryId), enc(bookId), chapter))
+    }
+
+    override suspend fun fetchVerse(translationId: String, bookId: String, chapter: Int, verse: Int): com.batyaboyo.bibleapp.model.Verse? = withContext(Dispatchers.IO) {
+        parseSingleVerse(bookId, chapter, verse, service.getVerse(enc(translationId), enc(bookId), chapter, verse))
+    }
+
     private interface HelloAoService {
         @GET("available_translations.json")
         suspend fun getTranslations(): JsonElement
@@ -53,6 +65,24 @@ class ApiService private constructor(
         @GET("{translationId}/{bookId}/{chapter}.json")
         suspend fun getChapter(
             @Path(value = "translationId", encoded = true) translationId: String,
+            @Path(value = "bookId", encoded = true) bookId: String,
+            @Path("chapter") chapter: Int
+        ): JsonElement
+
+        @GET("{translationId}/{bookId}/{chapter}/{verse}.json")
+        suspend fun getVerse(
+            @Path(value = "translationId", encoded = true) translationId: String,
+            @Path(value = "bookId", encoded = true) bookId: String,
+            @Path("chapter") chapter: Int,
+            @Path("verse") verse: Int
+        ): JsonElement
+
+        @GET("available_commentaries.json")
+        suspend fun getCommentaries(): JsonElement
+
+        @GET("c/{commentaryId}/{bookId}/{chapter}.json")
+        suspend fun getCommentaryChapter(
+            @Path(value = "commentaryId", encoded = true) commentaryId: String,
             @Path(value = "bookId", encoded = true) bookId: String,
             @Path("chapter") chapter: Int
         ): JsonElement
@@ -74,6 +104,38 @@ class ApiService private constructor(
                 val name = obj.string("name").ifBlank { id }
                 val shortName = obj.string("short_name").ifBlank { obj.string("shortName") }.ifBlank { id }
                 Translation(id = id, name = name, shortName = shortName)
+            }
+        }
+
+        internal fun parseCommentaries(root: JsonElement): List<com.batyaboyo.bibleapp.model.Commentary> {
+            val array = root.asArrayOrNull() ?: root.asObjectOrNull()?.get("commentaries")?.asArrayOrNull() ?: return emptyList()
+            return array.mapNotNull { item ->
+                val obj = item.asObjectOrNull() ?: return@mapNotNull null
+                val id = obj.string("id")
+                if (id.isBlank()) return@mapNotNull null
+                val name = obj.string("name").ifBlank { obj.string("englishName") }.ifBlank { id }
+                com.batyaboyo.bibleapp.model.Commentary(
+                    id = id,
+                    name = name,
+                    englishName = obj.string("englishName"),
+                    language = obj.string("language"),
+                    languageEnglishName = obj.string("languageEnglishName")
+                )
+            }
+        }
+
+        internal fun parseSingleVerse(bookId: String, chapter: Int, verse: Int, root: JsonElement): com.batyaboyo.bibleapp.model.Verse? {
+            val obj = root.asObjectOrNull()?.get("verse")?.asObjectOrNull() ?: root.asObjectOrNull() ?: return null
+            val text = parseVerseContent(obj["content"]).ifBlank { obj.string("text") }
+            if (text.isBlank()) return null
+            return com.batyaboyo.bibleapp.model.Verse(number = verse, text = text, reference = "${bookId.uppercase()} $chapter:$verse")
+        }
+
+        internal fun parseCommentaryChapter(root: JsonElement): com.batyaboyo.bibleapp.model.CommentaryChapter? {
+            return try {
+                json.decodeFromJsonElement(com.batyaboyo.bibleapp.model.CommentaryChapter.serializer(), root)
+            } catch (e: Exception) {
+                null
             }
         }
 

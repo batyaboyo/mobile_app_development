@@ -30,9 +30,37 @@ class LocalStore(context: Context, prefsName: String = "the_word_store") {
 
     fun removeBookmark(bookmark: Bookmark) {
         val filtered = getBookmarks().filterNot {
-            it.reference == bookmark.reference && it.version == bookmark.version
+            it.reference == bookmark.reference && it.version == bookmark.version && it.collection == bookmark.collection
         }
         saveBookmarks(filtered)
+    }
+
+    fun getCollections(): List<String> = read<List<String>>(KEY_COLLECTIONS).orEmpty()
+
+    fun addCollection(name: String) {
+        val current = getCollections().toMutableList()
+        if (current.contains(name)) return
+        current.add(name)
+        write(KEY_COLLECTIONS, current)
+    }
+
+    fun removeCollection(name: String) {
+        val current = getCollections().filterNot { it == name }
+        write(KEY_COLLECTIONS, current)
+        // Also remove this collection from bookmarks
+        val bookmarks = getBookmarks().map {
+            if (it.collection == name) it.copy(collection = null) else it
+        }
+        saveBookmarks(bookmarks)
+    }
+
+    fun updateBookmarkCollection(bookmark: Bookmark, collectionName: String?) {
+        val bookmarks = getBookmarks().map {
+            if (it.reference == bookmark.reference && it.version == bookmark.version && it.collection == bookmark.collection) {
+                it.copy(collection = collectionName)
+            } else it
+        }
+        saveBookmarks(bookmarks)
     }
 
     fun getLastReading(): ReadingSession? = read(KEY_LAST_READING)
@@ -161,6 +189,7 @@ class LocalStore(context: Context, prefsName: String = "the_word_store") {
         private const val KEY_QUIZ_STATS = "quiz_stats"
         private const val KEY_PRAYER_LOG = "prayer_log"
         private const val KEY_HIGHLIGHTS = "highlights"
+        private const val KEY_COLLECTIONS = "bookmark_collections"
         private const val MAX_CACHED_CHAPTERS = 36
     }
 }

@@ -1,6 +1,8 @@
 package com.batyaboyo.bibleapp.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,7 +22,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -30,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -42,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,9 +61,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
@@ -75,6 +88,8 @@ import com.batyaboyo.bibleapp.data.LocalStore
 import com.batyaboyo.bibleapp.model.Book
 import com.batyaboyo.bibleapp.model.Bookmark
 import com.batyaboyo.bibleapp.model.CachedChapter
+import com.batyaboyo.bibleapp.model.Commentary
+import com.batyaboyo.bibleapp.model.CommentaryChapter
 import com.batyaboyo.bibleapp.model.Prayer
 import com.batyaboyo.bibleapp.model.QuizQuestion
 import com.batyaboyo.bibleapp.model.ReadingSession
@@ -135,26 +150,42 @@ fun TheWordApp(
 
     val bookmarks = remember { mutableStateListOf<Bookmark>().apply { addAll(localStoreState.getBookmarks()) } }
     val highlights = remember { mutableStateListOf<com.batyaboyo.bibleapp.model.Highlight>().apply { addAll(localStoreState.getHighlights()) } }
+    val bookmarkCollections = remember { mutableStateListOf<String>().apply { addAll(localStoreState.getCollections()) } }
 
     var stories by remember { mutableStateOf<List<Story>>(emptyList()) }
     var questions by remember { mutableStateOf<List<QuizQuestion>>(emptyList()) }
     var prayers by remember { mutableStateOf<List<Prayer>>(emptyList()) }
+    var commentaries by remember { mutableStateOf<List<Commentary>>(emptyList()) }
+
+    var selectedCommentary by remember { mutableStateOf<Commentary?>(null) }
+    var commentaryChapter by remember { mutableStateOf<CommentaryChapter?>(null) }
+    var isCommentaryLoading by remember { mutableStateOf(false) }
+
+    var showCompareDialog by remember { mutableStateOf<Verse?>(null) }
+    val comparisons = remember { mutableStateMapOf<String, Verse?>() }
+    var isComparing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         stories = assetRepoState.loadStories()
         questions = assetRepoState.loadQuizQuestions()
         prayers = assetRepoState.loadPrayers()
-        runCatching { bibleApi.fetchTranslations() }
-            .onSuccess { loaded ->
-                translations = loaded
-                localStoreState.saveCachedTranslations(loaded)
-                selectedTranslation = loaded.firstOrNull { item -> item.id == restoredReading?.translationId } ?: loaded.firstOrNull()
-                loadingText = if (loaded.isEmpty()) "No translations available." else "Connected"
+        runCatching { 
+            val t = bibleApi.fetchTranslations()
+            val c = bibleApi.fetchCommentaries()
+            t to c
+        }
+            .onSuccess { (loadedTranslations, loadedCommentaries) ->
+                translations = loadedTranslations
+                commentaries = loadedCommentaries
+                localStoreState.saveCachedTranslations(loadedTranslations)
+                selectedTranslation = loadedTranslations.firstOrNull { item -> item.id == restoredReading?.translationId } ?: loadedTranslations.firstOrNull()
+                loadingText = if (loadedTranslations.isEmpty()) "No translations available." else "Connected"
                 offlineNotice = null
             }
             .onFailure {
                 val fallback = localStoreState.getCachedTranslations().ifEmpty { defaultTranslations() }
                 translations = fallback
+                commentaries = emptyList()
                 selectedTranslation = fallback.firstOrNull { item -> item.id == restoredReading?.translationId } ?: fallback.firstOrNull()
                 loadingText = "Offline mode: using saved translations."
                 offlineNotice = "No internet. Showing saved content where available."
@@ -196,6 +227,25 @@ fun TheWordApp(
         val book = selectedBook ?: return@LaunchedEffect
         val chapter = chapterInput.toIntOrNull()?.takeIf { it > 0 } ?: return@LaunchedEffect
         localStoreState.saveLastReading(ReadingSession(version.id, book.id, chapter))
+    }
+
+    LaunchedEffect(selectedCommentary?.id, selectedBook?.id, chapterInput) {
+        val commentary = selectedCommentary
+        val book = selectedBook
+        val chapter = chapterInput.toIntOrNull()
+        if (commentary == null || book == null || chapter == null) {
+            commentaryChapter = null
+            return@LaunchedEffect
+        }
+        
+        isCommentaryLoading = true
+        try {
+            commentaryChapter = bibleApi.fetchCommentaryChapter(commentary.id, book.id, chapter)
+        } catch (e: Exception) {
+            // Silent failure for commentary
+        } finally {
+            isCommentaryLoading = false
+        }
     }
 
     Scaffold(
@@ -266,9 +316,9 @@ fun TheWordApp(
                     verses = verses,
                     status = bibleStatus,
                     isLoading = isChapterLoading,
-                    onLoadChapter = {
-                        val book = selectedBook ?: return@BibleScreen
-                        val version = selectedTranslation ?: return@BibleScreen
+                    onLoadChapter = onLoadChapter@ {
+                        val book = selectedBook ?: return@onLoadChapter
+                        val version = selectedTranslation ?: return@onLoadChapter
                         val chapter = chapterInput.toIntOrNull()?.coerceIn(1, book.chapters) ?: 1
                         chapterInput = chapter.toString()
                         scope.launch {
@@ -278,7 +328,7 @@ fun TheWordApp(
                             }.onSuccess { loaded ->
                                 verses = loaded
                                 localStoreState.saveLastReading(ReadingSession(version.id, book.id, chapter))
-                                localStoreState.saveCachedChapter(CachedChapter(version.id, book.id, chapter, loaded))
+                                localStoreState.saveCachedChapter(CachedChapter(version.id, book.id, chapter, loaded, System.currentTimeMillis()))
                                 bibleStatus = if (loaded.isEmpty()) {
                                     "No verses found for ${book.name} $chapter (${version.shortName})."
                                 } else {
@@ -313,12 +363,51 @@ fun TheWordApp(
                         localStoreState.saveHighlight(hl)
                         highlights.clear()
                         highlights.addAll(localStoreState.getHighlights())
-                    }
+                    },
+                    commentaries = commentaries,
+                    selectedCommentary = selectedCommentary,
+                    onCommentarySelected = { comm ->
+                        selectedCommentary = comm
+                        if (selectedBook != null && chapterInput.toIntOrNull() != null) {
+                            scope.launch {
+                                isCommentaryLoading = true
+                                try {
+                                    commentaryChapter = if (comm == null) null 
+                                        else bibleApi.fetchCommentaryChapter(comm.id, selectedBook!!.id, chapterInput.toInt())
+                                } catch (e: Exception) {
+                                    bibleStatus = "Commentary load failed: ${e.message}"
+                                } finally {
+                                    isCommentaryLoading = false
+                                }
+                            }
+                        }
+                    },
+                    commentaryChapter = commentaryChapter,
+                    isCommentaryLoading = isCommentaryLoading,
+                    onCompareVerse = { showCompareDialog = it }
                 )
                 TabItem.Bookmarks -> BookmarksScreen(
                     bookmarks = bookmarks,
+                    collections = bookmarkCollections,
                     onRemove = {
                         localStoreState.removeBookmark(it)
+                        bookmarks.clear()
+                        bookmarks.addAll(localStoreState.getBookmarks())
+                    },
+                    onAddCollection = { name ->
+                        localStoreState.addCollection(name)
+                        bookmarkCollections.clear()
+                        bookmarkCollections.addAll(localStoreState.getCollections())
+                    },
+                    onRemoveCollection = { name ->
+                        localStoreState.removeCollection(name)
+                        bookmarkCollections.clear()
+                        bookmarkCollections.addAll(localStoreState.getCollections())
+                        bookmarks.clear()
+                        bookmarks.addAll(localStoreState.getBookmarks())
+                    },
+                    onMoveToCollection = { bookmark, coll ->
+                        localStoreState.updateBookmarkCollection(bookmark, coll)
                         bookmarks.clear()
                         bookmarks.addAll(localStoreState.getBookmarks())
                     }
@@ -354,6 +443,58 @@ fun TheWordApp(
                     onResult = { isCorrect -> localStoreState.saveQuizResult(isCorrect) }
                 )
                 TabItem.About -> AboutScreen()
+            }
+        }
+
+        if (showCompareDialog != null) {
+            val verse = showCompareDialog!!
+            AlertDialog(
+                onDismissRequest = { 
+                    showCompareDialog = null
+                    comparisons.clear()
+                },
+                title = { Text("Compare: ${selectedBook?.name} ${chapterInput}:${verse.number}") },
+                text = {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        item {
+                            Text("Current: ${selectedTranslation?.name}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                            Text(verse.text, style = MaterialTheme.typography.bodyMedium)
+                            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                        }
+                        if (isComparing) {
+                            item { CircularProgressIndicator(Modifier.size(24.dp)) }
+                        }
+                        val compareIds = listOf("BSB", "eng_web", "eng_bbe")
+                        compareIds.filter { it != selectedTranslation?.id }.forEach { versionId ->
+                            val v = comparisons[versionId]
+                            item {
+                                Text(versionId.uppercase(), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                                Text(v?.text ?: "Loading...", style = MaterialTheme.typography.bodyMedium)
+                                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { 
+                        showCompareDialog = null
+                        comparisons.clear()
+                    }) { Text("Close") }
+                }
+            )
+
+            LaunchedEffect(verse) {
+                isComparing = true
+                val compareIds = listOf("BSB", "eng_web", "eng_bbe")
+                compareIds.filter { it != selectedTranslation?.id }.forEach { versionId ->
+                    try {
+                        val res = bibleApi.fetchVerse(versionId, selectedBook!!.id, chapterInput.toInt(), verse.number)
+                        comparisons[versionId] = res
+                    } catch (e: Exception) {
+                        // ignore failures
+                    }
+                }
+                isComparing = false
             }
         }
     }
@@ -699,21 +840,38 @@ private fun HomeScreen(
         }
 
         item {
+            val gradient = Brush.linearGradient(
+                colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
+            )
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Verse of the Day", style = MaterialTheme.typography.titleMedium)
-                    if (dailyVerse == null) {
-                        Text(status, style = MaterialTheme.typography.bodyMedium)
-                    } else {
-                        Text("\"${dailyVerse.text}\"", style = MaterialTheme.typography.bodyLarge, fontStyle = FontStyle.Italic)
+                Box(modifier = Modifier.background(gradient).padding(24.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            "${dailyVerse.reference} ($version)",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontStyle = FontStyle.Italic
+                            "Verse of the Day",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
+                        if (dailyVerse == null) {
+                            Text(status, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Text(
+                                "\"${dailyVerse.text}\"",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Text(
+                                "${dailyVerse.reference} ($version)",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                            )
+                        }
                     }
                 }
             }
@@ -738,11 +896,24 @@ private fun BibleScreen(
     onLoadChapter: () -> Unit,
     onBookmarkVerse: (Verse) -> Unit,
     highlights: List<com.batyaboyo.bibleapp.model.Highlight>,
-    onHighlightVerse: (String, String, String) -> Unit
+    onHighlightVerse: (String, String, String) -> Unit,
+    commentaries: List<com.batyaboyo.bibleapp.model.Commentary>,
+    selectedCommentary: com.batyaboyo.bibleapp.model.Commentary?,
+    onCommentarySelected: (com.batyaboyo.bibleapp.model.Commentary?) -> Unit,
+    commentaryChapter: com.batyaboyo.bibleapp.model.CommentaryChapter?,
+    isCommentaryLoading: Boolean,
+    onCompareVerse: (Verse) -> Unit
 ) {
     var translationExpanded by remember { mutableStateOf(false) }
     var bookExpanded by remember { mutableStateOf(false) }
+    var commentaryExpanded by remember { mutableStateOf(false) }
     var showHighlightDialog by remember { mutableStateOf<Verse?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredVerses = remember(searchQuery, verses) {
+        if (searchQuery.isBlank()) verses
+        else verses.filter { it.text.contains(searchQuery, ignoreCase = true) || it.reference.contains(searchQuery, ignoreCase = true) }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -825,6 +996,44 @@ private fun BibleScreen(
             }
         }
 
+
+        item {
+            ExposedDropdownMenuBox(
+                expanded = commentaryExpanded,
+                onExpandedChange = { commentaryExpanded = !commentaryExpanded }
+            ) {
+                OutlinedTextField(
+                    value = selectedCommentary?.name ?: "No Commentary",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Commentary") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = commentaryExpanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = commentaryExpanded,
+                    onDismissRequest = { commentaryExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("No Commentary") },
+                        onClick = {
+                            onCommentarySelected(null)
+                            commentaryExpanded = false
+                        }
+                    )
+                    commentaries.forEach { commentary ->
+                        DropdownMenuItem(
+                            text = { Text(commentary.name ?: commentary.id) },
+                            onClick = {
+                                onCommentarySelected(commentary)
+                                commentaryExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
         item {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -861,6 +1070,23 @@ private fun BibleScreen(
             }
         }
 
+        item {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search verses...") },
+                modifier = Modifier.fillMaxWidth().testTag("search_input"),
+                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Clear")
+                        }
+                    }
+                } else null
+            )
+        }
+
         if (status != null) {
             item {
                 Card(
@@ -874,7 +1100,37 @@ private fun BibleScreen(
             }
         }
 
-        items(verses) { verse ->
+
+        if (commentaryChapter != null) {
+            item {
+                Text("Commentary", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
+                HorizontalDivider()
+            }
+            items(commentaryChapter.chapter?.content ?: emptyList()) { entry ->
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
+                ) {
+                    Column(Modifier.padding(12.dp)) {
+                        if (!entry.number.isNullOrBlank()) {
+                            Text("Verses ${entry.number}+", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                        }
+                        Text(
+                            text = entry.content?.joinToString("\n\n") ?: "",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        } else if (isCommentaryLoading) {
+            item {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                }
+            }
+        }
+
+        items(filteredVerses) { verse ->
             val highlight = highlights.find { it.reference == verse.reference }
             val bgColor = when (highlight?.color) {
                 "yellow" -> androidx.compose.ui.graphics.Color(0xFFFFF176)
@@ -914,6 +1170,7 @@ private fun BibleScreen(
                     }
 
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { onCompareVerse(verse) }) { Text("Compare") }
                         TextButton(onClick = { showHighlightDialog = verse }) { Text(if (highlight == null) "Highlight" else "Edit Note") }
                         TextButton(onClick = { onBookmarkVerse(verse) }) { Text("Bookmark") }
                     }
@@ -1015,27 +1272,124 @@ private fun HighlightDialog(
         }
     }
 }
-
 @Composable
-private fun BookmarksScreen(bookmarks: List<Bookmark>, onRemove: (Bookmark) -> Unit) {
+private fun BookmarksScreen(
+    bookmarks: List<Bookmark>,
+    collections: List<String>,
+    onRemove: (Bookmark) -> Unit,
+    onAddCollection: (String) -> Unit,
+    onRemoveCollection: (String) -> Unit,
+    onMoveToCollection: (Bookmark, String?) -> Unit
+) {
+    var newCollName by remember { mutableStateOf("") }
+    var selectedCollection by remember { mutableStateOf<String?>(null) }
+
+    val filteredBookmarks = remember(bookmarks, selectedCollection) {
+        if (selectedCollection == null) bookmarks
+        else bookmarks.filter { it.collection == selectedCollection }
+    }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text("Bookmarks", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text("Bookmark Collections", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = newCollName,
+                    onValueChange = { newCollName = it },
+                    label = { Text("New Collection") },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true
+                )
+                Button(onClick = { 
+                    if (newCollName.isNotBlank()) {
+                        onAddCollection(newCollName)
+                        newCollName = ""
+                    }
+                }) { Text("Add") }
+            }
         }
-        if (bookmarks.isEmpty()) {
-            item { Text("No bookmarks yet.") }
-        } else {
-            items(bookmarks) { bookmark ->
-                Card {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("${bookmark.reference} (${bookmark.version})", fontWeight = FontWeight.Bold)
-                        Text(bookmark.text, maxLines = 4, overflow = TextOverflow.Ellipsis)
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { onRemove(bookmark) }) { Text("Remove") }
+
+        item {
+            ScrollableTabRow(
+                selectedTabIndex = if (selectedCollection == null) 0 else collections.indexOf(selectedCollection) + 1,
+                edgePadding = 0.dp,
+                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                divider = {}
+            ) {
+                Tab(
+                    selected = selectedCollection == null,
+                    onClick = { selectedCollection = null },
+                    text = { Text("All") }
+                )
+                collections.forEach { coll ->
+                    Tab(
+                        selected = selectedCollection == coll,
+                        onClick = { selectedCollection = coll },
+                        text = { 
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(coll)
+                                IconButton(onClick = { onRemoveCollection(coll) }, modifier = Modifier.size(16.dp)) {
+                                    Icon(androidx.compose.material.icons.Icons.Default.Close, contentDescription = "Delete", modifier = Modifier.size(12.dp))
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
+        if (filteredBookmarks.isEmpty()) {
+            item {
+                Text(
+                    if (selectedCollection == null) "No bookmarks yet." else "Empty collection.",
+                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        items(filteredBookmarks) { bookmark ->
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(bookmark.reference, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                        Text(bookmark.version.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(bookmark.text, style = MaterialTheme.typography.bodyMedium)
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        var moveMenuExpanded by remember { mutableStateOf(false) }
+                        Box {
+                            TextButton(onClick = { moveMenuExpanded = true }) {
+                                Text("Move to", style = MaterialTheme.typography.labelSmall)
+                            }
+                            androidx.compose.material3.DropdownMenu(expanded = moveMenuExpanded, onDismissRequest = { moveMenuExpanded = false }) {
+                                androidx.compose.material3.DropdownMenuItem(text = { Text("None") }, onClick = { onMoveToCollection(bookmark, null); moveMenuExpanded = false })
+                                collections.forEach { coll ->
+                                    androidx.compose.material3.DropdownMenuItem(text = { Text(coll) }, onClick = { onMoveToCollection(bookmark, coll); moveMenuExpanded = false })
+                                }
+                            }
+                        }
+                        TextButton(onClick = { onRemove(bookmark) }) {
+                            Text("Remove", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
