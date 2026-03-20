@@ -17,13 +17,34 @@ class AssetRepository(private val context: Context) {
         val items = mutableListOf<Story>()
         for (i in 0 until arr.length()) {
             val obj = arr.getJSONObject(i)
+            
+            val contentArr = obj.optJSONArray("content") ?: JSONArray()
+            val content = buildList {
+                for (j in 0 until contentArr.length()) {
+                    val p = contentArr.getJSONObject(j)
+                    add(com.batyaboyo.bibleapp.model.StoryPage(
+                        title = p.optString("title").takeIf { it.isNotEmpty() },
+                        text = p.getString("text")
+                    ))
+                }
+            }
+            
+            val kvObj = obj.optJSONObject("keyVerse")
+            val keyVerse = kvObj?.let {
+                com.batyaboyo.bibleapp.model.StoryKeyVerse(
+                    text = it.getString("text"),
+                    ref = it.getString("ref")
+                )
+            }
+
             items += Story(
                 id = obj.getString("id"),
                 title = obj.getString("title"),
                 testament = obj.getString("testament"),
-                reference = obj.getString("reference"),
-                snippet = obj.getString("snippet"),
-                moral = obj.getString("moral")
+                icon = obj.optString("icon"),
+                content = content,
+                moral = obj.optString("moral").takeIf { it.isNotEmpty() },
+                keyVerse = keyVerse
             )
         }
         return@withContext items

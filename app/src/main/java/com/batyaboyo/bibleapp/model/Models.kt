@@ -36,9 +36,22 @@ data class Story(
     val id: String,
     val title: String,
     val testament: String,
-    val reference: String,
-    val snippet: String,
-    val moral: String
+    val icon: String? = null,
+    val content: List<StoryPage> = emptyList(),
+    val moral: String? = null,
+    val keyVerse: StoryKeyVerse? = null
+)
+
+@Serializable
+data class StoryPage(
+    val title: String? = null,
+    val text: String
+)
+
+@Serializable
+data class StoryKeyVerse(
+    val text: String,
+    val ref: String
 )
 
 @Serializable

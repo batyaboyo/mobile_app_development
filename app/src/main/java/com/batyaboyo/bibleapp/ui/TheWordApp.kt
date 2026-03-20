@@ -167,6 +167,43 @@ fun TheWordApp(
     var showCompareDialog by remember { mutableStateOf<Verse?>(null) }
     val comparisons = remember { mutableStateMapOf<String, Verse?>() }
     var isComparing by remember { mutableStateOf(false) }
+    var scrollToVerse by remember { mutableStateOf<Int?>(null) }
+    var selectedStory by remember { mutableStateOf<Story?>(null) }
+
+    val loadChapter: () -> Unit = {
+        val book = selectedBook ?: return@let
+        val version = selectedTranslation ?: return@let
+        val chapter = chapterInput.toIntOrNull()?.coerceIn(1, book.chapters) ?: 1
+        chapterInput = chapter.toString()
+        scope.launch {
+            isChapterLoading = true
+            runCatching {
+                bibleApi.fetchChapter(version.id, book.id, chapter)
+            }.onSuccess { loaded ->
+                verses = loaded
+                localStoreState.saveLastReading(ReadingSession(version.id, book.id, chapter))
+                localStoreState.saveCachedChapter(CachedChapter(version.id, book.id, chapter, loaded, System.currentTimeMillis()))
+                bibleStatus = if (loaded.isEmpty()) {
+                    "No verses found for ${book.name} $chapter (${version.shortName})."
+                } else {
+                    null
+                }
+                offlineNotice = null
+            }.onFailure {
+                val cached = localStoreState.getCachedChapter(version.id, book.id, chapter)
+                if (cached != null && cached.verses.isNotEmpty()) {
+                    verses = cached.verses
+                    bibleStatus = "Offline: showing saved ${book.name} ${cached.chapter} (${version.shortName})."
+                    offlineNotice = "No internet. Displaying downloaded chapter."
+                } else {
+                    verses = emptyList()
+                    bibleStatus = "Could not load ${book.name} $chapter (${version.shortName}). Open it once online to save for offline use."
+                    offlineNotice = "No internet and this chapter is not cached yet."
+                }
+            }
+            isChapterLoading = false
+        }
+    }
 
     LaunchedEffect(Unit) {
         stories = assetRepoState.loadStories()
@@ -332,6 +369,38 @@ fun TheWordApp(
             }
         }
     ) { innerPadding ->
+        selectedStory?.let { story ->
+            StoryDetailDialog(
+                story = story,
+                onDismiss = { selectedStory = null },
+                onGoToBible = {
+                    selectedStory = null
+                    val ref = story.keyVerse?.ref ?: ""
+                    // Match longest book name first (to handle "1 Samuel" vs "Samuel")
+                    val foundBook = books.sortedByDescending { it.name.length }
+                        .firstOrNull { ref.startsWith(it.name, ignoreCase = true) }
+                    
+                    if (foundBook != null) {
+                        val afterBook = ref.substring(foundBook.name.length).trim()
+                        // Match chapter and optional verse (e.g., "10:25" or "10")
+                        val match = Regex("""^(\d+)(?::(\d+))?""").find(afterBook)
+                        if (match != null) {
+                            val chap = match.groupValues[1]
+                            val verse = match.groupValues.getOrNull(2)?.toIntOrNull()
+                            
+                            selectedBook = foundBook
+                            chapterInput = chap
+                            scrollToVerse = verse
+                            verses = emptyList()
+                            bibleStatus = null
+                            currentTab = TabItem.Bible
+                            loadChapter()
+                        }
+                    }
+                }
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -366,40 +435,7 @@ fun TheWordApp(
                     verses = verses,
                     status = bibleStatus,
                     isLoading = isChapterLoading,
-                    onLoadChapter = onLoadChapter@ {
-                        val book = selectedBook ?: return@onLoadChapter
-                        val version = selectedTranslation ?: return@onLoadChapter
-                        val chapter = chapterInput.toIntOrNull()?.coerceIn(1, book.chapters) ?: 1
-                        chapterInput = chapter.toString()
-                        scope.launch {
-                            isChapterLoading = true
-                            runCatching {
-                                bibleApi.fetchChapter(version.id, book.id, chapter)
-                            }.onSuccess { loaded ->
-                                verses = loaded
-                                localStoreState.saveLastReading(ReadingSession(version.id, book.id, chapter))
-                                localStoreState.saveCachedChapter(CachedChapter(version.id, book.id, chapter, loaded, System.currentTimeMillis()))
-                                bibleStatus = if (loaded.isEmpty()) {
-                                    "No verses found for ${book.name} $chapter (${version.shortName})."
-                                } else {
-                                    null
-                                }
-                                offlineNotice = null
-                            }.onFailure {
-                                val cached = localStoreState.getCachedChapter(version.id, book.id, chapter)
-                                if (cached != null && cached.verses.isNotEmpty()) {
-                                    verses = cached.verses
-                                    bibleStatus = "Offline: showing saved ${book.name} ${cached.chapter} (${version.shortName})."
-                                    offlineNotice = "No internet. Displaying downloaded chapter."
-                                } else {
-                                    verses = emptyList()
-                                    bibleStatus = "Could not load ${book.name} $chapter (${version.shortName}). Open it once online to save for offline use."
-                                    offlineNotice = "No internet and this chapter is not cached yet."
-                                }
-                            }
-                            isChapterLoading = false
-                        }
-                    },
+                    onLoadChapter = loadChapter,
                     onBookmarkVerse = { verse ->
                         val version = selectedTranslation?.shortName ?: ""
                         val bookmark = Bookmark(verse.reference, verse.text, version)
@@ -434,7 +470,9 @@ fun TheWordApp(
                     },
                     commentaryChapter = commentaryChapter,
                     isCommentaryLoading = isCommentaryLoading,
-                    onCompareVerse = { showCompareDialog = it }
+                    onCompareVerse = { showCompareDialog = it },
+                    scrollToVerse = scrollToVerse,
+                    onScrollComplete = { scrollToVerse = null }
                 )
                 TabItem.Bookmarks -> BookmarksScreen(
                     bookmarks = bookmarks,
@@ -464,21 +502,7 @@ fun TheWordApp(
                 )
                 TabItem.Stories -> StoriesScreen(
                     stories = stories,
-                    onStoryClick = { story ->
-                        val match = Regex("""^(\d?\s*[a-zA-Z]+)\s+(\d+)""").find(story.reference)
-                        if (match != null) {
-                            val bName = match.groupValues[1]
-                            val chap = match.groupValues[2]
-                            val foundBook = books.firstOrNull { it.name.equals(bName, ignoreCase = true) }
-                            if (foundBook != null) {
-                                selectedBook = foundBook
-                                chapterInput = chap
-                                verses = emptyList()
-                                bibleStatus = null
-                                currentTab = TabItem.Bible
-                            }
-                        }
-                    }
+                    onStoryClick = { story -> selectedStory = story }
                 )
                 TabItem.Progress -> ProgressScreen(
                     quizStats = localStoreState.getQuizStats(),
@@ -952,8 +976,11 @@ private fun BibleScreen(
     onCommentarySelected: (com.batyaboyo.bibleapp.model.Commentary?) -> Unit,
     commentaryChapter: com.batyaboyo.bibleapp.model.CommentaryChapter?,
     isCommentaryLoading: Boolean,
-    onCompareVerse: (Verse) -> Unit
+    onCompareVerse: (Verse) -> Unit,
+    scrollToVerse: Int? = null,
+    onScrollComplete: () -> Unit = {}
 ) {
+
     var translationExpanded by remember { mutableStateOf(false) }
     var bookExpanded by remember { mutableStateOf(false) }
     var commentaryExpanded by remember { mutableStateOf(false) }
@@ -965,7 +992,28 @@ private fun BibleScreen(
         else verses.filter { it.text.contains(searchQuery, ignoreCase = true) || it.reference.contains(searchQuery, ignoreCase = true) }
     }
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(scrollToVerse, filteredVerses) {
+        val verseToScroll = scrollToVerse
+        if (verseToScroll != null && filteredVerses.isNotEmpty()) {
+            val verseIndex = filteredVerses.indexOfFirst { it.number == verseToScroll }
+            if (verseIndex >= 0) {
+                var offset = 6
+                if (status != null) offset++
+                if (commentaryChapter != null) {
+                    offset++ // header
+                    offset += commentaryChapter.chapter?.content?.size ?: 0
+                } else if (isCommentaryLoading) {
+                    offset++
+                }
+                listState.animateScrollToItem(offset + verseIndex)
+                onScrollComplete()
+            }
+        }
+    }
+
+    LazyColumn(state = listState, 
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -1461,7 +1509,7 @@ private fun StoriesScreen(stories: List<Story>, onStoryClick: (Story) -> Unit) {
     ) {
         item {
             Text("Bible Stories", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
                 FilterChip(
                     selected = filter == "all",
                     onClick = { filter = "all" },
@@ -1486,11 +1534,98 @@ private fun StoriesScreen(stories: List<Story>, onStoryClick: (Story) -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onStoryClick(story) }
             ) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(story.title, fontWeight = FontWeight.Bold)
-                    Text(story.reference, style = MaterialTheme.typography.labelMedium)
-                    Text(story.snippet)
-                    Text("Moral: ${story.moral}", style = MaterialTheme.typography.bodySmall)
+                Row(Modifier.padding(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    Text(story.icon ?: "📖", fontSize = 32.sp, modifier = Modifier.padding(end = 12.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+                        Text(story.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        story.keyVerse?.ref?.let {
+                            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        }
+                        val snippet = story.content.firstOrNull()?.text?.take(80)?.plus("...") ?: ""
+                        Text(snippet, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StoryDetailDialog(
+    story: Story,
+    onDismiss: () -> Unit,
+    onGoToBible: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(Modifier.fillMaxSize()) {
+                // Header
+                CenterAlignedTopAppBar(
+                    title = { Text(story.title, style = MaterialTheme.typography.titleMedium) },
+                    navigationIcon = {
+                        IconButton(onClick = onDismiss) {
+                            Icon(androidx.compose.material.icons.Icons.Default.Close, "Close")
+                        }
+                    },
+                    actions = {
+                        story.keyVerse?.let {
+                            TextButton(onClick = onGoToBible) {
+                                Text("Read in Bible")
+                            }
+                        }
+                    }
+                )
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f).padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                            Text(story.icon ?: "📖", fontSize = 64.sp)
+                        }
+                    }
+
+                    items(story.content) { page ->
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            page.title?.let {
+                                Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            }
+                            Text(page.text, style = MaterialTheme.typography.bodyLarge, lineHeight = 28.sp)
+                        }
+                    }
+
+                    story.moral?.let {
+                        item {
+                            Card(
+                                colors = androidx.compose.material3.CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text("The Moral", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    Text(it, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+
+                    story.keyVerse?.let {
+                        item {
+                            Column(Modifier.padding(vertical = 8.dp)) {
+                                Text("Key Verse", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                                Text("\"${it.text}\"", style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
+                                Text("- ${it.ref}", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
+                            }
+                        }
+                    }
                 }
             }
         }
