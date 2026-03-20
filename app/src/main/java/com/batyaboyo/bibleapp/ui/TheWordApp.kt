@@ -98,8 +98,10 @@ import com.batyaboyo.bibleapp.model.QuizQuestion
 import com.batyaboyo.bibleapp.model.ReadingSession
 import com.batyaboyo.bibleapp.model.Story
 import com.batyaboyo.bibleapp.model.Translation
-import com.batyaboyo.bibleapp.model.Verse
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import com.batyaboyo.bibleapp.model.Verse
 
 enum class TabItem(val title: String) {
     Home("Home"),
@@ -170,9 +172,9 @@ fun TheWordApp(
     var scrollToVerse by remember { mutableStateOf<Int?>(null) }
     var selectedStory by remember { mutableStateOf<Story?>(null) }
 
-    val loadChapter: () -> Unit = {
-        val book = selectedBook ?: return@let
-        val version = selectedTranslation ?: return@let
+    fun loadChapter() {
+        val book = selectedBook ?: return
+        val version = selectedTranslation ?: return
         val chapter = chapterInput.toIntOrNull()?.coerceIn(1, book.chapters) ?: 1
         chapterInput = chapter.toString()
         scope.launch {
@@ -435,7 +437,7 @@ fun TheWordApp(
                     verses = verses,
                     status = bibleStatus,
                     isLoading = isChapterLoading,
-                    onLoadChapter = loadChapter,
+                    onLoadChapter = { loadChapter() },
                     onBookmarkVerse = { verse ->
                         val version = selectedTranslation?.shortName ?: ""
                         val bookmark = Bookmark(verse.reference, verse.text, version)
@@ -1550,6 +1552,7 @@ private fun StoriesScreen(stories: List<Story>, onStoryClick: (Story) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StoryDetailDialog(
     story: Story,
