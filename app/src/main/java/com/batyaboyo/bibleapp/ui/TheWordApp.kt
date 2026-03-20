@@ -81,6 +81,9 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.batyaboyo.bibleapp.data.ApiService
 import com.batyaboyo.bibleapp.data.AssetRepository
 import com.batyaboyo.bibleapp.data.BibleApi
@@ -248,6 +251,9 @@ fun TheWordApp(
         }
     }
 
+    val bottomItems = listOf(TabItem.Home, TabItem.Bible, TabItem.Bookmarks, TabItem.Stories, TabItem.Prayer)
+    val topItems = TabItem.entries.filter { it !in bottomItems }
+
     Scaffold(
         topBar = {
             Column {
@@ -264,20 +270,64 @@ fun TheWordApp(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-                ScrollableTabRow(
-                    selectedTabIndex = TabItem.entries.indexOf(currentTab),
-                    edgePadding = 8.dp,
-                    containerColor = MaterialTheme.colorScheme.surface
+                TabRow(
+                    selectedTabIndex = topItems.indexOf(currentTab).let { if (it == -1) 0 else it },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    divider = {},
+                    indicator = { tabPositions ->
+                        if (currentTab in topItems) {
+                            TabRowDefaults.SecondaryIndicator(
+                                Modifier.tabIndicatorOffset(tabPositions[topItems.indexOf(currentTab)])
+                            )
+                        }
+                    }
                 ) {
-                    TabItem.entries.forEach { tab ->
+                    topItems.forEach { tab ->
                         Tab(
                             selected = currentTab == tab,
                             onClick = { currentTab = tab },
-                            text = { Text(tab.title) },
-                            icon = { Icon(imageVector = tabIcon(tab), contentDescription = tab.title) },
-                            modifier = Modifier.testTag("tab_${tab.name.lowercase()}")
+                            text = { 
+                                Text(
+                                    text = tab.title,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                ) 
+                            },
+                            icon = { 
+                                Icon(
+                                    imageVector = tabIcon(tab), 
+                                    contentDescription = tab.title,
+                                    modifier = Modifier.size(20.dp)
+                                ) 
+                            },
+                            selectedContentColor = MaterialTheme.colorScheme.primary,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+            }
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 8.dp
+            ) {
+                bottomItems.forEach { tab ->
+                    NavigationBarItem(
+                        selected = currentTab == tab,
+                        onClick = { currentTab = tab },
+                        icon = { Icon(imageVector = tabIcon(tab), contentDescription = tab.title) },
+                        label = { Text(tab.title) },
+                        modifier = Modifier.testTag("nav_${tab.name.lowercase()}"),
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
                 }
             }
         }
