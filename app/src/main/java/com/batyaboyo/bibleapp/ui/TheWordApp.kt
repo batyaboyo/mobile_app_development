@@ -43,6 +43,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -309,43 +310,6 @@ fun TheWordApp(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-                TabRow(
-                    selectedTabIndex = topItems.indexOf(currentTab).let { if (it == -1) 0 else it },
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    divider = {},
-                    indicator = { tabPositions ->
-                        if (currentTab in topItems) {
-                            TabRowDefaults.SecondaryIndicator(
-                                Modifier.tabIndicatorOffset(tabPositions[topItems.indexOf(currentTab)])
-                            )
-                        }
-                    }
-                ) {
-                    topItems.forEach { tab ->
-                        Tab(
-                            selected = currentTab == tab,
-                            onClick = { currentTab = tab },
-                            text = { 
-                                Text(
-                                    text = tab.title,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                ) 
-                            },
-                            icon = { 
-                                Icon(
-                                    imageVector = tabIcon(tab), 
-                                    contentDescription = tab.title,
-                                    modifier = Modifier.size(20.dp)
-                                ) 
-                            },
-                            selectedContentColor = MaterialTheme.colorScheme.primary,
-                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
         },
         bottomBar = {
@@ -414,7 +378,8 @@ fun TheWordApp(
                     version = selectedTranslation?.shortName ?: "",
                     status = loadingText,
                     bookmarksCount = bookmarks.size,
-                    offlineNotice = offlineNotice
+                    offlineNotice = offlineNotice,
+                    onFeatureClick = { currentTab = it }
                 )
                 TabItem.Bible -> BibleScreen(
                     translations = translations,
@@ -860,7 +825,8 @@ private fun HomeScreen(
     version: String,
     status: String,
     bookmarksCount: Int,
-    offlineNotice: String?
+    offlineNotice: String?,
+    onFeatureClick: (TabItem) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -949,6 +915,38 @@ private fun HomeScreen(
                             )
                         }
                     }
+                }
+            }
+        }
+
+        item {
+            Text("Explore Features", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+        }
+
+        val features = listOf(TabItem.Quiz, TabItem.Progress, TabItem.About)
+        items(features.chunked(2)) { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                row.forEach { tab ->
+                    Card(
+                        modifier = Modifier.weight(1f).height(100.dp),
+                        onClick = { onFeatureClick(tab) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                        )
+                    ) {
+                        Column(
+                            Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(tabIcon(tab), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                            Spacer(Modifier.height(8.dp))
+                            Text(tab.title, style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
+                if (row.size == 1) {
+                    Spacer(Modifier.weight(1f))
                 }
             }
         }
