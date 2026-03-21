@@ -38,6 +38,7 @@ data class Story(
     val testament: String,
     val icon: String? = null,
     val content: List<StoryPage> = emptyList(),
+    val snippets: String = "",
     val moral: String? = null,
     val keyVerse: StoryKeyVerse? = null
 )

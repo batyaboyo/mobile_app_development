@@ -27,12 +27,18 @@ class ApiService private constructor(
     constructor() : this(createService())
 
     override suspend fun fetchTranslations(): List<Translation> = withContext(Dispatchers.IO) {
-        parseTranslations(service.getTranslations()).ifEmpty {
-            listOf(
-                Translation("BSB", "Berean Standard Bible", "BSB"),
-                Translation("eng_web", "World English Bible", "WEB")
-            )
-        }
+        val allowed = listOf("BSB", "eng_web", "eng_kjv", "eng_kjva", "eng_ylt")
+        parseTranslations(service.getTranslations())
+            .filter { it.id in allowed }
+            .ifEmpty {
+                listOf(
+                    Translation("BSB", "Berean Standard Bible", "BSB"),
+                    Translation("eng_web", "World English Bible", "WEB"),
+                    Translation("eng_kjv", "King James Version", "KJV"),
+                    Translation("eng_kjva", "King James Version w/ Apocrypha", "KJVA"),
+                    Translation("eng_ylt", "Young's Literal Translation", "YLT")
+                )
+            }
     }
 
     override suspend fun fetchBooks(translationId: String): List<Book> = withContext(Dispatchers.IO) {

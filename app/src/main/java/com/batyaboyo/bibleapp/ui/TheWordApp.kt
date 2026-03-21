@@ -151,6 +151,9 @@ fun TheWordApp(
     var bibleStatus by remember { mutableStateOf<String?>(null) }
     var isChapterLoading by remember { mutableStateOf(false) }
     var dailyVerse by remember { mutableStateOf<Verse?>(null) }
+    var dailyMorningPrayer by remember { mutableStateOf<Prayer?>(null) }
+    var dailyEveningPrayer by remember { mutableStateOf<Prayer?>(null) }
+    var dailyStory by remember { mutableStateOf<Story?>(null) }
     var loadingText by remember { mutableStateOf("Loading translations...") }
     var offlineNotice by remember { mutableStateOf<String?>(null) }
 
@@ -212,6 +215,21 @@ fun TheWordApp(
         stories = assetRepoState.loadStories()
         questions = assetRepoState.loadQuizQuestions()
         prayers = assetRepoState.loadPrayers()
+        
+        // Calculate daily items
+        val dayIndex = (System.currentTimeMillis() / 86_400_000L).toInt()
+        if (stories.isNotEmpty()) {
+            dailyStory = stories[dayIndex % stories.size]
+        }
+        val morning = prayers.filter { it.type == "morning" }
+        if (morning.isNotEmpty()) {
+            dailyMorningPrayer = morning[dayIndex % morning.size]
+        }
+        val evening = prayers.filter { it.type == "evening" }
+        if (evening.isNotEmpty()) {
+            dailyEveningPrayer = evening[dayIndex % evening.size]
+        }
+
         runCatching { 
             val t = bibleApi.fetchTranslations()
             val c = bibleApi.fetchCommentaries()
@@ -379,7 +397,11 @@ fun TheWordApp(
                     status = loadingText,
                     bookmarksCount = bookmarks.size,
                     offlineNotice = offlineNotice,
-                    onFeatureClick = { currentTab = it }
+                    morningPrayer = dailyMorningPrayer,
+                    eveningPrayer = dailyEveningPrayer,
+                    storyOfDay = dailyStory,
+                    onFeatureClick = { currentTab = it },
+                    onStoryClick = { selectedStory = it }
                 )
                 TabItem.Bible -> BibleScreen(
                     translations = translations,
@@ -732,7 +754,10 @@ private fun PrayerScreen(prayers: List<Prayer>, onPrayed: (String) -> Unit) {
 
 private fun defaultTranslations(): List<Translation> = listOf(
     Translation("BSB", "Berean Standard Bible", "BSB"),
-    Translation("eng_web", "World English Bible", "WEB")
+    Translation("eng_web", "World English Bible", "WEB"),
+    Translation("eng_kjv", "King James Version", "KJV"),
+    Translation("eng_kjva", "King James Version w/ Apocrypha", "KJVA"),
+    Translation("eng_ylt", "Young's Literal Translation", "YLT")
 )
 
 private fun defaultBooks(): List<Book> = listOf(
@@ -826,7 +851,11 @@ private fun HomeScreen(
     status: String,
     bookmarksCount: Int,
     offlineNotice: String?,
-    onFeatureClick: (TabItem) -> Unit
+    morningPrayer: Prayer?,
+    eveningPrayer: Prayer?,
+    storyOfDay: Story?,
+    onFeatureClick: (TabItem) -> Unit,
+    onStoryClick: (Story) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -901,14 +930,14 @@ private fun HomeScreen(
                             Text(status, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary)
                         } else {
                             Text(
-                                "\"${dailyVerse.text}\"",
+                                "\"${dailyVerse!!.text}\"",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                             Text(
-                                "${dailyVerse.reference} ($version)",
+                                "${dailyVerse!!.reference} ($version)",
                                 style = MaterialTheme.typography.labelLarge,
                                 fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
@@ -919,8 +948,78 @@ private fun HomeScreen(
             }
         }
 
+
+
+        if (morningPrayer != null || eveningPrayer != null) {
+            item {
+                Text("Daily Prayers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            }
+            item {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    morningPrayer?.let { p ->
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            onClick = { onFeatureClick(TabItem.Prayer) },
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
+                        ) {
+                            Column(Modifier.padding(12.dp)) {
+                                Icon(Icons.Outlined.Home, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Text("Morning", style = MaterialTheme.typography.labelMedium)
+                                Spacer(Modifier.height(4.dp))
+                                Text(p.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                    eveningPrayer?.let { p ->
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            onClick = { onFeatureClick(TabItem.Prayer) },
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f))
+                        ) {
+                            Column(Modifier.padding(12.dp)) {
+                                Icon(Icons.Outlined.Home, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                                Text("Evening", style = MaterialTheme.typography.labelMedium)
+                                Spacer(Modifier.height(4.dp))
+                                Text(p.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        storyOfDay?.let { story ->
+            item {
+                Text("Story of the Day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            }
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onStoryClick(story) }
+                ) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(story.icon ?: "📖", style = MaterialTheme.typography.headlineSmall)
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(story.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(story.snippets, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        }
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                    }
+                }
+            }
+        }
+
         item {
-            Text("Explore Features", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            Text("Explore More", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
         }
 
         val features = listOf(TabItem.Quiz, TabItem.Progress, TabItem.About)
@@ -1193,7 +1292,7 @@ private fun BibleScreen(
                         .testTag("status_text"),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Text(status, modifier = Modifier.padding(12.dp))
+                    Text(status ?: "", modifier = Modifier.padding(12.dp))
                 }
             }
         }
@@ -1435,7 +1534,7 @@ private fun BookmarksScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(coll)
                                 IconButton(onClick = { onRemoveCollection(coll) }, modifier = Modifier.size(16.dp)) {
-                                    Icon(androidx.compose.material.icons.Icons.Default.Close, contentDescription = "Delete", modifier = Modifier.size(12.dp))
+                                    Icon(Icons.Default.Close, contentDescription = "Delete", modifier = Modifier.size(12.dp))
                                 }
                             }
                         }
@@ -1534,7 +1633,7 @@ private fun StoriesScreen(stories: List<Story>, onStoryClick: (Story) -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onStoryClick(story) }
             ) {
-                Row(Modifier.padding(12.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(story.icon ?: "📖", fontSize = 32.sp, modifier = Modifier.padding(end = 12.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
                         Text(story.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
@@ -1571,7 +1670,7 @@ private fun StoryDetailDialog(
                     title = { Text(story.title, style = MaterialTheme.typography.titleMedium) },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
-                            Icon(androidx.compose.material.icons.Icons.Default.Close, "Close")
+                            Icon(Icons.Default.Close, "Close")
                         }
                     },
                     actions = {
@@ -1589,7 +1688,7 @@ private fun StoryDetailDialog(
                     contentPadding = PaddingValues(bottom = 24.dp)
                 ) {
                     item {
-                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
                             Text(story.icon ?: "📖", fontSize = 64.sp)
                         }
                     }
