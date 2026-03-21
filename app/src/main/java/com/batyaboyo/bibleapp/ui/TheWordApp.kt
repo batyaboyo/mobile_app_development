@@ -87,6 +87,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.batyaboyo.bibleapp.data.ApiService
+import com.batyaboyo.bibleapp.data.AssetBibleProvider
 import com.batyaboyo.bibleapp.data.AssetRepository
 import com.batyaboyo.bibleapp.data.BibleApi
 import com.batyaboyo.bibleapp.data.LocalStore
@@ -135,7 +136,7 @@ fun TheWordApp(
     assetRepo: AssetRepository? = null
 ) {
     val context = LocalContext.current
-    val bibleApi = api ?: remember { ApiService() }
+    val bibleApi = api ?: remember { AssetBibleProvider(context) }
     val localStoreState = localStore ?: remember { LocalStore(context) }
     val assetRepoState = assetRepo ?: remember { AssetRepository(context) }
     val scope = rememberCoroutineScope()
