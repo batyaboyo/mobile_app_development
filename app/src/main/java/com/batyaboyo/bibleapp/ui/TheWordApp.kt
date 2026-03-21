@@ -74,6 +74,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Timeline
@@ -1012,7 +1013,7 @@ private fun HomeScreen(
                             Text(story.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             Text(story.snippets, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
                     }
                 }
             }
