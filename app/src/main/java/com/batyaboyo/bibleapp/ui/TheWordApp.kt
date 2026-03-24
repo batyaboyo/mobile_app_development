@@ -30,9 +30,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenu
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -1177,19 +1174,26 @@ private fun BibleScreen(
             ) {
                 // Bible Version Selector
                 Box {
-                    OutlinedTextField(
-                        value = selectedTranslation?.shortName ?: "Version",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Bible Version", style = MaterialTheme.typography.labelSmall) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = translationExpanded) },
+                    OutlinedButton(
+                        onClick = { translationExpanded = true },
                         modifier = Modifier
                             .testTag("version_selector")
                             .fillMaxWidth()
-                            .menuAnchor(),
-                        textStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                    ExposedDropdownMenu(
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                selectedTranslation?.shortName ?: "Version",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+                        }
+                    }
+                    DropdownMenu(
                         expanded = translationExpanded,
                         onDismissRequest = { translationExpanded = false }
                     ) {
@@ -1376,16 +1380,20 @@ private fun BibleScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Box {
-                            OutlinedTextField(
-                                value = selectedCommentary?.name ?: "None",
-                                onValueChange = {},
-                                readOnly = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(),
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = commentaryExpanded) }
-                            )
-                            ExposedDropdownMenu(
+                            OutlinedButton(
+                                onClick = { commentaryExpanded = true },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(selectedCommentary?.name ?: "None")
+                                    Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+                                }
+                            }
+                            DropdownMenu(
                                 expanded = commentaryExpanded,
                                 onDismissRequest = { commentaryExpanded = false }
                             ) {
