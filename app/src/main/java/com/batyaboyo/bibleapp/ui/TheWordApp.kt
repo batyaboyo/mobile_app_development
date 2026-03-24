@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -28,6 +31,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -789,10 +793,10 @@ private fun defaultTranslations(): List<Translation> = listOf(
 )
 
 private fun getOldTestamentBooks(books: List<Book>): List<Book> =
-    books.takeWhile { it.abbrev != "MAT" }
+    books.takeWhile { it.id != "MAT" }
 
 private fun getNewTestamentBooks(books: List<Book>): List<Book> =
-    books.dropWhile { it.abbrev != "MAT" }
+    books.dropWhile { it.id != "MAT" }
 
 private fun defaultBooks(): List<Book> = listOf(
     Book("GEN", "Genesis", 50),
@@ -1293,12 +1297,12 @@ private fun BibleScreen(
                                 modifier = Modifier
                                     .wrapContentWidth()
                                     .height(48.dp),
-                                color = if (selectedBook?.abbrev == book.abbrev)
+                                color = if (selectedBook?.id == book.id)
                                     MaterialTheme.colorScheme.primary
                                 else
                                     MaterialTheme.colorScheme.secondaryContainer,
                                 shape = MaterialTheme.shapes.medium,
-                                tonalElevation = if (selectedBook?.abbrev == book.abbrev) 4.dp else 0.dp,
+                                tonalElevation = if (selectedBook?.id == book.id) 4.dp else 0.dp,
                                 onClick = { onBookSelected(book) }
                             ) {
                                 Box(
@@ -1310,11 +1314,11 @@ private fun BibleScreen(
                                     Text(
                                         book.name.take(15),
                                         style = MaterialTheme.typography.labelMedium,
-                                        color = if (selectedBook?.abbrev == book.abbrev)
+                                        color = if (selectedBook?.id == book.id)
                                             MaterialTheme.colorScheme.onPrimary
                                         else
                                             MaterialTheme.colorScheme.onSecondaryContainer,
-                                        fontWeight = if (selectedBook?.abbrev == book.abbrev)
+                                        fontWeight = if (selectedBook?.id == book.id)
                                             FontWeight.Bold
                                         else
                                             FontWeight.Normal
