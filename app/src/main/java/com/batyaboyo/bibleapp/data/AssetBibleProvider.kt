@@ -20,28 +20,38 @@ private data class LocalBook(
 class AssetBibleProvider(private val context: Context) : BibleApi {
 
     private val json = Json { ignoreUnknownKeys = true }
-    private var cachedBible: List<LocalBook>? = null
+    private val cachedBibles = mutableMapOf<String, List<LocalBook>>()
 
-    private suspend fun getBible(): List<LocalBook> = withContext(Dispatchers.IO) {
-        cachedBible ?: try {
-            val inputStream = context.assets.open("bible_kjv.json")
+    private fun translationAsset(translationId: String): String {
+        return when (translationId) {
+            "local_niv" -> "bible_niv.json"
+            else -> "bible_kjv.json"
+        }
+    }
+
+    private suspend fun getBible(translationId: String): List<LocalBook> = withContext(Dispatchers.IO) {
+        val assetName = translationAsset(translationId)
+        cachedBibles[assetName] ?: try {
+            val inputStream = context.assets.open(assetName)
             val content = inputStream.bufferedReader().use { it.readText() }
-            // Strip UTF-8 BOM if present
             val cleanContent = if (content.startsWith('\uFEFF')) content.substring(1) else content
             val bible: List<LocalBook> = json.decodeFromString(cleanContent)
-            cachedBible = bible
+            cachedBibles[assetName] = bible
             bible
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
 
     override suspend fun fetchTranslations(): List<Translation> {
-        return listOf(Translation("local_kjv", "King James Version (Offline)", "KJV"))
+        return listOf(
+            Translation("local_niv", "New International Version (Offline)", "NIV"),
+            Translation("local_kjv", "King James Version (Offline)", "KJV")
+        )
     }
 
     override suspend fun fetchBooks(translationId: String): List<Book> {
-        return getBible().map { b ->
+        return getBible(translationId).map { b ->
             Book(id = b.abbrev, name = b.name, chapters = b.chapters.size)
         }
     }
@@ -68,7 +78,7 @@ class AssetBibleProvider(private val context: Context) : BibleApi {
 
     override suspend fun fetchChapter(translationId: String, bookId: String, chapter: Int): List<Verse> {
         val mappedId = mapId(bookId)
-        val book = getBible().find { it.abbrev.equals(mappedId, ignoreCase = true) || it.abbrev.equals(bookId, ignoreCase = true) } ?: return emptyList()
+        val book = getBible(translationId).find { it.abbrev.equals(mappedId, ignoreCase = true) || it.abbrev.equals(bookId, ignoreCase = true) } ?: return emptyList()
         val chapterIndex = chapter - 1
         if (chapterIndex < 0 || chapterIndex >= book.chapters.size) return emptyList()
         

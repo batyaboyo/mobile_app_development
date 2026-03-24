@@ -134,3 +134,10 @@ data class Prayer(
     val text: String,
     val closing: String
 )
+
+@Serializable
+data class Devotion(
+    val title: String,
+    val reference: String,
+    val message: String
+)

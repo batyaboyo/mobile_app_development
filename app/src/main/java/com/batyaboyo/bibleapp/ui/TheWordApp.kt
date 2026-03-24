@@ -75,7 +75,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Timeline
@@ -97,6 +97,7 @@ import com.batyaboyo.bibleapp.model.Bookmark
 import com.batyaboyo.bibleapp.model.CachedChapter
 import com.batyaboyo.bibleapp.model.Commentary
 import com.batyaboyo.bibleapp.model.CommentaryChapter
+import com.batyaboyo.bibleapp.model.Devotion
 import com.batyaboyo.bibleapp.model.Prayer
 import com.batyaboyo.bibleapp.model.QuizQuestion
 import com.batyaboyo.bibleapp.model.ReadingSession
@@ -106,6 +107,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import com.batyaboyo.bibleapp.model.Verse
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetState
+import androidx.compose.ui.graphics.graphicsLayer
 
 enum class TabItem(val title: String) {
     Home("Home"),
@@ -156,6 +164,7 @@ fun TheWordApp(
     var dailyVerse by remember { mutableStateOf<Verse?>(null) }
     var dailyMorningPrayer by remember { mutableStateOf<Prayer?>(null) }
     var dailyEveningPrayer by remember { mutableStateOf<Prayer?>(null) }
+    var dailyDevotion by remember { mutableStateOf<Devotion?>(null) }
     var dailyStory by remember { mutableStateOf<Story?>(null) }
     var loadingText by remember { mutableStateOf("Loading translations...") }
     var offlineNotice by remember { mutableStateOf<String?>(null) }
@@ -167,6 +176,7 @@ fun TheWordApp(
     var stories by remember { mutableStateOf<List<Story>>(emptyList()) }
     var questions by remember { mutableStateOf<List<QuizQuestion>>(emptyList()) }
     var prayers by remember { mutableStateOf<List<Prayer>>(emptyList()) }
+    var devotions by remember { mutableStateOf<List<Devotion>>(emptyList()) }
     var commentaries by remember { mutableStateOf<List<Commentary>>(emptyList()) }
 
     var selectedCommentary by remember { mutableStateOf<Commentary?>(null) }
@@ -218,11 +228,15 @@ fun TheWordApp(
         stories = assetRepoState.loadStories()
         questions = assetRepoState.loadQuizQuestions()
         prayers = assetRepoState.loadPrayers()
+        devotions = assetRepoState.loadDevotions()
         
         // Calculate daily items
         val dayIndex = (System.currentTimeMillis() / 86_400_000L).toInt()
         if (stories.isNotEmpty()) {
             dailyStory = stories[dayIndex % stories.size]
+        }
+        if (devotions.isNotEmpty()) {
+            dailyDevotion = devotions[dayIndex % devotions.size]
         }
         val morning = prayers.filter { it.type == "morning" }
         if (morning.isNotEmpty()) {
@@ -313,7 +327,6 @@ fun TheWordApp(
     }
 
     val bottomItems = listOf(TabItem.Home, TabItem.Bible, TabItem.Bookmarks, TabItem.Stories, TabItem.Prayer)
-    val topItems = TabItem.entries.filter { it !in bottomItems }
 
     Scaffold(
         topBar = {
@@ -402,6 +415,7 @@ fun TheWordApp(
                     offlineNotice = offlineNotice,
                     morningPrayer = dailyMorningPrayer,
                     eveningPrayer = dailyEveningPrayer,
+                    dailyDevotion = dailyDevotion,
                     storyOfDay = dailyStory,
                     onFeatureClick = { currentTab = it },
                     onStoryClick = { selectedStory = it }
@@ -782,6 +796,8 @@ private fun PrayerScreen(prayers: List<Prayer>, onPrayed: (String) -> Unit) {
 
 
 private fun defaultTranslations(): List<Translation> = listOf(
+    Translation("local_niv", "New International Version (Offline)", "NIV"),
+    Translation("local_kjv", "King James Version (Offline)", "KJV"),
     Translation("BSB", "Berean Standard Bible", "BSB"),
     Translation("eng_web", "World English Bible", "WEB"),
     Translation("eng_kjv", "King James Version", "KJV"),
@@ -789,11 +805,31 @@ private fun defaultTranslations(): List<Translation> = listOf(
     Translation("eng_ylt", "Young's Literal Translation", "YLT")
 )
 
-private fun getOldTestamentBooks(books: List<Book>): List<Book> =
-    books.takeWhile { it.id != "MAT" }
+private fun getOldTestamentBooks(books: List<Book>): List<Book> {
+    val otIds = listOf(
+        "GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI", "1CH", "2CH",
+        "EZR", "NEH", "EST", "JOB", "PSA", "PRO", "ECC", "SNG", "ISA", "JER", "LAM", "EZK", "DAN", "HOS",
+        "JOL", "AMO", "OBA", "JON", "MIC", "NAM", "HAB", "ZEP", "HAG", "ZEC", "MAL"
+    )
+    return books.filter { it.id.uppercase() in otIds }
+}
 
-private fun getNewTestamentBooks(books: List<Book>): List<Book> =
-    books.dropWhile { it.id != "MAT" }
+private fun getNewTestamentBooks(books: List<Book>): List<Book> {
+    val ntIds = listOf(
+        "MAT", "MRK", "LUK", "JHN", "ACT", "ROM", "1CO", "2CO", "GAL", "EPH", "PHP", "COL", "1TH", "2TH",
+        "1TI", "2TI", "TIT", "PHM", "HEB", "JAS", "1PE", "2PE", "1JN", "2JN", "3JN", "JUD", "REV"
+    )
+    return books.filter { it.id.uppercase() in ntIds }
+}
+
+private fun isOldTestament(bookId: String): Boolean {
+    val otIds = listOf(
+        "GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI", "1CH", "2CH",
+        "EZR", "NEH", "EST", "JOB", "PSA", "PRO", "ECC", "SNG", "ISA", "JER", "LAM", "EZK", "DAN", "HOS",
+        "JOL", "AMO", "OBA", "JON", "MIC", "NAM", "HAB", "ZEP", "HAG", "ZEC", "MAL"
+    )
+    return bookId.uppercase() in otIds
+}
 
 private fun defaultBooks(): List<Book> = listOf(
     Book("GEN", "Genesis", 50),
@@ -894,6 +930,7 @@ private fun HomeScreen(
     offlineNotice: String?,
     morningPrayer: Prayer?,
     eveningPrayer: Prayer?,
+    dailyDevotion: Devotion?,
     storyOfDay: Story?,
     onFeatureClick: (TabItem) -> Unit,
     onStoryClick: (Story) -> Unit
@@ -1029,6 +1066,26 @@ private fun HomeScreen(
             }
         }
 
+        dailyDevotion?.let { devotion ->
+            item {
+                Text("Daily Devotion", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+            }
+            item {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                    )
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(devotion.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(devotion.reference, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        Text(devotion.message, style = MaterialTheme.typography.bodyMedium, maxLines = 4, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+        }
+
         storyOfDay?.let { story ->
             item {
                 Text("Story of the Day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
@@ -1053,7 +1110,7 @@ private fun HomeScreen(
                             Text(story.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             Text(story.snippets, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
                     }
                 }
             }
@@ -1120,16 +1177,11 @@ private fun BibleScreen(
     scrollToVerse: Int? = null,
     onScrollComplete: () -> Unit = {}
 ) {
-    var translationExpanded by remember { mutableStateOf(false) }
-    var bookExpanded by remember { mutableStateOf(false) }
-    var commentaryExpanded by remember { mutableStateOf(false) }
+    var showSelectionSheet by remember { mutableStateOf(false) }
+    var showVersionSheet by remember { mutableStateOf(false) }
     var showHighlightDialog by remember { mutableStateOf<Verse?>(null) }
     var searchQuery by remember { mutableStateOf("") }
-    var selectedTestament by remember { mutableStateOf("old") }
 
-    val oldTestamentBooks = remember(books) { getOldTestamentBooks(books) }
-    val newTestamentBooks = remember(books) { getNewTestamentBooks(books) }
-    val testamentBooks = if (selectedTestament == "old") oldTestamentBooks else newTestamentBooks
 
     val filteredVerses = remember(searchQuery, verses) {
         if (searchQuery.isBlank()) verses
@@ -1158,114 +1210,60 @@ private fun BibleScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Top Navbar with Version & Testament Selector
+        // Premium Sticky Navigation Bar
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            tonalElevation = 4.dp
+            tonalElevation = 6.dp,
+            shadowElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Bible Version Selector
-                Box {
-                    OutlinedButton(
-                        onClick = { translationExpanded = true },
-                        modifier = Modifier
-                            .testTag("version_selector")
-                            .fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                selectedTranslation?.shortName ?: "Version",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
-                        }
-                    }
-                    DropdownMenu(
-                        expanded = translationExpanded,
-                        onDismissRequest = { translationExpanded = false }
-                    ) {
-                        translations.take(40).forEach { translation ->
-                            DropdownMenuItem(
-                                text = { Text("${translation.name} (${translation.shortName})") },
-                                onClick = {
-                                    onTranslationSelected(translation)
-                                    translationExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // Old/New Testament Tabs
+            Column(Modifier.padding(8.dp)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(40.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Location & Testament Selector
                     Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        color = if (selectedTestament == "old") 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.surface,
+                        onClick = { showSelectionSheet = true },
                         shape = MaterialTheme.shapes.medium,
-                        onClick = { selectedTestament = "old" }
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Icon(Icons.AutoMirrored.Outlined.MenuBook, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(10.dp))
                             Text(
-                                "Old Testament",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = if (selectedTestament == "old")
-                                    MaterialTheme.colorScheme.onPrimary
-                                else
-                                    MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold
+                                text = "${selectedBook?.name ?: "Select Book"} ${chapterInput}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold
                             )
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, modifier = Modifier.graphicsLayer(rotationZ = 90f).size(20.dp))
                         }
                     }
 
+                    Spacer(Modifier.width(10.dp))
+
+                    // Version Selector
                     Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        color = if (selectedTestament == "new")
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.surface,
+                        onClick = { showVersionSheet = true },
                         shape = MaterialTheme.shapes.medium,
-                        onClick = { selectedTestament = "new" }
+                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "New Testament",
+                                text = selectedTranslation?.shortName ?: "VER",
                                 style = MaterialTheme.typography.labelLarge,
-                                color = if (selectedTestament == "new")
-                                    MaterialTheme.colorScheme.onPrimary
-                                else
-                                    MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.tertiary
                             )
                         }
                     }
@@ -1390,7 +1388,7 @@ private fun BibleScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(selectedCommentary?.name ?: "None")
-                                    Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
                                 }
                             }
                             DropdownMenu(
@@ -1547,6 +1545,28 @@ private fun BibleScreen(
                 }
             }
         }
+    }
+
+        )
+    }
+
+    if (showSelectionSheet) {
+        BibleSelectionSheet(
+            books = books,
+            selectedBook = selectedBook,
+            onBookSelected = onBookSelected,
+            onChapterSelected = { onChapterChanged(it.toString()); onLoadChapter() },
+            onDismiss = { showSelectionSheet = false }
+        )
+    }
+
+    if (showVersionSheet) {
+        VersionSelectionSheet(
+            translations = translations,
+            selectedTranslation = selectedTranslation,
+            onTranslationSelected = onTranslationSelected,
+            onDismiss = { showVersionSheet = false }
+        )
     }
 
     if (showHighlightDialog != null) {
@@ -2013,6 +2033,145 @@ private fun QuizScreen(questions: List<com.batyaboyo.bibleapp.model.QuizQuestion
                                 chosen = -1
                             }) {
                                 Text("Restart Quiz")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BibleSelectionSheet(
+    books: List<Book>,
+    selectedBook: Book?,
+    onBookSelected: (Book) -> Unit,
+    onChapterSelected: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selectedTestament by remember { mutableStateOf(if (selectedBook != null && !isOldTestament(selectedBook.id)) "new" else "old") }
+    var showingChapters by remember { mutableStateOf(selectedBook != null) }
+    var currentBook by remember { mutableStateOf(selectedBook) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ) {
+        Column(modifier = Modifier.fillMaxHeight(0.85f).padding(16.dp)) {
+            Text("Select Book & Chapter", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(16.dp))
+            
+            TabRow(selectedTabIndex = if (selectedTestament == "old") 0 else 1) {
+                Tab(selected = selectedTestament == "old", onClick = { selectedTestament = "old"; showingChapters = false }) {
+                    Text("Old Testament", modifier = Modifier.padding(12.dp))
+                }
+                Tab(selected = selectedTestament == "new", onClick = { selectedTestament = "new"; showingChapters = false }) {
+                    Text("New Testament", modifier = Modifier.padding(12.dp))
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            if (!showingChapters) {
+                val filteredList: List<Book> = if (selectedTestament == "old") getOldTestamentBooks(books) else getNewTestamentBooks(books)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(filteredList) { bookItem ->
+                        Surface(
+                            onClick = { 
+                                currentBook = bookItem
+                                showingChapters = true
+                            },
+                            color = if (currentBook?.id == bookItem.id) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text(
+                                bookItem.name,
+                                modifier = Modifier.padding(12.dp),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            } else {
+                val book = currentBook ?: return@Column
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { showingChapters = false }) {
+                        Icon(imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Back", modifier = Modifier.graphicsLayer(rotationZ = 180f))
+                    }
+                    Text(book.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(8.dp))
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(5),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items((1..book.chapters).toList()) { chapter ->
+                        Surface(
+                            onClick = { 
+                                onBookSelected(book)
+                                onChapterSelected(chapter)
+                                onDismiss()
+                            },
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Text(
+                                chapter.toString(),
+                                modifier = Modifier.padding(12.dp),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VersionSelectionSheet(
+    translations: List<Translation>,
+    selectedTranslation: Translation?,
+    onTranslationSelected: (Translation) -> Unit,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 32.dp)) {
+            Text("Select Translation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(16.dp))
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(translations) { translation ->
+                    Surface(
+                        onClick = { 
+                            onTranslationSelected(translation)
+                            onDismiss()
+                        },
+                        color = if (selectedTranslation?.id == translation.id) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Column {
+                                Text(translation.name, fontWeight = FontWeight.Bold)
+                                Text(translation.shortName, style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (selectedTranslation?.id == translation.id) {
+                                Icon(androidx.compose.material.icons.Icons.Default.Close, null, tint = MaterialTheme.colorScheme.primary) 
                             }
                         }
                     }

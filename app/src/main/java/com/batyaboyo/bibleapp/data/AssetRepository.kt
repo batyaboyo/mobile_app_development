@@ -1,6 +1,7 @@
 package com.batyaboyo.bibleapp.data
 
 import android.content.Context
+import com.batyaboyo.bibleapp.model.Devotion
 import com.batyaboyo.bibleapp.model.Prayer
 import com.batyaboyo.bibleapp.model.QuizQuestion
 import com.batyaboyo.bibleapp.model.Story
@@ -10,6 +11,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class AssetRepository(private val context: Context) {
+
+    private fun assetExists(name: String): Boolean {
+        return try {
+            context.assets.open(name).close()
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
 
     suspend fun loadStories(): List<Story> = withContext(Dispatchers.IO) {
         val raw = context.assets.open("stories.json").bufferedReader().use { it.readText() }
@@ -87,5 +97,40 @@ class AssetRepository(private val context: Context) {
             )
         }
         return@withContext items
+    }
+
+    suspend fun loadDevotions(): List<Devotion> = withContext(Dispatchers.IO) {
+        if (!assetExists("devotions.json")) {
+            return@withContext listOf(
+                Devotion(
+                    title = "Trust in God",
+                    reference = "Proverbs 3:5-6",
+                    message = "Trust in the Lord with all your heart and acknowledge Him in all your ways. He will direct your path today."
+                ),
+                Devotion(
+                    title = "New Mercies",
+                    reference = "Lamentations 3:22-23",
+                    message = "God's mercies are new every morning. Receive today's grace and walk in hope."
+                ),
+                Devotion(
+                    title = "Peace Over Fear",
+                    reference = "Philippians 4:6-7",
+                    message = "Bring every concern to God in prayer. His peace will guard your heart and mind in Christ."
+                )
+            )
+        }
+
+        val raw = context.assets.open("devotions.json").bufferedReader().use { it.readText() }
+        val arr = JSONArray(raw)
+        val items = mutableListOf<Devotion>()
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            items += Devotion(
+                title = obj.optString("title", "Daily Devotion"),
+                reference = obj.optString("reference", obj.optString("verseRef", "")),
+                message = obj.optString("message", obj.optString("text", ""))
+            )
+        }
+        return@withContext items.filter { it.message.isNotBlank() }
     }
 }
