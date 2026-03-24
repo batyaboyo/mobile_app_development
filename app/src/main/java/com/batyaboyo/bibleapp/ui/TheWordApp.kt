@@ -445,12 +445,14 @@ fun TheWordApp(
                     selectedCommentary = selectedCommentary,
                     onCommentarySelected = { comm ->
                         selectedCommentary = comm
-                        if (selectedBook != null && chapterInput.toIntOrNull() != null) {
+                        val book = selectedBook
+                        val chapter = chapterInput.toIntOrNull()
+                        if (book != null && chapter != null) {
                             scope.launch {
                                 isCommentaryLoading = true
                                 try {
                                     commentaryChapter = if (comm == null) null 
-                                        else bibleApi.fetchCommentaryChapter(comm.id, selectedBook!!.id, chapterInput.toInt())
+                                        else bibleApi.fetchCommentaryChapter(comm.id, book.id, chapter)
                                 } catch (e: Exception) {
                                     bibleStatus = "Commentary load failed: ${e.message}"
                                 } finally {
@@ -551,9 +553,15 @@ fun TheWordApp(
             LaunchedEffect(verse) {
                 isComparing = true
                 val compareIds = listOf("BSB", "eng_web", "eng_bbe")
+                val currentBook = selectedBook
+                val currentChapter = chapterInput.toIntOrNull()
+                if (currentBook == null || currentChapter == null) {
+                    isComparing = false
+                    return@LaunchedEffect
+                }
                 compareIds.filter { it != selectedTranslation?.id }.forEach { versionId ->
                     try {
-                        val res = bibleApi.fetchVerse(versionId, selectedBook!!.id, chapterInput.toInt(), verse.number)
+                        val res = bibleApi.fetchVerse(versionId, currentBook.id, currentChapter, verse.number)
                         comparisons[versionId] = res
                     } catch (e: Exception) {
                         // ignore failures
@@ -658,12 +666,18 @@ private fun PrayerScreen(prayers: List<Prayer>, onPrayed: (String) -> Unit) {
 
     val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
     var currentType by remember { mutableStateOf(if (hour < 17) "morning" else "evening") }
-    
-    val filteredPrayers = prayers.filter { it.type == currentType }
+
+    val filteredPrayers = remember(prayers, currentType) { prayers.filter { it.type == currentType } }
     val dayOfYear = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR)
-    
-    var selectedPrayer by remember(currentType) { 
-        mutableStateOf(filteredPrayers.getOrElse(dayOfYear % filteredPrayers.size) { filteredPrayers.first() }) 
+
+    var selectedPrayer by remember(currentType) {
+        mutableStateOf(selectDailyPrayer(prayers, currentType, dayOfYear))
+    }
+
+    LaunchedEffect(prayers, currentType) {
+        if (selectedPrayer == null || selectedPrayer?.type != currentType) {
+            selectedPrayer = selectDailyPrayer(prayers, currentType, dayOfYear)
+        }
     }
 
     LazyColumn(
@@ -693,57 +707,69 @@ private fun PrayerScreen(prayers: List<Prayer>, onPrayed: (String) -> Unit) {
         }
 
         item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(selectedPrayer.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                    
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+            if (selectedPrayer == null) {
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
-                            "\"${selectedPrayer.verse}\"",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontStyle = FontStyle.Italic,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                        Text(
-                            "— ${selectedPrayer.verseRef}",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Medium
+                            text = "No prayers available for ${currentType.replaceFirstChar { it.uppercase() }}.",
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
+                }
+            } else {
+                val prayer = selectedPrayer ?: return@item
+                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(prayer.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                    Text(selectedPrayer.text, style = MaterialTheme.typography.bodyMedium)
-                    
-                    Text(
-                        selectedPrayer.closing,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        fontStyle = FontStyle.Italic
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            onClick = { onPrayed(currentType) }
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("I Prayed")
+                            Text(
+                                "\"${prayer.verse}\"",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            )
+                            Text(
+                                "— ${prayer.verseRef}",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
-                        OutlinedButton(
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                selectedPrayer = filteredPrayers.random()
-                            }
+
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                        Text(prayer.text, style = MaterialTheme.typography.bodyMedium)
+
+                        Text(
+                            prayer.closing,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            fontStyle = FontStyle.Italic
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Another")
+                            Button(
+                                modifier = Modifier.weight(1f),
+                                onClick = { onPrayed(currentType) }
+                            ) {
+                                Text("I Prayed")
+                            }
+                            OutlinedButton(
+                                modifier = Modifier.weight(1f),
+                                onClick = {
+                                    selectedPrayer = filteredPrayers.randomOrNull() ?: selectedPrayer
+                                }
+                            ) {
+                                Text("Another")
+                            }
                         }
                     }
                 }
@@ -761,6 +787,12 @@ private fun defaultTranslations(): List<Translation> = listOf(
     Translation("eng_kjva", "King James Version w/ Apocrypha", "KJVA"),
     Translation("eng_ylt", "Young's Literal Translation", "YLT")
 )
+
+private fun getOldTestamentBooks(books: List<Book>): List<Book> =
+    books.takeWhile { it.abbrev != "MAT" }
+
+private fun getNewTestamentBooks(books: List<Book>): List<Book> =
+    books.dropWhile { it.abbrev != "MAT" }
 
 private fun defaultBooks(): List<Book> = listOf(
     Book("GEN", "Genesis", 50),
@@ -844,6 +876,12 @@ private suspend fun loadDailyVerse(api: BibleApi, translationId: String, onReady
         api.fetchChapter(translationId, pick.first, pick.second)
             .firstOrNull { it.number == pick.third }
     }.onSuccess(onReady).onFailure { onReady(null) }
+}
+
+internal fun selectDailyPrayer(prayers: List<Prayer>, type: String, dayOfYear: Int): Prayer? {
+    val filtered = prayers.filter { it.type == type }
+    if (filtered.isEmpty()) return null
+    return filtered[dayOfYear.mod(filtered.size)]
 }
 
 @Composable
@@ -932,14 +970,14 @@ private fun HomeScreen(
                             Text(status, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary)
                         } else {
                             Text(
-                                "\"${dailyVerse!!.text}\"",
+                                "\"${dailyVerse.text}\"",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                             Text(
-                                "${dailyVerse!!.reference} ($version)",
+                                "${dailyVerse.reference} ($version)",
                                 style = MaterialTheme.typography.labelLarge,
                                 fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
@@ -1081,12 +1119,16 @@ private fun BibleScreen(
     scrollToVerse: Int? = null,
     onScrollComplete: () -> Unit = {}
 ) {
-
     var translationExpanded by remember { mutableStateOf(false) }
     var bookExpanded by remember { mutableStateOf(false) }
     var commentaryExpanded by remember { mutableStateOf(false) }
     var showHighlightDialog by remember { mutableStateOf<Verse?>(null) }
     var searchQuery by remember { mutableStateOf("") }
+    var selectedTestament by remember { mutableStateOf("old") }
+
+    val oldTestamentBooks = remember(books) { getOldTestamentBooks(books) }
+    val newTestamentBooks = remember(books) { getNewTestamentBooks(books) }
+    val testamentBooks = if (selectedTestament == "old") oldTestamentBooks else newTestamentBooks
 
     val filteredVerses = remember(searchQuery, verses) {
         if (searchQuery.isBlank()) verses
@@ -1103,7 +1145,7 @@ private fun BibleScreen(
                 var offset = 6
                 if (status != null) offset++
                 if (commentaryChapter != null) {
-                    offset++ // header
+                    offset++
                     offset += commentaryChapter.chapter?.content?.size ?: 0
                 } else if (isCommentaryLoading) {
                     offset++
@@ -1114,264 +1156,381 @@ private fun BibleScreen(
         }
     }
 
-    LazyColumn(state = listState, 
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Text("Read the Bible", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(
-                "Choose a version, pick a book and chapter, then load. Chapters you open are saved for offline reading.",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            HorizontalDivider()
-        }
-
-        item {
-            ExposedDropdownMenuBox(
-                expanded = translationExpanded,
-                onExpandedChange = { translationExpanded = !translationExpanded }
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Top Navbar with Version & Testament Selector
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            tonalElevation = 4.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedTextField(
-                    value = selectedTranslation?.name ?: "Choose translation",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Version") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = translationExpanded) },
-                    modifier = Modifier
-                        .testTag("version_selector")
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = translationExpanded,
-                    onDismissRequest = { translationExpanded = false }
-                ) {
-                    translations.take(40).forEach { translation ->
-                        DropdownMenuItem(
-                            text = { Text("${translation.name} (${translation.shortName})") },
-                            onClick = {
-                                onTranslationSelected(translation)
-                                translationExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            ExposedDropdownMenuBox(
-                expanded = bookExpanded,
-                onExpandedChange = { bookExpanded = !bookExpanded }
-            ) {
-                OutlinedTextField(
-                    value = selectedBook?.name ?: "Choose book",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Book") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bookExpanded) },
-                    modifier = Modifier
-                        .testTag("book_selector")
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = bookExpanded,
-                    onDismissRequest = { bookExpanded = false }
-                ) {
-                    books.forEach { book ->
-                        DropdownMenuItem(
-                            text = { Text(book.name) },
-                            onClick = {
-                                onBookSelected(book)
-                                bookExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-
-        item {
-            ExposedDropdownMenuBox(
-                expanded = commentaryExpanded,
-                onExpandedChange = { commentaryExpanded = !commentaryExpanded }
-            ) {
-                OutlinedTextField(
-                    value = selectedCommentary?.name ?: "No Commentary",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Commentary") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = commentaryExpanded) },
-                    modifier = Modifier.fillMaxWidth().menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = commentaryExpanded,
-                    onDismissRequest = { commentaryExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("No Commentary") },
-                        onClick = {
-                            onCommentarySelected(null)
-                            commentaryExpanded = false
-                        }
+                // Bible Version Selector
+                Box {
+                    OutlinedTextField(
+                        value = selectedTranslation?.shortName ?: "Version",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Bible Version", style = MaterialTheme.typography.labelSmall) },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = translationExpanded) },
+                        modifier = Modifier
+                            .testTag("version_selector")
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        textStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                     )
-                    commentaries.forEach { commentary ->
-                        DropdownMenuItem(
-                            text = { Text(commentary.name ?: commentary.id) },
-                            onClick = {
-                                onCommentarySelected(commentary)
-                                commentaryExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = chapterInput,
-                    onValueChange = onChapterChanged,
-                    label = { Text("Chapter") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .width(120.dp)
-                        .testTag("chapter_input")
-                )
-                Button(
-                    onClick = onLoadChapter,
-                    enabled = !isLoading,
-                    modifier = Modifier
-                        .height(56.dp)
-                        .testTag("load_button")
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(20.dp)
-                                .testTag("loading_indicator"),
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("Load")
-                    }
-                }
-            }
-        }
-
-        item {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text("Search verses...") },
-                modifier = Modifier.fillMaxWidth().testTag("search_input"),
-                leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
-                trailingIcon = if (searchQuery.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Clear")
+                    ExposedDropdownMenu(
+                        expanded = translationExpanded,
+                        onDismissRequest = { translationExpanded = false }
+                    ) {
+                        translations.take(40).forEach { translation ->
+                            DropdownMenuItem(
+                                text = { Text("${translation.name} (${translation.shortName})") },
+                                onClick = {
+                                    onTranslationSelected(translation)
+                                    translationExpanded = false
+                                }
+                            )
                         }
                     }
-                } else null
-            )
-        }
+                }
 
-        if (status != null) {
-            item {
-                Card(
+                // Old/New Testament Tabs
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("status_text"),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        .height(40.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(status ?: "", modifier = Modifier.padding(12.dp))
-                }
-            }
-        }
-
-
-        if (commentaryChapter != null) {
-            item {
-                Text("Commentary", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
-                HorizontalDivider()
-            }
-            items(commentaryChapter.chapter?.content ?: emptyList()) { entry ->
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        if (!entry.number.isNullOrBlank()) {
-                            Text("Verses ${entry.number}+", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
-                        }
-                        Text(
-                            text = entry.content?.joinToString("\n\n") ?: "",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-        } else if (isCommentaryLoading) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                }
-            }
-        }
-
-        items(filteredVerses) { verse ->
-            val highlight = highlights.find { it.reference == verse.reference }
-            val bgColor = when (highlight?.color) {
-                "yellow" -> androidx.compose.ui.graphics.Color(0xFFFFF176)
-                "green" -> androidx.compose.ui.graphics.Color(0xFFAED581)
-                "blue" -> androidx.compose.ui.graphics.Color(0xFF81D4FA)
-                "pink" -> androidx.compose.ui.graphics.Color(0xFFF48FB1)
-                "purple" -> androidx.compose.ui.graphics.Color(0xFFCE93D8)
-                else -> MaterialTheme.colorScheme.surface
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                colors = CardDefaults.cardColors(containerColor = bgColor)
-            ) {
-                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "${verse.reference}",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    Text(verse.text, style = MaterialTheme.typography.bodyLarge)
-                    
-                    if (!highlight?.note.isNullOrBlank()) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = MaterialTheme.shapes.small,
-                            modifier = Modifier.fillMaxWidth()
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        color = if (selectedTestament == "old") 
+                            MaterialTheme.colorScheme.primary 
+                        else 
+                            MaterialTheme.colorScheme.surface,
+                        shape = MaterialTheme.shapes.medium,
+                        onClick = { selectedTestament = "old" }
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                highlight!!.note,
-                                modifier = Modifier.padding(8.dp),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontStyle = FontStyle.Italic
+                                "Old Testament",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (selectedTestament == "old")
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { onCompareVerse(verse) }) { Text("Compare") }
-                        TextButton(onClick = { showHighlightDialog = verse }) { Text(if (highlight == null) "Highlight" else "Edit Note") }
-                        TextButton(onClick = { onBookmarkVerse(verse) }) { Text("Bookmark") }
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        color = if (selectedTestament == "new")
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.surface,
+                        shape = MaterialTheme.shapes.medium,
+                        onClick = { selectedTestament = "new" }
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "New Testament",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (selectedTestament == "new")
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Book Selection Section
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Select Book & Chapter",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    // Book List with Scrollable Row
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 0.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(testamentBooks) { book ->
+                            Surface(
+                                modifier = Modifier
+                                    .wrapContentWidth()
+                                    .height(48.dp),
+                                color = if (selectedBook?.abbrev == book.abbrev)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.secondaryContainer,
+                                shape = MaterialTheme.shapes.medium,
+                                tonalElevation = if (selectedBook?.abbrev == book.abbrev) 4.dp else 0.dp,
+                                onClick = { onBookSelected(book) }
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp)
+                                        .fillMaxHeight(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        book.name.take(15),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = if (selectedBook?.abbrev == book.abbrev)
+                                            MaterialTheme.colorScheme.onPrimary
+                                        else
+                                            MaterialTheme.colorScheme.onSecondaryContainer,
+                                        fontWeight = if (selectedBook?.abbrev == book.abbrev)
+                                            FontWeight.Bold
+                                        else
+                                            FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Chapter Input & Load Button
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = chapterInput,
+                            onValueChange = onChapterChanged,
+                            label = { Text("Chapter") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier
+                                .width(100.dp)
+                                .testTag("chapter_input"),
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Button(
+                            onClick = onLoadChapter,
+                            enabled = !isLoading,
+                            modifier = Modifier
+                                .height(56.dp)
+                                .testTag("load_button")
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .testTag("loading_indicator"),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Text("Load", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Commentary Selector
+            if (commentaries.isNotEmpty()) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            "Commentary",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Box {
+                            OutlinedTextField(
+                                value = selectedCommentary?.name ?: "None",
+                                onValueChange = {},
+                                readOnly = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(),
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = commentaryExpanded) }
+                            )
+                            ExposedDropdownMenu(
+                                expanded = commentaryExpanded,
+                                onDismissRequest = { commentaryExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("None") },
+                                    onClick = {
+                                        onCommentarySelected(null)
+                                        commentaryExpanded = false
+                                    }
+                                )
+                                commentaries.forEach { commentary ->
+                                    DropdownMenuItem(
+                                        text = { Text(commentary.name ?: commentary.id) },
+                                        onClick = {
+                                            onCommentarySelected(commentary)
+                                            commentaryExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Search Verses
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Search verses...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("search_input"),
+                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
+                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                        {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(imageVector = Icons.Default.Close, contentDescription = "Clear")
+                            }
+                        }
+                    } else null
+                )
+            }
+
+            // Status Message
+            if (status != null) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("status_text"),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Text(status, modifier = Modifier.padding(12.dp), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+
+            // Commentary Display
+            if (commentaryChapter != null) {
+                item {
+                    Text(
+                        "Commentary",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                }
+                items(commentaryChapter.chapter?.content ?: emptyList()) { entry ->
+                    ElevatedCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
+                            if (!entry.number.isNullOrBlank()) {
+                                Text(
+                                    "Verses ${entry.number}+",
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                            Text(
+                                text = entry.content?.joinToString("\n\n") ?: "",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            } else if (isCommentaryLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+                }
+            }
+
+            // Verses Display
+            items(filteredVerses) { verse ->
+                val highlight = highlights.find { it.reference == verse.reference }
+                val bgColor = when (highlight?.color) {
+                    "yellow" -> androidx.compose.ui.graphics.Color(0xFFFFF176)
+                    "green" -> androidx.compose.ui.graphics.Color(0xFFAED581)
+                    "blue" -> androidx.compose.ui.graphics.Color(0xFF81D4FA)
+                    "pink" -> androidx.compose.ui.graphics.Color(0xFFF48FB1)
+                    "purple" -> androidx.compose.ui.graphics.Color(0xFFCE93D8)
+                    else -> MaterialTheme.colorScheme.surface
+                }
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                    colors = CardDefaults.cardColors(containerColor = bgColor)
+                ) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            verse.reference,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Text(verse.text, style = MaterialTheme.typography.bodyLarge)
+
+                        if (!highlight?.note.isNullOrBlank()) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                shape = MaterialTheme.shapes.small,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    highlight!!.note,
+                                    modifier = Modifier.padding(8.dp),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontStyle = FontStyle.Italic
+                                )
+                            }
+                        }
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            TextButton(onClick = { onCompareVerse(verse) }) { Text("Compare") }
+                            TextButton(onClick = { showHighlightDialog = verse }) {
+                                Text(if (highlight == null) "Highlight" else "Edit Note")
+                            }
+                            TextButton(onClick = { onBookmarkVerse(verse) }) { Text("Bookmark") }
+                        }
                     }
                 }
             }
