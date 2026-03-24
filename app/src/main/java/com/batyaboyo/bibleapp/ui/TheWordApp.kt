@@ -1182,7 +1182,6 @@ private fun BibleScreen(
     var showHighlightDialog by remember { mutableStateOf<Verse?>(null) }
     var searchQuery by remember { mutableStateOf("") }
 
-
     val filteredVerses = remember(searchQuery, verses) {
         if (searchQuery.isBlank()) verses
         else verses.filter { it.text.contains(searchQuery, ignoreCase = true) || it.reference.contains(searchQuery, ignoreCase = true) }
@@ -1279,144 +1278,6 @@ private fun BibleScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Book Selection Section
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        "Select Book & Chapter",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    
-                    // Book List with Scrollable Row
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 0.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(testamentBooks) { book ->
-                            Surface(
-                                modifier = Modifier
-                                    .wrapContentWidth()
-                                    .height(48.dp),
-                                color = if (selectedBook?.id == book.id)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.medium,
-                                tonalElevation = if (selectedBook?.id == book.id) 4.dp else 0.dp,
-                                onClick = { onBookSelected(book) }
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(horizontal = 12.dp)
-                                        .fillMaxHeight(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        book.name.take(15),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = if (selectedBook?.id == book.id)
-                                            MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSecondaryContainer,
-                                        fontWeight = if (selectedBook?.id == book.id)
-                                            FontWeight.Bold
-                                        else
-                                            FontWeight.Normal
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    // Chapter Input & Load Button
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        OutlinedTextField(
-                            value = chapterInput,
-                            onValueChange = onChapterChanged,
-                            label = { Text("Chapter") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier
-                                .width(100.dp)
-                                .testTag("chapter_input"),
-                            textStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-                        )
-                        Button(
-                            onClick = onLoadChapter,
-                            enabled = !isLoading,
-                            modifier = Modifier
-                                .height(56.dp)
-                                .testTag("load_button")
-                        ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .testTag("loading_indicator"),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text("Load", fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Commentary Selector
-            if (commentaries.isNotEmpty()) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            "Commentary",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Box {
-                            OutlinedButton(
-                                onClick = { commentaryExpanded = true },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(selectedCommentary?.name ?: "None")
-                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
-                                }
-                            }
-                            DropdownMenu(
-                                expanded = commentaryExpanded,
-                                onDismissRequest = { commentaryExpanded = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("None") },
-                                    onClick = {
-                                        onCommentarySelected(null)
-                                        commentaryExpanded = false
-                                    }
-                                )
-                                commentaries.forEach { commentary ->
-                                    DropdownMenuItem(
-                                        text = { Text(commentary.name ?: commentary.id) },
-                                        onClick = {
-                                            onCommentarySelected(commentary)
-                                            commentaryExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             // Search Verses
             item {
                 OutlinedTextField(
@@ -1545,9 +1406,6 @@ private fun BibleScreen(
                 }
             }
         }
-    }
-
-        )
     }
 
     if (showSelectionSheet) {
