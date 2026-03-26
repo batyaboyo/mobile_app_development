@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A production-ready, responsive Bible web application for reading, searching, and bookmarking verses.">
+    <meta name="keywords" content="Bible, Scripture, Holy Bible, Bible Study, Online Bible">
+    <meta name="author" content="Bible App">
+    <title>The Word - Bible Study App</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">📖</span>
+                    The Word
+                </h1>
+                <nav class="nav" role="navigation" aria-label="Main navigation">
+                    <ul class="nav-list">
+                        <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
+                        <li><a href="#" class="nav-link" data-page="bible">Bible</a></li>
+                        <li><a href="#" class="nav-link" data-page="bookmarks">Bookmarks</a></li>
+                        <li><a href="#" class="nav-link" data-page="progress">Progress</a></li>
+                        <li><a href="#" class="nav-link" data-page="stories">Stories</a></li>
+                        <li><a href="#" class="nav-link" data-page="prayer">Prayer</a></li>
+                        <li><a href="#" class="nav-link" data-page="quiz">Quiz</a></li>
+                        <li><a href="#" class="nav-link" data-page="about">About</a></li>
+                    </ul>
+                </nav>
+                <span class="version-badge" id="current-version-badge" title="Current Bible version">KJV</span>
+                <button class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button class="mobile-menu-toggle" aria-label="Toggle mobile menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Home Page -->
+        <section id="home" class="page active">
+            <div class="container">
+                <div class="hero">
+                    <h2 class="hero-title">Welcome to The Word</h2>
+                    <p class="hero-subtitle">Your personal Bible study companion</p>
+                </div>
+
+                <!-- Daily Verse Widget -->
+                <article class="daily-verse-card">
+                    <h3 class="card-title">Verse of the Day</h3>
+                    <div class="daily-verse-content">
+                        <div class="verse-loader">
+                            <div class="spinner"></div>
+                            <p>Loading today's verse...</p>
+                        </div>
+                        <div class="verse-text hidden">
+                            <blockquote class="verse-quote"></blockquote>
+                            <cite class="verse-reference"></cite>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary" onclick="navigateTo('bible')">
+                            Start Reading
+                        </button>
+                    </div>
+                </article>
+
+                <!-- Features Section -->
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">📚</div>
+                        <h3 class="feature-title">Read the Bible</h3>
+                        <p class="feature-description">Access all 66 books of the Bible, organized by Old and New Testament.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3 class="feature-title">Search Verses</h3>
+                        <p class="feature-description">Find specific verses or search by keywords instantly.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔖</div>
+                        <h3 class="feature-title">Bookmark & Save</h3>
+                        <p class="feature-description">Save your favorite verses and access them anytime.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📜</div>
+                        <h3 class="feature-title">Multiple Versions</h3>
+                        <p class="feature-description">Read in BSB, WEB, BBE, and many more Bible translations.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📝</div>
+                        <h3 class="feature-title">Commentaries</h3>
+                        <p class="feature-description">Study with Matthew Henry, John Gill, and other classic commentaries.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌓</div>
+                        <h3 class="feature-title">Dark Mode</h3>
+                        <p class="feature-description">Switch between light and dark themes for comfortable reading.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">❓</div>
+                        <h3 class="feature-title">Daily Quiz</h3>
+                        <p class="feature-description">Test your Bible knowledge with a new quiz every day.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌈</div>
+                        <h3 class="feature-title">Bible Stories</h3>
+                        <p class="feature-description">Kid-friendly summaries of the most important Bible stories.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h3 class="feature-title">Highlights & Notes</h3>
+                        <p class="feature-description">Highlight verses with colors and add personal study notes.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">Reading Progress</h3>
+                        <p class="feature-description">Track your Bible reading journey and see how far you've come.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚖️</div>
+                        <h3 class="feature-title">Compare Translations</h3>
+                        <p class="feature-description">View verses side by side across different Bible translations.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📂</div>
+                        <h3 class="feature-title">Bookmark Collections</h3>
+                        <p class="feature-description">Organize your bookmarks into custom folders and categories.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bible Page -->
+        <section id="bible" class="page">
+            <div class="container">
+                <div class="bible-header">
+                    <h2 class="page-title">Read the Bible</h2>
+                    <div class="bible-toolbar">
+                        <div class="version-selector-container">
+                            <label for="version-selector" class="version-label">Version:</label>
+                            <select id="version-selector" class="version-selector" aria-label="Select Bible version">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="commentary-selector-container">
+                            <label for="commentary-selector" class="commentary-label">Commentary:</label>
+                            <select id="commentary-selector" class="commentary-selector" aria-label="Select Bible commentary">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="search-container">
+                            <input 
+                                type="search" 
+                                class="search-input" 
+                                placeholder="Search verses or enter reference (e.g., John 3:16)..."
+                                aria-label="Search Bible verses"
+                            >
+                            <div class="search-results hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bible-layout">
+                    <!-- Sidebar - Book Selection -->
+                    <aside class="bible-sidebar">
+                        <div class="sidebar-section">
+                            <h3 class="sidebar-title">Old Testament</h3>
+                            <div class="book-list" id="old-testament-books"></div>
+                        </div>
+                        <div class="sidebar-section">
+                            <h3 class="sidebar-title">New Testament</h3>
+                            <div class="book-list" id="new-testament-books"></div>
+                        </div>
+                    </aside>
+
+                    <!-- Main Reading Area -->
+                    <div class="bible-content">
+                        <!-- Welcome State -->
+                        <div class="bible-welcome" id="bible-welcome">
+                            <div class="welcome-icon">📖</div>
+                            <h3>Select a Book to Begin</h3>
+                            <p>Choose a book from the sidebar to start reading.</p>
+                        </div>
+
+                        <!-- Chapter Selection -->
+                        <div class="chapter-selection" id="chapter-selection" hidden>
+                            <h3 class="selected-book-title"></h3>
+                            <div class="chapter-grid"></div>
+                        </div>
+
+                        <!-- Verse Display -->
+                        <div class="verse-display" id="verse-display" hidden>
+                            <div class="verse-header">
+                                <button class="btn-back" aria-label="Back to chapter selection">
+                                    ← Back
+                                </button>
+                                <h3 class="chapter-title"></h3>
+                                <div class="chapter-nav">
+                                    <button class="btn-chapter-nav" id="prev-chapter" aria-label="Previous chapter" disabled>← Prev</button>
+                                    <button class="btn-chapter-nav" id="next-chapter" aria-label="Next chapter">Next →</button>
+                                </div>
+                            </div>
+                            <div class="verse-loader">
+                                <div class="spinner"></div>
+                                <p>Loading chapter...</p>
+                            </div>
+                            <div class="verses-container"></div>
+                            <div class="commentary-panel" id="commentary-panel" hidden>
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Page -->
+        <section id="quiz" class="page">
+            <div class="container">
+                <h2 class="page-title">Daily Bible Quiz</h2>
+                <div class="quiz-container">
+                    <div class="quiz-header">
+                        <div class="quiz-meta">
+                            <span class="quiz-date" id="quiz-date"></span>
+                            <span class="quiz-score-badge" id="quiz-score-badge" hidden></span>
+                        </div>
+                        <div class="quiz-progress">
+                            <div class="quiz-progress-bar" id="quiz-progress-bar"></div>
+                        </div>
+                        <p class="quiz-progress-text" id="quiz-progress-text">Question 1 of 10</p>
+                    </div>
+
+                    <!-- Quiz question area -->
+                    <div class="quiz-body" id="quiz-body">
+                        <div class="quiz-loader" id="quiz-loader">
+                            <div class="spinner"></div>
+                            <p>Preparing today's quiz...</p>
+                        </div>
+                        <div class="quiz-question-card" id="quiz-question-card" hidden>
+                            <p class="quiz-category" id="quiz-category"></p>
+                            <h3 class="quiz-question" id="quiz-question"></h3>
+                            <div class="quiz-options" id="quiz-options"></div>
+                            <div class="quiz-feedback" id="quiz-feedback" hidden>
+                                <p class="quiz-feedback-text" id="quiz-feedback-text"></p>
+                                <p class="quiz-reference" id="quiz-reference"></p>
+                            </div>
+                            <button class="btn btn-primary quiz-next-btn" id="quiz-next-btn" hidden>Next Question</button>
+                        </div>
+                    </div>
+
+                    <!-- Quiz results -->
+                    <div class="quiz-results" id="quiz-results" hidden>
+                        <div class="quiz-results-icon" id="quiz-results-icon"></div>
+                        <h3 class="quiz-results-title" id="quiz-results-title"></h3>
+                        <p class="quiz-results-score" id="quiz-results-score"></p>
+                        <div class="quiz-results-breakdown" id="quiz-results-breakdown"></div>
+                        <div class="quiz-results-actions">
+                            <button class="btn btn-primary" id="quiz-review-btn">Review Answers</button>
+                            <button class="btn btn-secondary" onclick="navigateTo('bible')">Read the Bible</button>
+                        </div>
+                    </div>
+
+                    <!-- Quiz review -->
+                    <div class="quiz-review" id="quiz-review" hidden>
+                        <h3 class="quiz-review-title">Answer Review</h3>
+                        <div class="quiz-review-list" id="quiz-review-list"></div>
+                        <button class="btn btn-secondary quiz-back-btn" id="quiz-back-results-btn">Back to Results</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stories Page -->
+        <section id="stories" class="page">
+            <div class="container">
+                <h2 class="page-title">Bible Stories for Kids</h2>
+                <p class="stories-subtitle">Discover the most beloved stories from the Bible, told in a way that's easy to understand.</p>
+
+                <div class="stories-filter" id="stories-filter">
+                    <button class="stories-filter-btn active" data-filter="all">All Stories</button>
+                    <button class="stories-filter-btn" data-filter="old-testament">Old Testament</button>
+                    <button class="stories-filter-btn" data-filter="new-testament">New Testament</button>
+                </div>
+
+                <div class="stories-grid" id="stories-grid">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Story detail modal/view -->
+                <div class="story-detail" id="story-detail" hidden>
+                    <button class="btn-back story-back-btn" id="story-back-btn" aria-label="Back to stories list">
+                        ← Back to Stories
+                    </button>
+                    <article class="story-detail-content" id="story-detail-content">
+                        <!-- Populated by JS -->
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bookmarks Page -->
+        <section id="bookmarks" class="page">
+            <div class="container">
+                <h2 class="page-title">My Bookmarks</h2>
+
+                <!-- Collection Filter -->
+                <div class="collections-bar" id="collections-bar">
+                    <div class="collections-tabs" id="collections-tabs">
+                        <button class="collection-tab active" data-collection="all">All</button>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="manage-collections-btn" title="Manage collections">📂 Manage</button>
+                </div>
+
+                <div class="bookmarks-container">
+                    <div class="empty-state" id="bookmarks-empty">
+                        <div class="empty-icon">🔖</div>
+                        <h3>No Bookmarks Yet</h3>
+                        <p>Start bookmarking your favorite verses to see them here.</p>
+                        <button class="btn btn-primary" onclick="navigateTo('bible')">
+                            Browse Bible
+                        </button>
+                    </div>
+                    <div class="bookmarks-list" id="bookmarks-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reading Progress Page -->
+        <section id="progress" class="page">
+            <div class="container">
+                <h2 class="page-title">Reading Progress</h2>
+                <p class="progress-subtitle">Track your journey through God's Word. Chapters are marked as read when you open them.</p>
+
+                <div class="progress-overview" id="progress-overview">
+                    <div class="progress-stat-card">
+                        <div class="progress-stat-value" id="progress-total-percent">0%</div>
+                        <div class="progress-stat-label">Overall</div>
+                        <div class="progress-bar-outer">
+                            <div class="progress-bar-inner" id="progress-total-bar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-stat-card">
+                        <div class="progress-stat-value" id="progress-ot-percent">0%</div>
+                        <div class="progress-stat-label">Old Testament</div>
+                        <div class="progress-bar-outer">
+                            <div class="progress-bar-inner" id="progress-ot-bar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-stat-card">
+                        <div class="progress-stat-value" id="progress-nt-percent">0%</div>
+                        <div class="progress-stat-label">New Testament</div>
+                        <div class="progress-bar-outer">
+                            <div class="progress-bar-inner" id="progress-nt-bar"></div>
+                        </div>
+                    </div>
+                    <div class="progress-stat-card">
+                        <div class="progress-stat-value" id="progress-chapters-read">0</div>
+                        <div class="progress-stat-label">Chapters Read</div>
+                    </div>
+                </div>
+
+                <div class="progress-books" id="progress-books">
+                    <h3 class="progress-section-title">Old Testament</h3>
+                    <div class="progress-books-grid" id="progress-ot-books"></div>
+                    <h3 class="progress-section-title">New Testament</h3>
+                    <div class="progress-books-grid" id="progress-nt-books"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prayer Page -->
+        <section id="prayer" class="page">
+            <div class="container">
+                <h2 class="page-title">Daily Prayer</h2>
+                <p class="prayer-subtitle">Take one minute each morning and evening to connect with God through prayer.</p>
+
+                <div class="prayer-time-toggle">
+                    <button class="prayer-toggle-btn active" id="prayer-morning-btn" data-time="morning">
+                        <span class="prayer-toggle-icon">🌅</span>
+                        Morning Prayer
+                    </button>
+                    <button class="prayer-toggle-btn" id="prayer-evening-btn" data-time="evening">
+                        <span class="prayer-toggle-icon">🌙</span>
+                        Evening Prayer
+                    </button>
+                </div>
+
+                <div class="prayer-card" id="prayer-card">
+                    <div class="prayer-card-header">
+                        <span class="prayer-time-label" id="prayer-time-label">Morning Prayer</span>
+                        <span class="prayer-date" id="prayer-date"></span>
+                    </div>
+
+                    <div class="prayer-body">
+                        <h3 class="prayer-title" id="prayer-title"></h3>
+                        <blockquote class="prayer-verse" id="prayer-verse"></blockquote>
+                        <cite class="prayer-verse-ref" id="prayer-verse-ref"></cite>
+
+                        <div class="prayer-text" id="prayer-text"></div>
+
+                        <div class="prayer-closing" id="prayer-closing"></div>
+                    </div>
+
+                    <div class="prayer-timer-section">
+                        <p class="prayer-timer-label">2-Minute Prayer Timer</p>
+                        <div class="prayer-timer-ring" id="prayer-timer-ring">
+                            <svg viewBox="0 0 120 120" class="prayer-timer-svg">
+                                <circle cx="60" cy="60" r="54" class="prayer-timer-track"></circle>
+                                <circle cx="60" cy="60" r="54" class="prayer-timer-progress" id="prayer-timer-progress"></circle>
+                            </svg>
+                            <span class="prayer-timer-text" id="prayer-timer-text">2:00</span>
+                        </div>
+                        <button class="btn btn-primary prayer-timer-btn" id="prayer-timer-btn">Start Timer</button>
+                        <p class="prayer-timer-hint">Close your eyes, quiet your heart, and pray.</p>
+                    </div>
+
+                    <div class="prayer-actions">
+                        <button class="btn btn-secondary" id="prayer-copy-btn" title="Copy prayer to clipboard">📋 Copy Prayer</button>
+                        <button class="btn btn-secondary" id="prayer-share-btn" title="Share this prayer">🔗 Share</button>
+                        <button class="btn btn-secondary" id="prayer-new-btn" title="Get another prayer">🔄 Another Prayer</button>
+                    </div>
+                </div>
+
+                <div class="prayer-streak" id="prayer-streak" hidden>
+                    <div class="prayer-streak-icon">🔥</div>
+                    <div class="prayer-streak-info">
+                        <span class="prayer-streak-count" id="prayer-streak-count">0</span>
+                        <span class="prayer-streak-label">day streak</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Page -->
+        <section id="about" class="page">
+            <div class="container">
+                <h2 class="page-title">About The Word</h2>
+                <div class="about-content">
+                    <article class="about-section">
+                        <h3>Our Mission</h3>
+                        <p>The Word is a modern, user-friendly Bible study application designed to make scripture accessible to everyone. Whether you're studying, researching, or seeking inspiration, our app provides a seamless reading experience across all devices.</p>
+                    </article>
+
+                    <article class="about-section">
+                        <h3>Features</h3>
+                        <ul class="feature-list">
+                            <li>📖 Complete Bible text with all 66 books</li>
+                            <li>🌐 Multiple Bible translations (BSB, WEB, BBE, and more)</li>
+                            <li>📝 Classic commentaries (Matthew Henry, John Gill, etc.)</li>
+                            <li>🔍 Powerful search functionality</li>
+                            <li>🔖 Bookmark and save your favorite verses</li>
+                            <li>📂 Organize bookmarks into custom collections</li>
+                            <li>🎨 Highlight verses with colors and add study notes</li>
+                            <li>📊 Track your Bible reading progress</li>
+                            <li>⚖️ Compare verses across translations side-by-side</li>
+                            <li>📱 Fully responsive design for all devices</li>
+                            <li>🌓 Dark and light mode for comfortable reading</li>
+                            <li>📋 Copy verses to clipboard</li>
+                            <li>🔗 Share verses on social media</li>
+                            <li>💾 Offline bookmark storage</li>
+                        </ul>
+                    </article>
+
+                    <article class="about-section">
+                        <h3>Data Source</h3>
+                        <p>All Bible text and commentaries are provided by the <a href="https://bible.helloao.org" target="_blank" rel="noopener noreferrer">HelloAO Bible API</a>, a free and open-source API serving hundreds of Bible translations in many languages, along with classic commentaries. We are grateful for their service in making scripture freely accessible.</p>
+                    </article>
+
+                    <article class="about-section">
+                        <h3>Technology</h3>
+                        <p>This application is built with modern web technologies:</p>
+                        <ul class="tech-list">
+                            <li>HTML5 for semantic structure</li>
+                            <li>CSS3 with custom properties for theming</li>
+                            <li>Vanilla JavaScript for all functionality</li>
+                            <li>LocalStorage API for data persistence</li>
+                            <li>Fetch API for Bible content retrieval</li>
+                        </ul>
+                    </article>
+
+                    <article class="about-section">
+                        <h3>Accessibility</h3>
+                        <p>We are committed to making The Word accessible to all users. The app includes:</p>
+                        <ul>
+                            <li>ARIA labels for screen readers</li>
+                            <li>Keyboard navigation support</li>
+                            <li>High contrast color schemes (WCAG AA compliant)</li>
+                            <li>Readable font sizes and line spacing</li>
+                        </ul>
+                    </article>
+
+                    <article class="about-section">
+                        <h3>Privacy</h3>
+                        <p>Your privacy is important to us. All bookmarks and preferences are stored locally on your device. We do not collect, store, or share any personal information.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Highlight & Notes Popup -->
+    <div class="modal-overlay" id="highlight-modal">
+        <div class="modal-content highlight-modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="highlight-modal-title">Highlight & Note</h3>
+                <button class="modal-close" id="highlight-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="highlight-verse-ref" id="highlight-verse-ref"></p>
+                <div class="highlight-colors">
+                    <span class="highlight-color-label">Highlight Color:</span>
+                    <div class="highlight-color-options" id="highlight-color-options">
+                        <button class="highlight-color-btn" data-color="none" title="No highlight">✕</button>
+                        <button class="highlight-color-btn hl-yellow" data-color="yellow" title="Yellow"></button>
+                        <button class="highlight-color-btn hl-green" data-color="green" title="Green"></button>
+                        <button class="highlight-color-btn hl-blue" data-color="blue" title="Blue"></button>
+                        <button class="highlight-color-btn hl-pink" data-color="pink" title="Pink"></button>
+                        <button class="highlight-color-btn hl-orange" data-color="orange" title="Orange"></button>
+                        <button class="highlight-color-btn hl-purple" data-color="purple" title="Purple"></button>
+                    </div>
+                </div>
+                <div class="highlight-note-section">
+                    <label for="highlight-note-input" class="highlight-note-label">Personal Note:</label>
+                    <textarea id="highlight-note-input" class="highlight-note-input" rows="4" placeholder="Write your thoughts, reflections, or study notes here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="highlight-cancel-btn">Cancel</button>
+                <button class="btn btn-primary" id="highlight-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Translation Comparison Modal -->
+    <div class="modal-overlay" id="compare-modal">
+        <div class="modal-content compare-modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="compare-modal-title">Compare Translations</h3>
+                <button class="modal-close" id="compare-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body" id="compare-modal-body">
+                <div class="compare-loader">
+                    <div class="spinner"></div>
+                    <p>Loading translations...</p>
+                </div>
+                <div class="compare-results" id="compare-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collections Manager Modal -->
+    <div class="modal-overlay" id="collections-modal">
+        <div class="modal-content collections-modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Manage Collections</h3>
+                <button class="modal-close" id="collections-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="collection-add-form">
+                    <input type="text" id="new-collection-input" class="collection-input" placeholder="New collection name..." maxlength="30">
+                    <button class="btn btn-primary btn-sm" id="add-collection-btn">Add</button>
+                </div>
+                <div class="collections-list" id="collections-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-text">
+                    &copy; <span id="copyright-year">2024</span> The Word. All rights reserved.
+                </p>
+                <p class="footer-attribution">
+                    Bible text provided by <a href="https://bible.helloao.org" target="_blank" rel="noopener noreferrer">HelloAO Bible API</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
