@@ -81,6 +81,8 @@ import androidx.compose.material.icons.outlined.Psychology
 import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
@@ -114,28 +116,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SheetState
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.background
 
-enum class TabItem(val title: String) {
-    Home("Home"),
-    Bible("Bible"),
-    Bookmarks("Bookmarks"),
-    Progress("Progress"),
-    Stories("Stories"),
-    Prayer("Prayer"),
-    Quiz("Quiz"),
-    About("About")
-}
 
-private fun tabIcon(tab: TabItem): ImageVector = when (tab) {
-    TabItem.Home -> Icons.Outlined.Home
-    TabItem.Bible -> Icons.AutoMirrored.Outlined.MenuBook
-    TabItem.Bookmarks -> Icons.Outlined.BookmarkBorder
-    TabItem.Progress -> Icons.Outlined.Timeline
-    TabItem.Stories -> Icons.Outlined.AutoStories
-    TabItem.Prayer -> Icons.Outlined.SelfImprovement
-    TabItem.Quiz -> Icons.Outlined.Psychology
-    TabItem.About -> Icons.Outlined.Info
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,6 +171,11 @@ fun TheWordApp(
     var isComparing by remember { mutableStateOf(false) }
     var scrollToVerse by remember { mutableStateOf<Int?>(null) }
     var selectedStory by remember { mutableStateOf<Story?>(null) }
+    var showSelectionSheet by remember { mutableStateOf(false) }
+    var showVersionSheet by remember { mutableStateOf(false) }
+
+    val bookSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val versionSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     fun loadChapter() {
         val book = selectedBook ?: return
@@ -253,11 +241,13 @@ fun TheWordApp(
             t to c
         }
             .onSuccess { (loadedTranslations, loadedCommentaries) ->
-                translations = loadedTranslations
+                val localOnly = defaultTranslations().filter { it.id.startsWith("local_") }
+                val merged = (localOnly + loadedTranslations).distinctBy { it.id }
+                translations = merged
                 commentaries = loadedCommentaries
-                localStoreState.saveCachedTranslations(loadedTranslations)
-                selectedTranslation = loadedTranslations.firstOrNull { item -> item.id == restoredReading?.translationId } ?: loadedTranslations.firstOrNull()
-                loadingText = if (loadedTranslations.isEmpty()) "No translations available." else "Connected"
+                localStoreState.saveCachedTranslations(merged)
+                selectedTranslation = merged.firstOrNull { item -> item.id == restoredReading?.translationId } ?: merged.firstOrNull()
+                loadingText = if (merged.isEmpty()) "No translations available." else "Connected"
                 offlineNotice = null
             }
             .onFailure {
@@ -326,11 +316,25 @@ fun TheWordApp(
         }
     }
 
-    val bottomItems = listOf(TabItem.Home, TabItem.Bible, TabItem.Bookmarks, TabItem.Stories, TabItem.Prayer)
+    val bottomItems = listOf(
+        TabItem.Home,
+        TabItem.Bible,
+        TabItem.Bookmarks,
+        TabItem.Stories,
+        TabItem.Prayer
+    )
 
     Scaffold(
         topBar = {
-            Column {
+            if (currentTab == TabItem.Bible) {
+                BibleTopBar(
+                    selectedBook = selectedBook,
+                    chapterInput = chapterInput,
+                    selectedTranslation = selectedTranslation,
+                    onBookClick = { showSelectionSheet = true },
+                    onVersionClick = { showVersionSheet = true }
+                )
+            } else {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
@@ -357,7 +361,7 @@ fun TheWordApp(
                         onClick = { currentTab = tab },
                         icon = { Icon(imageVector = tabIcon(tab), contentDescription = tab.title) },
                         label = { Text(tab.title) },
-                        modifier = Modifier.testTag("nav_${tab.name.lowercase()}"),
+                        modifier = Modifier.testTag("tab_${tab.name.lowercase()}"),
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -585,322 +589,143 @@ fun TheWordApp(
                 isComparing = false
             }
         }
-    }
-}
 
-@Composable
-private fun ProgressScreen(quizStats: com.batyaboyo.bibleapp.model.QuizStats, prayerLog: Map<String, Map<String, Boolean>>) {
-    val prayerStreak = remember(prayerLog) {
-        var streak = 0
-        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-        val cal = java.util.Calendar.getInstance()
-        for (i in 0 until 365) {
-            val dateStr = sdf.format(cal.time)
-            if (prayerLog.containsKey(dateStr)) {
-                streak++
-            } else {
-                if (i > 0) break // Allow today to not be logged yet
-            }
-            cal.add(java.util.Calendar.DAY_OF_YEAR, -1)
-        }
-        streak
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Text("Your Progress", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            HorizontalDivider()
-        }
-
-        item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Prayer Activity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text("Current Streak", style = MaterialTheme.typography.labelMedium)
-                            Text("$prayerStreak Days", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+        if (showSelectionSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showSelectionSheet = false },
+                sheetState = bookSheetState
+            ) {
+                BibleSelectionSheet(
+                    books = books,
+                    selectedBook = selectedBook,
+                    onBookSelected = { book ->
+                        selectedBook = book
+                        chapterInput = "1"
+                        verses = emptyList()
+                        bibleStatus = null
+                    },
+                    onChapterSelected = { chap ->
+                        chapterInput = chap.toString()
+                        loadChapter()
+                        scope.launch { bookSheetState.hide() }.invokeOnCompletion {
+                            if (!bookSheetState.isVisible) showSelectionSheet = false
                         }
-                        Icon(
-                            imageVector = Icons.Outlined.SelfImprovement,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Quiz Performance", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Accuracy", style = MaterialTheme.typography.labelMedium)
-                            val accuracy = if (quizStats.totalQuestions > 0) 
-                                (quizStats.correctAnswers * 100 / quizStats.totalQuestions) else 0
-                            Text("$accuracy%", style = MaterialTheme.typography.headlineSmall)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Streak", style = MaterialTheme.typography.labelMedium)
-                            Text("${quizStats.streak}", style = MaterialTheme.typography.headlineSmall)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Best", style = MaterialTheme.typography.labelMedium)
-                            Text("${quizStats.bestStreak}", style = MaterialTheme.typography.headlineSmall)
+                    },
+                    onDismiss = {
+                        scope.launch { bookSheetState.hide() }.invokeOnCompletion {
+                            if (!bookSheetState.isVisible) showSelectionSheet = false
                         }
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("Total Questions Answered: ${quizStats.totalQuestions}", style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PrayerScreen(prayers: List<Prayer>, onPrayed: (String) -> Unit) {
-    if (prayers.isEmpty()) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-            Text("Loading prayers...", style = MaterialTheme.typography.bodyLarge)
-        }
-        return
-    }
-
-    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-    var currentType by remember { mutableStateOf(if (hour < 17) "morning" else "evening") }
-
-    val filteredPrayers = remember(prayers, currentType) { prayers.filter { it.type == currentType } }
-    val dayOfYear = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR)
-
-    var selectedPrayer by remember(currentType) {
-        mutableStateOf(selectDailyPrayer(prayers, currentType, dayOfYear))
-    }
-
-    LaunchedEffect(prayers, currentType) {
-        if (selectedPrayer == null || selectedPrayer?.type != currentType) {
-            selectedPrayer = selectDailyPrayer(prayers, currentType, dayOfYear)
-        }
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Text(
-                text = if (currentType == "morning") "🌅 Morning Prayer" else "🌙 Evening Prayer",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = currentType == "morning",
-                    onClick = { currentType = "morning" },
-                    label = { Text("Morning") }
-                )
-                FilterChip(
-                    selected = currentType == "evening",
-                    onClick = { currentType = "evening" },
-                    label = { Text("Evening") }
                 )
             }
-            HorizontalDivider()
         }
 
-        item {
-            if (selectedPrayer == null) {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            text = "No prayers available for ${currentType.replaceFirstChar { it.uppercase() }}.",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-            } else {
-                val prayer = selectedPrayer ?: return@item
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(prayer.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                "\"${prayer.verse}\"",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontStyle = FontStyle.Italic,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            Text(
-                                "— ${prayer.verseRef}",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Medium
-                            )
+        if (showVersionSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showVersionSheet = false },
+                sheetState = versionSheetState
+            ) {
+                VersionSelectionSheet(
+                    translations = translations,
+                    selectedTranslation = selectedTranslation,
+                    onTranslationSelected = { translation ->
+                        selectedTranslation = translation
+                        verses = emptyList()
+                        bibleStatus = null
+                        scope.launch { versionSheetState.hide() }.invokeOnCompletion {
+                            if (!versionSheetState.isVisible) showVersionSheet = false
                         }
-
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                        Text(prayer.text, style = MaterialTheme.typography.bodyMedium)
-
-                        Text(
-                            prayer.closing,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            fontStyle = FontStyle.Italic
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                modifier = Modifier.weight(1f),
-                                onClick = { onPrayed(currentType) }
-                            ) {
-                                Text("I Prayed")
-                            }
-                            OutlinedButton(
-                                modifier = Modifier.weight(1f),
-                                onClick = {
-                                    selectedPrayer = filteredPrayers.randomOrNull() ?: selectedPrayer
-                                }
-                            ) {
-                                Text("Another")
-                            }
+                    },
+                    onDismiss = {
+                        scope.launch { versionSheetState.hide() }.invokeOnCompletion {
+                            if (!versionSheetState.isVisible) showVersionSheet = false
                         }
                     }
-                }
+                )
             }
         }
     }
 }
-
-
-
-private fun defaultTranslations(): List<Translation> = listOf(
-    Translation("local_niv", "New International Version (Offline)", "NIV"),
-    Translation("local_kjv", "King James Version (Offline)", "KJV"),
-    Translation("BSB", "Berean Standard Bible", "BSB"),
-    Translation("eng_web", "World English Bible", "WEB"),
-    Translation("eng_kjv", "King James Version", "KJV"),
-    Translation("eng_kjva", "King James Version w/ Apocrypha", "KJVA"),
-    Translation("eng_ylt", "Young's Literal Translation", "YLT")
+private fun defaultTranslations(): List<com.batyaboyo.bibleapp.model.Translation> = listOf(
+    com.batyaboyo.bibleapp.model.Translation("local_niv", "New International Version (Offline)", "NIV"),
+    com.batyaboyo.bibleapp.model.Translation("local_kjv", "King James Version (Offline)", "KJV"),
+    com.batyaboyo.bibleapp.model.Translation("BSB", "Berean Standard Bible", "BSB"),
+    com.batyaboyo.bibleapp.model.Translation("eng_web", "World English Bible", "WEB"),
+    com.batyaboyo.bibleapp.model.Translation("eng_kjv", "King James Version", "KJV"),
+    com.batyaboyo.bibleapp.model.Translation("eng_kjva", "King James Version w/ Apocrypha", "KJVA"),
+    com.batyaboyo.bibleapp.model.Translation("eng_ylt", "Young's Literal Translation", "YLT")
 )
 
-private fun getOldTestamentBooks(books: List<Book>): List<Book> {
-    val otIds = listOf(
-        "GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI", "1CH", "2CH",
-        "EZR", "NEH", "EST", "JOB", "PSA", "PRO", "ECC", "SNG", "ISA", "JER", "LAM", "EZK", "DAN", "HOS",
-        "JOL", "AMO", "OBA", "JON", "MIC", "NAM", "HAB", "ZEP", "HAG", "ZEC", "MAL"
-    )
-    return books.filter { it.id.uppercase() in otIds }
-}
-
-private fun getNewTestamentBooks(books: List<Book>): List<Book> {
-    val ntIds = listOf(
-        "MAT", "MRK", "LUK", "JHN", "ACT", "ROM", "1CO", "2CO", "GAL", "EPH", "PHP", "COL", "1TH", "2TH",
-        "1TI", "2TI", "TIT", "PHM", "HEB", "JAS", "1PE", "2PE", "1JN", "2JN", "3JN", "JUD", "REV"
-    )
-    return books.filter { it.id.uppercase() in ntIds }
-}
-
-private fun isOldTestament(bookId: String): Boolean {
-    val otIds = listOf(
-        "GEN", "EXO", "LEV", "NUM", "DEU", "JOS", "JDG", "RUT", "1SA", "2SA", "1KI", "2KI", "1CH", "2CH",
-        "EZR", "NEH", "EST", "JOB", "PSA", "PRO", "ECC", "SNG", "ISA", "JER", "LAM", "EZK", "DAN", "HOS",
-        "JOL", "AMO", "OBA", "JON", "MIC", "NAM", "HAB", "ZEP", "HAG", "ZEC", "MAL"
-    )
-    return bookId.uppercase() in otIds
-}
-
-private fun defaultBooks(): List<Book> = listOf(
-    Book("GEN", "Genesis", 50),
-    Book("EXO", "Exodus", 40),
-    Book("LEV", "Leviticus", 27),
-    Book("NUM", "Numbers", 36),
-    Book("DEU", "Deuteronomy", 34),
-    Book("JOS", "Joshua", 24),
-    Book("JDG", "Judges", 21),
-    Book("RUT", "Ruth", 4),
-    Book("1SA", "1 Samuel", 31),
-    Book("2SA", "2 Samuel", 24),
-    Book("1KI", "1 Kings", 22),
-    Book("2KI", "2 Kings", 25),
-    Book("1CH", "1 Chronicles", 29),
-    Book("2CH", "2 Chronicles", 36),
-    Book("EZR", "Ezra", 10),
-    Book("NEH", "Nehemiah", 13),
-    Book("EST", "Esther", 10),
-    Book("JOB", "Job", 42),
-    Book("PSA", "Psalms", 150),
-    Book("PRO", "Proverbs", 31),
-    Book("ECC", "Ecclesiastes", 12),
-    Book("SNG", "Song of Songs", 8),
-    Book("ISA", "Isaiah", 66),
-    Book("JER", "Jeremiah", 52),
-    Book("LAM", "Lamentations", 5),
-    Book("EZK", "Ezekiel", 48),
-    Book("DAN", "Daniel", 12),
-    Book("HOS", "Hosea", 14),
-    Book("JOL", "Joel", 3),
-    Book("AMO", "Amos", 9),
-    Book("OBA", "Obadiah", 1),
-    Book("JON", "Jonah", 4),
-    Book("MIC", "Micah", 7),
-    Book("NAM", "Nahum", 3),
-    Book("HAB", "Habakkuk", 3),
-    Book("ZEP", "Zephaniah", 3),
-    Book("HAG", "Haggai", 2),
-    Book("ZEC", "Zechariah", 14),
-    Book("MAL", "Malachi", 4),
-    Book("MAT", "Matthew", 28),
-    Book("MRK", "Mark", 16),
-    Book("LUK", "Luke", 24),
-    Book("JHN", "John", 21),
-    Book("ACT", "Acts", 28),
-    Book("ROM", "Romans", 16),
-    Book("1CO", "1 Corinthians", 16),
-    Book("2CO", "2 Corinthians", 13),
-    Book("GAL", "Galatians", 6),
-    Book("EPH", "Ephesians", 6),
-    Book("PHP", "Philippians", 4),
-    Book("COL", "Colossians", 4),
-    Book("1TH", "1 Thessalonians", 5),
-    Book("2TH", "2 Thessalonians", 3),
-    Book("1TI", "1 Timothy", 6),
-    Book("2TI", "2 Timothy", 4),
-    Book("TIT", "Titus", 3),
-    Book("PHM", "Philemon", 1),
-    Book("HEB", "Hebrews", 13),
-    Book("JAS", "James", 5),
-    Book("1PE", "1 Peter", 5),
-    Book("2PE", "2 Peter", 3),
-    Book("1JN", "1 John", 5),
-    Book("2JN", "2 John", 1),
-    Book("3JN", "3 John", 1),
-    Book("JUD", "Jude", 1),
-    Book("REV", "Revelation", 22)
+private fun defaultBooks(): List<com.batyaboyo.bibleapp.model.Book> = listOf(
+    com.batyaboyo.bibleapp.model.Book("GEN", "Genesis", 50),
+    com.batyaboyo.bibleapp.model.Book("EXO", "Exodus", 40),
+    com.batyaboyo.bibleapp.model.Book("LEV", "Leviticus", 27),
+    com.batyaboyo.bibleapp.model.Book("NUM", "Numbers", 36),
+    com.batyaboyo.bibleapp.model.Book("DEU", "Deuteronomy", 34),
+    com.batyaboyo.bibleapp.model.Book("JOS", "Joshua", 24),
+    com.batyaboyo.bibleapp.model.Book("JDG", "Judges", 21),
+    com.batyaboyo.bibleapp.model.Book("RUT", "Ruth", 4),
+    com.batyaboyo.bibleapp.model.Book("1SA", "1 Samuel", 31),
+    com.batyaboyo.bibleapp.model.Book("2SA", "2 Samuel", 24),
+    com.batyaboyo.bibleapp.model.Book("1KI", "1 Kings", 22),
+    com.batyaboyo.bibleapp.model.Book("2KI", "2 Kings", 25),
+    com.batyaboyo.bibleapp.model.Book("1CH", "1 Chronicles", 29),
+    com.batyaboyo.bibleapp.model.Book("2CH", "2 Chronicles", 36),
+    com.batyaboyo.bibleapp.model.Book("EZR", "Ezra", 10),
+    com.batyaboyo.bibleapp.model.Book("NEH", "Nehemiah", 13),
+    com.batyaboyo.bibleapp.model.Book("EST", "Esther", 10),
+    com.batyaboyo.bibleapp.model.Book("JOB", "Job", 42),
+    com.batyaboyo.bibleapp.model.Book("PSA", "Psalms", 150),
+    com.batyaboyo.bibleapp.model.Book("PRO", "Proverbs", 31),
+    com.batyaboyo.bibleapp.model.Book("ECC", "Ecclesiastes", 12),
+    com.batyaboyo.bibleapp.model.Book("SNG", "Song of Songs", 8),
+    com.batyaboyo.bibleapp.model.Book("ISA", "Isaiah", 66),
+    com.batyaboyo.bibleapp.model.Book("JER", "Jeremiah", 52),
+    com.batyaboyo.bibleapp.model.Book("LAM", "Lamentations", 5),
+    com.batyaboyo.bibleapp.model.Book("EZK", "Ezekiel", 48),
+    com.batyaboyo.bibleapp.model.Book("DAN", "Daniel", 12),
+    com.batyaboyo.bibleapp.model.Book("HOS", "Hosea", 14),
+    com.batyaboyo.bibleapp.model.Book("JOL", "Joel", 3),
+    com.batyaboyo.bibleapp.model.Book("AMO", "Amos", 9),
+    com.batyaboyo.bibleapp.model.Book("OBA", "Obadiah", 1),
+    com.batyaboyo.bibleapp.model.Book("JON", "Jonah", 4),
+    com.batyaboyo.bibleapp.model.Book("MIC", "Micah", 7),
+    com.batyaboyo.bibleapp.model.Book("NAM", "Nahum", 3),
+    com.batyaboyo.bibleapp.model.Book("HAB", "Habakkuk", 3),
+    com.batyaboyo.bibleapp.model.Book("ZEP", "Zephaniah", 3),
+    com.batyaboyo.bibleapp.model.Book("HAG", "Haggai", 2),
+    com.batyaboyo.bibleapp.model.Book("ZEC", "Zechariah", 14),
+    com.batyaboyo.bibleapp.model.Book("MAL", "Malachi", 4),
+    com.batyaboyo.bibleapp.model.Book("MAT", "Matthew", 28),
+    com.batyaboyo.bibleapp.model.Book("MRK", "Mark", 16),
+    com.batyaboyo.bibleapp.model.Book("LUK", "Luke", 24),
+    com.batyaboyo.bibleapp.model.Book("JHN", "John", 21),
+    com.batyaboyo.bibleapp.model.Book("ACT", "Acts", 28),
+    com.batyaboyo.bibleapp.model.Book("ROM", "Romans", 16),
+    com.batyaboyo.bibleapp.model.Book("1CO", "1 Corinthians", 16),
+    com.batyaboyo.bibleapp.model.Book("2CO", "2 Corinthians", 13),
+    com.batyaboyo.bibleapp.model.Book("GAL", "Galatians", 6),
+    com.batyaboyo.bibleapp.model.Book("EPH", "Ephesians", 6),
+    com.batyaboyo.bibleapp.model.Book("PHP", "Philippians", 4),
+    com.batyaboyo.bibleapp.model.Book("COL", "Colossians", 4),
+    com.batyaboyo.bibleapp.model.Book("1TH", "1 Thessalonians", 5),
+    com.batyaboyo.bibleapp.model.Book("2TH", "2 Thessalonians", 3),
+    com.batyaboyo.bibleapp.model.Book("1TI", "1 Timothy", 6),
+    com.batyaboyo.bibleapp.model.Book("2TI", "2 Timothy", 4),
+    com.batyaboyo.bibleapp.model.Book("TIT", "Titus", 3),
+    com.batyaboyo.bibleapp.model.Book("PHM", "Philemon", 1),
+    com.batyaboyo.bibleapp.model.Book("HEB", "Hebrews", 13),
+    com.batyaboyo.bibleapp.model.Book("JAS", "James", 5),
+    com.batyaboyo.bibleapp.model.Book("1PE", "1 Peter", 5),
+    com.batyaboyo.bibleapp.model.Book("2PE", "2 Peter", 3),
+    com.batyaboyo.bibleapp.model.Book("1JN", "1 John", 5),
+    com.batyaboyo.bibleapp.model.Book("2JN", "2 John", 1),
+    com.batyaboyo.bibleapp.model.Book("3JN", "3 John", 1),
+    com.batyaboyo.bibleapp.model.Book("JUD", "Jude", 1),
+    com.batyaboyo.bibleapp.model.Book("REV", "Revelation", 22)
 )
 
-private suspend fun loadDailyVerse(api: BibleApi, translationId: String, onReady: (Verse?) -> Unit) {
+private suspend fun loadDailyVerse(api: com.batyaboyo.bibleapp.data.BibleApi, translationId: String, onReady: (com.batyaboyo.bibleapp.model.Verse?) -> Unit) {
     val picks = listOf(
         Triple("JHN", 3, 16),
         Triple("PSA", 23, 1),
@@ -913,1128 +738,4 @@ private suspend fun loadDailyVerse(api: BibleApi, translationId: String, onReady
         api.fetchChapter(translationId, pick.first, pick.second)
             .firstOrNull { it.number == pick.third }
     }.onSuccess(onReady).onFailure { onReady(null) }
-}
-
-internal fun selectDailyPrayer(prayers: List<Prayer>, type: String, dayOfYear: Int): Prayer? {
-    val filtered = prayers.filter { it.type == type }
-    if (filtered.isEmpty()) return null
-    return filtered[dayOfYear.mod(filtered.size)]
-}
-
-@Composable
-private fun HomeScreen(
-    dailyVerse: Verse?,
-    version: String,
-    status: String,
-    bookmarksCount: Int,
-    offlineNotice: String?,
-    morningPrayer: Prayer?,
-    eveningPrayer: Prayer?,
-    dailyDevotion: Devotion?,
-    storyOfDay: Story?,
-    onFeatureClick: (TabItem) -> Unit,
-    onStoryClick: (Story) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("The Word", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Text("Study Scripture with saved progress, bookmarks, stories, and quiz.", style = MaterialTheme.typography.bodyMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialTheme.shapes.large
-                        ) {
-                            Text(
-                                text = "Bookmarks: $bookmarksCount",
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                        if (version.isNotBlank()) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.large
-                            ) {
-                                Text(
-                                    text = "Version: $version",
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!offlineNotice.isNullOrBlank()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-                ) {
-                    Text(
-                        text = offlineNotice,
-                        modifier = Modifier.padding(14.dp),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        }
-
-        item {
-            val gradient = Brush.linearGradient(
-                colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
-            )
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Box(modifier = Modifier.background(gradient).padding(24.dp)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "Verse of the Day",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                        )
-                        if (dailyVerse == null) {
-                            Text(status, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimary)
-                        } else {
-                            Text(
-                                "\"${dailyVerse.text}\"",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
-                            Text(
-                                "${dailyVerse.reference} ($version)",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-
-
-        if (morningPrayer != null || eveningPrayer != null) {
-            item {
-                Text("Daily Prayers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-            }
-            item {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    morningPrayer?.let { p ->
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            onClick = { onFeatureClick(TabItem.Prayer) },
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f))
-                        ) {
-                            Column(Modifier.padding(12.dp)) {
-                                Icon(Icons.Outlined.Home, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                Text("Morning", style = MaterialTheme.typography.labelMedium)
-                                Spacer(Modifier.height(4.dp))
-                                Text(p.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            }
-                        }
-                    }
-                    eveningPrayer?.let { p ->
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            onClick = { onFeatureClick(TabItem.Prayer) },
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f))
-                        ) {
-                            Column(Modifier.padding(12.dp)) {
-                                Icon(Icons.Outlined.Home, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
-                                Text("Evening", style = MaterialTheme.typography.labelMedium)
-                                Spacer(Modifier.height(4.dp))
-                                Text(p.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        dailyDevotion?.let { devotion ->
-            item {
-                Text("Daily Devotion", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-            }
-            item {
-                ElevatedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
-                    )
-                ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(devotion.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text(devotion.reference, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                        Text(devotion.message, style = MaterialTheme.typography.bodyMedium, maxLines = 4, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-            }
-        }
-
-        storyOfDay?.let { story ->
-            item {
-                Text("Story of the Day", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-            }
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onStoryClick(story) }
-                ) {
-                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(story.icon ?: "📖", style = MaterialTheme.typography.headlineSmall)
-                            }
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(story.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text(story.snippets, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
-                    }
-                }
-            }
-        }
-
-        item {
-            Text("Explore More", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-        }
-
-        val features = listOf(TabItem.Quiz, TabItem.Progress, TabItem.About)
-        items(features.chunked(2)) { row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                row.forEach { tab ->
-                    Card(
-                        modifier = Modifier.weight(1f).height(100.dp),
-                        onClick = { onFeatureClick(tab) },
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-                        )
-                    ) {
-                        Column(
-                            Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(tabIcon(tab), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
-                            Spacer(Modifier.height(8.dp))
-                            Text(tab.title, style = MaterialTheme.typography.labelLarge)
-                        }
-                    }
-                }
-                if (row.size == 1) {
-                    Spacer(Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun BibleScreen(
-    translations: List<Translation>,
-    selectedTranslation: Translation?,
-    onTranslationSelected: (Translation) -> Unit,
-    books: List<Book>,
-    selectedBook: Book?,
-    onBookSelected: (Book) -> Unit,
-    chapterInput: String,
-    onChapterChanged: (String) -> Unit,
-    verses: List<Verse>,
-    status: String?,
-    isLoading: Boolean,
-    onLoadChapter: () -> Unit,
-    onBookmarkVerse: (Verse) -> Unit,
-    highlights: List<com.batyaboyo.bibleapp.model.Highlight>,
-    onHighlightVerse: (String, String, String) -> Unit,
-    commentaries: List<com.batyaboyo.bibleapp.model.Commentary>,
-    selectedCommentary: com.batyaboyo.bibleapp.model.Commentary?,
-    onCommentarySelected: (com.batyaboyo.bibleapp.model.Commentary?) -> Unit,
-    commentaryChapter: com.batyaboyo.bibleapp.model.CommentaryChapter?,
-    isCommentaryLoading: Boolean,
-    onCompareVerse: (Verse) -> Unit,
-    scrollToVerse: Int? = null,
-    onScrollComplete: () -> Unit = {}
-) {
-    var showSelectionSheet by remember { mutableStateOf(false) }
-    var showVersionSheet by remember { mutableStateOf(false) }
-    var showHighlightDialog by remember { mutableStateOf<Verse?>(null) }
-    var searchQuery by remember { mutableStateOf("") }
-
-    val filteredVerses = remember(searchQuery, verses) {
-        if (searchQuery.isBlank()) verses
-        else verses.filter { it.text.contains(searchQuery, ignoreCase = true) || it.reference.contains(searchQuery, ignoreCase = true) }
-    }
-
-    val listState = rememberLazyListState()
-
-    LaunchedEffect(scrollToVerse, filteredVerses) {
-        val verseToScroll = scrollToVerse
-        if (verseToScroll != null && filteredVerses.isNotEmpty()) {
-            val verseIndex = filteredVerses.indexOfFirst { it.number == verseToScroll }
-            if (verseIndex >= 0) {
-                var offset = 6
-                if (status != null) offset++
-                if (commentaryChapter != null) {
-                    offset++
-                    offset += commentaryChapter.chapter?.content?.size ?: 0
-                } else if (isCommentaryLoading) {
-                    offset++
-                }
-                listState.animateScrollToItem(offset + verseIndex)
-                onScrollComplete()
-            }
-        }
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Premium Sticky Navigation Bar
-        Surface(
-            tonalElevation = 6.dp,
-            shadowElevation = 8.dp,
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(Modifier.padding(8.dp)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Location & Testament Selector
-                    Surface(
-                        onClick = { showSelectionSheet = true },
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Row(
-                            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.AutoMirrored.Outlined.MenuBook, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                text = "${selectedBook?.name ?: "Select Book"} ${chapterInput}",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, modifier = Modifier.graphicsLayer(rotationZ = 90f).size(20.dp))
-                        }
-                    }
-
-                    Spacer(Modifier.width(10.dp))
-
-                    // Version Selector
-                    Surface(
-                        onClick = { showVersionSheet = true },
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
-                    ) {
-                        Row(
-                            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = selectedTranslation?.shortName ?: "VER",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.tertiary
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .weight(1f),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Search Verses
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    label = { Text("Search verses...") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("search_input"),
-                    leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null) },
-                    trailingIcon = if (searchQuery.isNotEmpty()) {
-                        {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(imageVector = Icons.Default.Close, contentDescription = "Clear")
-                            }
-                        }
-                    } else null
-                )
-            }
-
-            // Status Message
-            if (status != null) {
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("status_text"),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        Text(status, modifier = Modifier.padding(12.dp), style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-            }
-
-            // Commentary Display
-            if (commentaryChapter != null) {
-                item {
-                    Text(
-                        "Commentary",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = 8.dp),
-                        fontWeight = FontWeight.Bold
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                }
-                items(commentaryChapter.chapter?.content ?: emptyList()) { entry ->
-                    ElevatedCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        colors = CardDefaults.elevatedCardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
-                        )
-                    ) {
-                        Column(Modifier.padding(12.dp)) {
-                            if (!entry.number.isNullOrBlank()) {
-                                Text(
-                                    "Verses ${entry.number}+",
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-                            Text(
-                                text = entry.content?.joinToString("\n\n") ?: "",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-            } else if (isCommentaryLoading) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    }
-                }
-            }
-
-            // Verses Display
-            items(filteredVerses) { verse ->
-                val highlight = highlights.find { it.reference == verse.reference }
-                val bgColor = when (highlight?.color) {
-                    "yellow" -> androidx.compose.ui.graphics.Color(0xFFFFF176)
-                    "green" -> androidx.compose.ui.graphics.Color(0xFFAED581)
-                    "blue" -> androidx.compose.ui.graphics.Color(0xFF81D4FA)
-                    "pink" -> androidx.compose.ui.graphics.Color(0xFFF48FB1)
-                    "purple" -> androidx.compose.ui.graphics.Color(0xFFCE93D8)
-                    else -> MaterialTheme.colorScheme.surface
-                }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                    colors = CardDefaults.cardColors(containerColor = bgColor)
-                ) {
-                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            verse.reference,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                        Text(verse.text, style = MaterialTheme.typography.bodyLarge)
-
-                        if (!highlight?.note.isNullOrBlank()) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                shape = MaterialTheme.shapes.small,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    highlight!!.note,
-                                    modifier = Modifier.padding(8.dp),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontStyle = FontStyle.Italic
-                                )
-                            }
-                        }
-
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { onCompareVerse(verse) }) { Text("Compare") }
-                            TextButton(onClick = { showHighlightDialog = verse }) {
-                                Text(if (highlight == null) "Highlight" else "Edit Note")
-                            }
-                            TextButton(onClick = { onBookmarkVerse(verse) }) { Text("Bookmark") }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showSelectionSheet) {
-        BibleSelectionSheet(
-            books = books,
-            selectedBook = selectedBook,
-            onBookSelected = onBookSelected,
-            onChapterSelected = { onChapterChanged(it.toString()); onLoadChapter() },
-            onDismiss = { showSelectionSheet = false }
-        )
-    }
-
-    if (showVersionSheet) {
-        VersionSelectionSheet(
-            translations = translations,
-            selectedTranslation = selectedTranslation,
-            onTranslationSelected = onTranslationSelected,
-            onDismiss = { showVersionSheet = false }
-        )
-    }
-
-    if (showHighlightDialog != null) {
-        val verse = showHighlightDialog!!
-        val existing = highlights.find { it.reference == verse.reference }
-        HighlightDialog(
-            verse = verse,
-            existingHighlight = existing,
-            onDismiss = { showHighlightDialog = null },
-            onSave = { color, note ->
-                onHighlightVerse(verse.reference, color, note)
-                showHighlightDialog = null
-            }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun HighlightDialog(
-    verse: Verse,
-    existingHighlight: com.batyaboyo.bibleapp.model.Highlight?,
-    onDismiss: () -> Unit,
-    onSave: (String, String) -> Unit
-) {
-    var selectedColor by remember { mutableStateOf(existingHighlight?.color ?: "none") }
-    var note by remember { mutableStateOf(existingHighlight?.note ?: "") }
-    
-    val colors = listOf(
-        "yellow" to androidx.compose.ui.graphics.Color(0xFFFFF176),
-        "green" to androidx.compose.ui.graphics.Color(0xFFAED581),
-        "blue" to androidx.compose.ui.graphics.Color(0xFF81D4FA),
-        "pink" to androidx.compose.ui.graphics.Color(0xFFF48FB1),
-        "purple" to androidx.compose.ui.graphics.Color(0xFFCE93D8)
-    )
-
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 6.dp,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Text(text = "Highlight Verse", style = MaterialTheme.typography.headlineSmall)
-                Text(text = verse.reference, style = MaterialTheme.typography.titleMedium)
-                
-                Text(text = "Color", style = MaterialTheme.typography.labelLarge)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    colors.forEach { (name, color) ->
-                        Surface(
-                            onClick = { selectedColor = name },
-                            color = color,
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            border = if (selectedColor == name) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-                            modifier = Modifier.size(40.dp)
-                        ) {}
-                    }
-                    Surface(
-                        onClick = { selectedColor = "none" },
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = androidx.compose.foundation.shape.CircleShape,
-                        border = if (selectedColor == "none") androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(imageVector = androidx.compose.material.icons.Icons.Default.Close, contentDescription = "None", modifier = Modifier.padding(8.dp))
-                    }
-                }
-
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Add a note") },
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = { onSave(selectedColor, note) }) { Text("Save") }
-                }
-            }
-        }
-    }
-}
-@Composable
-private fun BookmarksScreen(
-    bookmarks: List<Bookmark>,
-    collections: List<String>,
-    onRemove: (Bookmark) -> Unit,
-    onAddCollection: (String) -> Unit,
-    onRemoveCollection: (String) -> Unit,
-    onMoveToCollection: (Bookmark, String?) -> Unit
-) {
-    var newCollName by remember { mutableStateOf("") }
-    var selectedCollection by remember { mutableStateOf<String?>(null) }
-
-    val filteredBookmarks = remember(bookmarks, selectedCollection) {
-        if (selectedCollection == null) bookmarks
-        else bookmarks.filter { it.collection == selectedCollection }
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Text("Bookmark Collections", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = newCollName,
-                    onValueChange = { newCollName = it },
-                    label = { Text("New Collection") },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true
-                )
-                Button(onClick = { 
-                    if (newCollName.isNotBlank()) {
-                        onAddCollection(newCollName)
-                        newCollName = ""
-                    }
-                }) { Text("Add") }
-            }
-        }
-
-        item {
-            ScrollableTabRow(
-                selectedTabIndex = if (selectedCollection == null) 0 else collections.indexOf(selectedCollection) + 1,
-                edgePadding = 0.dp,
-                containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                divider = {}
-            ) {
-                Tab(
-                    selected = selectedCollection == null,
-                    onClick = { selectedCollection = null },
-                    text = { Text("All") }
-                )
-                collections.forEach { coll ->
-                    Tab(
-                        selected = selectedCollection == coll,
-                        onClick = { selectedCollection = coll },
-                        text = { 
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(coll)
-                                IconButton(onClick = { onRemoveCollection(coll) }, modifier = Modifier.size(16.dp)) {
-                                    Icon(Icons.Default.Close, contentDescription = "Delete", modifier = Modifier.size(12.dp))
-                                }
-                            }
-                        }
-                    )
-                }
-            }
-        }
-
-        if (filteredBookmarks.isEmpty()) {
-            item {
-                Text(
-                    if (selectedCollection == null) "No bookmarks yet." else "Empty collection.",
-                    modifier = Modifier.fillMaxWidth().padding(32.dp),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        items(filteredBookmarks) { bookmark ->
-            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(bookmark.reference, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-                        Text(bookmark.version.uppercase(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text(bookmark.text, style = MaterialTheme.typography.bodyMedium)
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        var moveMenuExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            TextButton(onClick = { moveMenuExpanded = true }) {
-                                Text("Move to", style = MaterialTheme.typography.labelSmall)
-                            }
-                            androidx.compose.material3.DropdownMenu(expanded = moveMenuExpanded, onDismissRequest = { moveMenuExpanded = false }) {
-                                androidx.compose.material3.DropdownMenuItem(text = { Text("None") }, onClick = { onMoveToCollection(bookmark, null); moveMenuExpanded = false })
-                                collections.forEach { coll ->
-                                    androidx.compose.material3.DropdownMenuItem(text = { Text(coll) }, onClick = { onMoveToCollection(bookmark, coll); moveMenuExpanded = false })
-                                }
-                            }
-                        }
-                        TextButton(onClick = { onRemove(bookmark) }) {
-                            Text("Remove", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun StoriesScreen(stories: List<Story>, onStoryClick: (Story) -> Unit) {
-    var filter by remember { mutableStateOf("all") }
-    val shown = stories.filter { filter == "all" || it.testament == filter }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text("Bible Stories", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
-                FilterChip(
-                    selected = filter == "all",
-                    onClick = { filter = "all" },
-                    label = { Text("All") }
-                )
-                FilterChip(
-                    selected = filter == "old-testament",
-                    onClick = { filter = "old-testament" },
-                    label = { Text("Old") }
-                )
-                FilterChip(
-                    selected = filter == "new-testament",
-                    onClick = { filter = "new-testament" },
-                    label = { Text("New") }
-                )
-            }
-            HorizontalDivider()
-        }
-
-        items(shown) { story ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onStoryClick(story) }
-            ) {
-                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(story.icon ?: "📖", fontSize = 32.sp, modifier = Modifier.padding(end = 12.dp))
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
-                        Text(story.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                        story.keyVerse?.ref?.let {
-                            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                        }
-                        val snippet = story.content.firstOrNull()?.text?.take(80)?.plus("...") ?: ""
-                        Text(snippet, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun StoryDetailDialog(
-    story: Story,
-    onDismiss: () -> Unit,
-    onGoToBible: () -> Unit
-) {
-    androidx.compose.ui.window.Dialog(
-        onDismissRequest = onDismiss,
-        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.surface
-        ) {
-            Column(Modifier.fillMaxSize()) {
-                // Header
-                CenterAlignedTopAppBar(
-                    title = { Text(story.title, style = MaterialTheme.typography.titleMedium) },
-                    navigationIcon = {
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.Close, "Close")
-                        }
-                    },
-                    actions = {
-                        story.keyVerse?.let {
-                            TextButton(onClick = onGoToBible) {
-                                Text("Read in Bible")
-                            }
-                        }
-                    }
-                )
-
-                LazyColumn(
-                    modifier = Modifier.weight(1f).padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp)
-                ) {
-                    item {
-                        Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
-                            Text(story.icon ?: "📖", fontSize = 64.sp)
-                        }
-                    }
-
-                    items(story.content) { page ->
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            page.title?.let {
-                                Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            }
-                            Text(page.text, style = MaterialTheme.typography.bodyLarge, lineHeight = 28.sp)
-                        }
-                    }
-
-                    story.moral?.let {
-                        item {
-                            Card(
-                                colors = androidx.compose.material3.CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                )
-                            ) {
-                                Column(Modifier.padding(16.dp)) {
-                                    Text("The Moral", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                    Text(it, style = MaterialTheme.typography.bodyMedium)
-                                }
-                            }
-                        }
-                    }
-
-                    story.keyVerse?.let {
-                        item {
-                            Column(Modifier.padding(vertical = 8.dp)) {
-                                Text("Key Verse", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
-                                Text("\"${it.text}\"", style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
-                                Text("- ${it.ref}", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuizScreen(questions: List<com.batyaboyo.bibleapp.model.QuizQuestion>, onResult: (Boolean) -> Unit) {
-    val quizSet = remember(questions) { questions.shuffled().take(10) }
-    var idx by remember { mutableIntStateOf(0) }
-    var score by remember { mutableIntStateOf(0) }
-    var answered by remember { mutableStateOf(false) }
-    var chosen by remember { mutableIntStateOf(-1) }
-
-    if (quizSet.isEmpty()) {
-        Column(Modifier.fillMaxSize().padding(16.dp)) {
-            Text("Quiz data missing.")
-        }
-        return
-    }
-
-    val q = quizSet[idx]
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text("Daily Quiz", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text("Question ${idx + 1} of ${quizSet.size} | Score: $score")
-            HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
-        }
-
-        item {
-            Text(q.category, style = MaterialTheme.typography.labelMedium)
-            Text(q.question, style = MaterialTheme.typography.titleMedium)
-        }
-
-        items(q.options.indices.toList()) { optionIdx ->
-            val option = q.options[optionIdx]
-            val btnColors = if (answered) {
-                if (optionIdx == q.answerIndex) {
-                    androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                        disabledContainerColor = androidx.compose.ui.graphics.Color(0xFF4CAF50),
-                        disabledContentColor = androidx.compose.ui.graphics.Color.White
-                    )
-                } else if (optionIdx == chosen) {
-                    androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                        disabledContainerColor = androidx.compose.ui.graphics.Color(0xFFE53935),
-                        disabledContentColor = androidx.compose.ui.graphics.Color.White
-                    )
-                } else {
-                    androidx.compose.material3.ButtonDefaults.outlinedButtonColors()
-                }
-            } else {
-                androidx.compose.material3.ButtonDefaults.outlinedButtonColors()
-            }
-
-            OutlinedButton(
-                onClick = {
-                    if (!answered) {
-                        chosen = optionIdx
-                        answered = true
-                        val isCorrect = optionIdx == q.answerIndex
-                        if (isCorrect) score += 1
-                        onResult(isCorrect)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !answered,
-                colors = btnColors
-            ) {
-                Text(option)
-            }
-        }
-
-        item {
-            if (answered) {
-                val correct = chosen == q.answerIndex
-                Text(if (correct) "Correct!" else "Not quite...")
-                if (q.reference.isNotBlank()) Text("Reference: ${q.reference}", style = MaterialTheme.typography.bodySmall)
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                if (idx < quizSet.lastIndex) {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            idx += 1
-                            answered = false
-                            chosen = -1
-                        }
-                    ) {
-                        Text("Next Question")
-                    }
-                } else {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = androidx.compose.material3.CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    ) {
-                        Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Quiz Complete!", style = MaterialTheme.typography.titleLarge)
-                            Text("Your final score: $score / ${quizSet.size}")
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(onClick = {
-                                idx = 0
-                                score = 0
-                                answered = false
-                                chosen = -1
-                            }) {
-                                Text("Restart Quiz")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun BibleSelectionSheet(
-    books: List<Book>,
-    selectedBook: Book?,
-    onBookSelected: (Book) -> Unit,
-    onChapterSelected: (Int) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var selectedTestament by remember { mutableStateOf(if (selectedBook != null && !isOldTestament(selectedBook.id)) "new" else "old") }
-    var showingChapters by remember { mutableStateOf(selectedBook != null) }
-    var currentBook by remember { mutableStateOf(selectedBook) }
-
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ) {
-        Column(modifier = Modifier.fillMaxHeight(0.85f).padding(16.dp)) {
-            Text("Select Book & Chapter", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(16.dp))
-            
-            TabRow(selectedTabIndex = if (selectedTestament == "old") 0 else 1) {
-                Tab(selected = selectedTestament == "old", onClick = { selectedTestament = "old"; showingChapters = false }) {
-                    Text("Old Testament", modifier = Modifier.padding(12.dp))
-                }
-                Tab(selected = selectedTestament == "new", onClick = { selectedTestament = "new"; showingChapters = false }) {
-                    Text("New Testament", modifier = Modifier.padding(12.dp))
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            if (!showingChapters) {
-                val filteredList: List<Book> = if (selectedTestament == "old") getOldTestamentBooks(books) else getNewTestamentBooks(books)
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(filteredList) { bookItem ->
-                        Surface(
-                            onClick = { 
-                                currentBook = bookItem
-                                showingChapters = true
-                            },
-                            color = if (currentBook?.id == bookItem.id) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                            shape = MaterialTheme.shapes.medium
-                        ) {
-                            Text(
-                                bookItem.name,
-                                modifier = Modifier.padding(12.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.labelMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-            } else {
-                val book = currentBook ?: return@Column
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { showingChapters = false }) {
-                        Icon(imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Back", modifier = Modifier.graphicsLayer(rotationZ = 180f))
-                    }
-                    Text(book.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                }
-                Spacer(Modifier.height(8.dp))
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(5),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items((1..book.chapters).toList()) { chapter ->
-                        Surface(
-                            onClick = { 
-                                onBookSelected(book)
-                                onChapterSelected(chapter)
-                                onDismiss()
-                            },
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = MaterialTheme.shapes.medium
-                        ) {
-                            Text(
-                                chapter.toString(),
-                                modifier = Modifier.padding(12.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun VersionSelectionSheet(
-    translations: List<Translation>,
-    selectedTranslation: Translation?,
-    onTranslationSelected: (Translation) -> Unit,
-    onDismiss: () -> Unit
-) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 32.dp)) {
-            Text("Select Translation", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(16.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(translations) { translation ->
-                    Surface(
-                        onClick = { 
-                            onTranslationSelected(translation)
-                            onDismiss()
-                        },
-                        color = if (selectedTranslation?.id == translation.id) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Column {
-                                Text(translation.name, fontWeight = FontWeight.Bold)
-                                Text(translation.shortName, style = MaterialTheme.typography.bodySmall)
-                            }
-                            if (selectedTranslation?.id == translation.id) {
-                                Icon(androidx.compose.material.icons.Icons.Default.Close, null, tint = MaterialTheme.colorScheme.primary) 
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
