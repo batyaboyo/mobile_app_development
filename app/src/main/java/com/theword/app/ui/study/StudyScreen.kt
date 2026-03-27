@@ -6,9 +6,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.*
@@ -37,7 +37,7 @@ fun StudyScreen(
         StudyFeature("Bookmarks", "Access your saved verses", Icons.Filled.Bookmark, onNavigateToBookmarks),
         StudyFeature("Favorites", "Verses you've starred", Icons.Filled.Favorite, {}), // Placeholder
         StudyFeature("Comfort", "Verses organized by emotion", Icons.Filled.SelfImprovement, {}), // Placeholder
-        StudyFeature("Notes", "Personal reflections and diaries", Icons.Filled.Notes, {}) // Placeholder
+        StudyFeature("Notes", "Personal reflections and diaries", Icons.AutoMirrored.Filled.Notes, {}) // Placeholder
     )
 
     Column(modifier = Modifier.fillMaxSize()) {

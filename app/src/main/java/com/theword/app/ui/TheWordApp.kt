@@ -34,11 +34,13 @@ import kotlinx.coroutines.launch
 
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
+import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
     data object Home : Screen("home", "Home", Icons.Outlined.Home, Icons.Filled.Home)
     data object Bible : Screen("bible", "Bible", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook)
-    data object Study : Screen("study", "Study", Icons.Outlined.LibraryBooks, Icons.Filled.LibraryBooks)
+    data object Study : Screen("study", "Study", Icons.AutoMirrored.Outlined.LibraryBooks, Icons.AutoMirrored.Filled.LibraryBooks)
     data object Bookmarks : Screen("bookmarks", "Bookmarks", Icons.Outlined.Bookmark, Icons.Filled.Bookmark)
     data object Quiz : Screen("quiz", "Quiz", Icons.Outlined.Quiz, Icons.Filled.Quiz)
     data object Stories : Screen("stories", "Stories", Icons.Outlined.AutoStories, Icons.Filled.AutoStories)
@@ -114,7 +116,10 @@ fun TheWordApp() {
                 val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
                 HomeScreen(
                     viewModel = vm,
-                    onNavigateToBible = { navController.navigate(Screen.Bible.route) }
+                    onNavigateToBible = { navController.navigate(Screen.Bible.route) },
+                    onNavigateToStories = { navController.navigate(Screen.Stories.route) },
+                    onNavigateToPrayer = { navController.navigate(Screen.Prayer.route) },
+                    onNavigateToDevotion = { navController.navigate("devotion") }
                 )
             }
             composable(Screen.Bible.route) {
@@ -134,6 +139,11 @@ fun TheWordApp() {
             composable(Screen.Quiz.route) {
                 val vm: QuizViewModel = viewModel(factory = QuizViewModel.Factory)
                 QuizScreen(vm)
+            }
+            composable("devotion") {
+                // We fetch the shared HomeViewModel so we can display the Daily Devotion
+                val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
+                com.theword.app.ui.home.DevotionScreen(viewModel = vm)
             }
             composable(Screen.Stories.route) {
                 StoriesScreen()
