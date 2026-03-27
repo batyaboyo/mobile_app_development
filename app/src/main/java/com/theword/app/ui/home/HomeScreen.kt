@@ -6,10 +6,16 @@ import java.util.Locale
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoStories
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Quiz
+import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -21,7 +27,11 @@ import com.theword.app.domain.model.Prayer
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onNavigateToBible: () -> Unit
+    onNavigateToBible: () -> Unit,
+    onNavigateToQuiz: () -> Unit,
+    onNavigateToStories: () -> Unit,
+    onNavigateToPrayer: () -> Unit,
+    onNavigateToAbout: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTabIndex by remember { mutableStateOf(0) }
@@ -40,6 +50,16 @@ fun HomeScreen(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp, start = 8.dp)
         )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            QuickLinkButton("Quiz", Icons.Outlined.Quiz, onNavigateToQuiz)
+            QuickLinkButton("Stories", Icons.Outlined.AutoStories, onNavigateToStories)
+            QuickLinkButton("Prayer", Icons.Outlined.SelfImprovement, onNavigateToPrayer)
+            QuickLinkButton("About", Icons.Outlined.Info, onNavigateToAbout)
+        }
 
         ScrollableTabRow(
             selectedTabIndex = selectedTabIndex,
@@ -130,9 +150,15 @@ fun DailyStoryCard(story: BibleStory) {
             Spacer(modifier = Modifier.height(12.dp))
             Text("${story.icon} ${story.title}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(story.reference, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onTertiaryContainer)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(story.snippet, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            story.sections.forEach { section ->
+                Text(section.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(section.text, style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            
             Text("Moral: ${story.moral}", style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
         }
     }

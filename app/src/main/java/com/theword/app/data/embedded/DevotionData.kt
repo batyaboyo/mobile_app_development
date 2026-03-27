@@ -10,64 +10,31 @@ data class Devotion(
 object DevotionData {
     val list = listOf(
         Devotion(
-            title = "A New Creation",
+            title = "A New Creation in a Broken World",
             reference = "2 Corinthians 5:17",
-            text = "When we come to Christ, we are not just slightly improved versions of our old selves; we are entirely new creations. The old habits, failures, and guilt are washed away. Embrace the new life and purpose God has given you today. Don't let your past dictate your future when God has already declared you new.",
-            prayer = "Lord, thank You for making me a new creation. Help me to leave my past behind and walk fully in the new life You have provided. Amen."
+            text = "When we come to Christ, the Apostle Paul tells us we are not just a slightly improved version of our old selves; we become an entirely new creation. \"Therefore, if anyone is in Christ, he is a new creation. The old has passed away; behold, the new has come.\" The profound reality of this truth is often lost in translation or diluted by familiarity. Becoming new does not mean our circumstances magically alter or that our past ceases to exist. Rather, the lens through which we view our past, our present, and our future is entirely transformed by grace.\n\n" +
+            "In our daily walk, the pull of the \"old\" is relentless. The habits we swore to break, the guilt we've carried relentlessly, and the failures that seek to define our identity are like anchors keeping our ships harbored in safe—but empty—waters. Grace, however, is the wind that intends to fill our sails. Grace tells us that while the enemy demands we identify with our failures, God looks at us and sees the righteousness of Christ. When the old self attempts to masquerade as your present reality, you have the divine mandate to remind yourself: \"The old has passed away.\"\n\n" +
+            "Living as a new creation means embracing a radically different purpose. It requires intentional daily surrender. Every morning we wake up, we must consciously discard the grave clothes of our past and put on the majestic garments of our new identity. The world will constantly try to label you by your shortcomings. It will remind you of the times you fell short. Yet God declares, \"Behold, the new has come!\" This is an active transformation—a continuous shedding of the old skin and an embracing of a Spirit-led life. \n\n" +
+            "If you are struggling with a persistent sin, a lingering shame, or the echo of past mistakes, realize that stepping into the new requires courage. It requires the courage to believe God's Word over the evidence of your own feelings. Because Jesus defeated death, your spiritual rebirth is an absolute reality. Walk today not as a prisoner to your past, but as a masterpiece carefully crafted by the Creator for a breathtaking future.",
+            prayer = "Lord, thank You for the indescribable gift of becoming a new creation. I confess that I often allow the weight of my past to dictate the joy of my present. Help me to grasp the sheer gravity of Your grace. Let Your Holy Spirit empower me today to shed my old habits and embrace the new life, the new joy, and the new purpose You have pre-ordained for me. In Jesus' mighty name, Amen."
         ),
         Devotion(
-            title = "Strength in Weakness",
+            title = "The Paradox of True Strength",
             reference = "2 Corinthians 12:9",
-            text = "We often try to hide our weaknesses, thinking they make us less valuable or capable. But God tells us that His power is made perfect in our weakness. When we are weak, His grace is more than enough. Allow God to work through your vulnerabilities today, knowing that His strength will carry you.",
-            prayer = "Father, I surrender my weaknesses to You today. Let Your strength shine through my limitations, and remind me that Your grace is sufficient for me. Amen."
+            text = "The world's definition of strength is deeply ingrained within us: independence, resilience, the ability to conquer obstacles without shedding a tear, and absolute self-reliance. But Jesus introduces a staggering paradox to the Apostle Paul, stating, \"My grace is sufficient for you, for my power is made perfect in weakness.\" This goes against the grain of every human instinct. We exhaust ourselves trying to hide our flaws, masquerade our insecurities, and build thick impenetrable walls so that no one sees our vulnerabilities.\n\n" +
+            "When we operate solely under our own strength, we inadvertently place a ceiling on what God can accomplish through us. If we are capable of handling everything on our own, we rely on the fragile limits of human endurance. Human endurance will eventually run dry. You will encounter a diagnosis, a financial crisis, a broken relationship, or an overwhelming bout of anxiety that cannot be fixed by trying harder. It is exactly in this moment of profound inadequacy that the grace of Christ is designed to intersect with our reality.\n\n" +
+            "God does not ask us to pretend we have it all together. He invites us to be breathtakingly honest about our frailties. By acknowledging our weakness, we create an empty vessel that His perfect power can completely fill. Your greatest moments of impact will often not come from your areas of towering competency, but from the spaces where your vulnerability allowed God's strength to shine through undisputed. When people see you enduring unimaginable difficulties with unexplainable peace, they don't see human resilience—they see the living God.\n\n" +
+            "Today, pause and identify the specific areas where you feel uniquely inadequate. Is it your parenting? Is it your career? Your ability to overcome a stubborn habit? Stop striving to camouflage it. Hand that weakness to God as an offering. Trust that His grace is not merely a backup plan, but the only truly sufficient provision you will ever need. His power thrives in our surrender.",
+            prayer = "Father, I am weary from pretending I am strong enough to handle life on my own. I surrender my inadequacies, my fears, and my hidden weaknesses into Your capable hands. Where I am fragile, let Your power be unmistakable. Teach me to rest in Your sufficiency rather than striving in my own exhaustion. May others see Your profound strength shining through the cracks of my life today. Amen."
         ),
         Devotion(
-            title = "Trusting God's Timing",
+            title = "The Wilderness of Waiting",
             reference = "Ecclesiastes 3:1",
-            text = "Waiting is one of the hardest things we do. We live in a world of instant gratification, but God's kingdom operates on His perfect timing. There is a season for everything. Even when it feels like nothing is happening, God is working behind the scenes. Trust that He knows the right time for your breakthrough.",
-            prayer = "Lord, give me the patience to trust Your timing. Help me to rest in the knowledge that You are working everything out for my good. Amen."
-        ),
-        Devotion(
-            title = "The Power of Words",
-            reference = "Proverbs 18:21",
-            text = "Our words have incredible power—they can build up or tear down, bring life or cause death. It is so easy to speak carelessly, especially when we are angry or frustrated. Today, choose to speak words of encouragement, love, and life to yourself and those around you.",
-            prayer = "God, guard my mouth today. Let the words I speak bring life, healing, and hope to everyone I encounter. Help me to use my words to glorify You. Amen."
-        ),
-        Devotion(
-            title = "Finding Rest",
-            reference = "Matthew 11:28",
-            text = "Are you feeling weary and burdened? Jesus invites us to come to Him and find rest. True rest is not just a break from physical labor; it is a deep, spiritual peace that comes from trusting Him completely. Stop striving and start trusting. Lay your burdens at His feet.",
-            prayer = "Jesus, I am tired. I bring my heavy burdens to You and ask for the rest that only You can provide. Refresh my soul today. Amen."
-        ),
-        Devotion(
-            title = "Overcoming Fear",
-            reference = "Isaiah 41:10",
-            text = "Fear has a way of paralyzing us, making us second-guess God's plan. But God commands us not to fear because He is with us. He promises to strengthen, help, and uphold us. Whatever you are facing today, remember that the Creator of the universe is holding your right hand.",
-            prayer = "Lord, calm my anxious heart. Remind me that You are always with me, and give me the courage to face today without fear. Amen."
-        ),
-        Devotion(
-            title = "Walking in Love",
-            reference = "1 Corinthians 16:14",
-            text = "Everything we do should be done in love. It sounds simple, but it is often incredibly difficult. Love requires patience, selflessness, and grace. Today, challenge yourself to respond to difficult people and challenging situations with the same love that Christ has shown you.",
-            prayer = "Father, fill me with Your unconditional love. Help me to see others through Your eyes and to act in love in all that I do. Amen."
-        ),
-        Devotion(
-            title = "The Joy of the Lord",
-            reference = "Nehemiah 8:10",
-            text = "Happiness depends on our circumstances, but joy comes entirely from the Lord. Even in the midst of trials, we can experience deep joy because we know who holds our future. Don't let the difficulties of today steal the joy that God has placed in your heart.",
-            prayer = "God, thank You for being the source of my joy. When circumstances are tough, help me to draw strength from the joy You provide. Amen."
-        ),
-        Devotion(
-            title = "Enduring Faith",
-            reference = "James 1:2-3",
-            text = "Trials are not a sign that God has abandoned us; rather, they are opportunities for our faith to grow. When our faith is tested, it develops perseverance. Embrace the challenges of today as tools that God is using to shape your character and deepen your trust in Him.",
-            prayer = "Lord, give me the perspective to see trials as opportunities for growth. Help me to endure with faith and patience. Amen."
-        ),
-        Devotion(
-            title = "A Light in the Darkness",
-            reference = "Matthew 5:14",
-            text = "We are called to be the light of the world. A light does not hide; it shines brightly to illuminate the path for others. Your actions, words, and attitude can bring the light of Christ into a dark world. Don't dim your light to fit in; let it shine so others may see God through you.",
-            prayer = "Jesus, help me to be a bright light in my workplace, home, and community today. Let others see Your love reflected in me. Amen."
+            text = "There is perhaps no spiritual discipline as agonizing, yet as deeply formative, as waiting. \"For everything there is a season, and a time for every matter under heaven.\" We inhabit a culture digitized for instant gratification. When God's timeline does not align with our self-imposed deadlines, our immediate reaction is often frustration or despair. We assume that a delay implies a denial, or worse, that God has entirely forgotten our faithful prayers.\n\n" +
+            "Yet throughout Scripture, the most monumental movements of God were preceded by extended, painful seasons of waiting. Abraham waited decades for the child of promise. Joseph languished in a sunless Egyptian prison long before he sat on a throne. Moses paced the rugged desert for forty years before he was deemed ready to lead the Exodus. Jesus Himself spent thirty years in obscurity for an earthly ministry that lasted only three years. God is never in a hurry, and He is never late. \n\n" +
+            "The season of waiting is not an empty parenthesis in your life—it is the very soil where your character is cultivated. When we wait, our faith transitions from shallow enthusiasm to deep, rooted endurance. If God granted every request instantaneously, we would treat Him like a cosmic vending machine rather than a sovereign King. Waiting forces us to wrestle with our true motivations: do we desire the gift, or do we desire the Giver? \n\n" +
+            "If you find yourself in the wilderness of a delayed promise today, do not lose heart. Understand that God is meticulously aligning circumstances, shifting hearts, and preparing you to carry the weight of the blessing He is about to provide. A premature blessing can often become a crushing burden if you lack the spiritual maturity to steward it. Trust that the Architect of time knows exactly what season it is in your life. Rest securely in His perfect timeline.",
+            prayer = "Sovereign Lord, the wait is often difficult and my patience runs thin. I confess my desire to rush Your plans and force outcomes. Give me the grace to wait well. Remind my anxious soul that You are working profoundly in the silence. Cultivate my character, refine my trust, and help me to cherish the season I am in. I trust that Your timing is flawless and Your plans for me are fiercely good. Amen."
         )
     )
 }

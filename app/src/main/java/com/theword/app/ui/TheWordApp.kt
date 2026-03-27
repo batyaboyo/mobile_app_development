@@ -1,11 +1,14 @@
 package com.theword.app.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,8 +27,6 @@ import com.theword.app.ui.bookmarks.BookmarksViewModel
 import com.theword.app.ui.home.HomeScreen
 import com.theword.app.ui.home.HomeViewModel
 import com.theword.app.ui.prayer.PrayerScreen
-import com.theword.app.ui.progress.ProgressScreen
-import com.theword.app.ui.progress.ProgressViewModel
 import com.theword.app.ui.quiz.QuizScreen
 import com.theword.app.ui.quiz.QuizViewModel
 import com.theword.app.ui.stories.StoriesScreen
@@ -37,15 +38,17 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 sealed class Screen(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
     data object Home : Screen("home", "Home", Icons.Outlined.Home, Icons.Filled.Home)
     data object Bible : Screen("bible", "Bible", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook)
+    data object Study : Screen("study", "Study", Icons.Outlined.LibraryBooks, Icons.Filled.LibraryBooks)
     data object Bookmarks : Screen("bookmarks", "Bookmarks", Icons.Outlined.Bookmark, Icons.Filled.Bookmark)
-    data object Progress : Screen("progress", "Progress", Icons.Outlined.BarChart, Icons.Filled.BarChart)
+    data object Profile : Screen("profile", "Profile", Icons.Outlined.Person, Icons.Filled.Person)
+    
     data object Quiz : Screen("quiz", "Quiz", Icons.Outlined.Quiz, Icons.Filled.Quiz)
     data object Stories : Screen("stories", "Stories", Icons.Outlined.AutoStories, Icons.Filled.AutoStories)
     data object Prayer : Screen("prayer", "Prayer", Icons.Outlined.SelfImprovement, Icons.Filled.SelfImprovement)
     data object About : Screen("about", "About", Icons.Outlined.Info, Icons.Filled.Info)
 }
 
-val bottomNavItems = listOf(Screen.Home, Screen.Bible, Screen.Bookmarks, Screen.Progress)
+val bottomNavItems = listOf(Screen.Home, Screen.Bible, Screen.Study, Screen.Bookmarks, Screen.Profile)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,33 +73,6 @@ fun TheWordApp() {
                         Icon(
                             if (isDarkMode) Icons.Filled.LightMode else Icons.Filled.DarkMode,
                             contentDescription = "Toggle theme"
-                        )
-                    }
-                    // More menu
-                    var showMenu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "More")
-                    }
-                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                        DropdownMenuItem(
-                            text = { Text("Quiz") },
-                            onClick = { showMenu = false; navController.navigate(Screen.Quiz.route) },
-                            leadingIcon = { Icon(Icons.Outlined.Quiz, null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Stories") },
-                            onClick = { showMenu = false; navController.navigate(Screen.Stories.route) },
-                            leadingIcon = { Icon(Icons.Outlined.AutoStories, null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Prayer") },
-                            onClick = { showMenu = false; navController.navigate(Screen.Prayer.route) },
-                            leadingIcon = { Icon(Icons.Outlined.SelfImprovement, null) }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("About") },
-                            onClick = { showMenu = false; navController.navigate(Screen.About.route) },
-                            leadingIcon = { Icon(Icons.Outlined.Info, null) }
                         )
                     }
                 },
@@ -138,19 +114,28 @@ fun TheWordApp() {
         ) {
             composable(Screen.Home.route) {
                 val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
-                HomeScreen(vm, onNavigateToBible = { navController.navigate(Screen.Bible.route) })
+                HomeScreen(
+                    viewModel = vm,
+                    onNavigateToBible = { navController.navigate(Screen.Bible.route) },
+                    onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) },
+                    onNavigateToStories = { navController.navigate(Screen.Stories.route) },
+                    onNavigateToPrayer = { navController.navigate(Screen.Prayer.route) },
+                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
+                )
             }
             composable(Screen.Bible.route) {
                 val vm: BibleViewModel = viewModel(factory = BibleViewModel.Factory)
                 BibleScreen(vm)
             }
+            composable(Screen.Study.route) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Study Screen Coming Soon") }
+            }
             composable(Screen.Bookmarks.route) {
                 val vm: BookmarksViewModel = viewModel(factory = BookmarksViewModel.Factory)
                 BookmarksScreen(vm, onNavigateToBible = { navController.navigate(Screen.Bible.route) })
             }
-            composable(Screen.Progress.route) {
-                val vm: ProgressViewModel = viewModel(factory = ProgressViewModel.Factory)
-                ProgressScreen(vm)
+            composable(Screen.Profile.route) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Profile Screen Coming Soon") }
             }
             composable(Screen.Quiz.route) {
                 val vm: QuizViewModel = viewModel(factory = QuizViewModel.Factory)
