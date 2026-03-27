@@ -47,7 +47,7 @@ fun ProgressScreen(viewModel: ProgressViewModel) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
-                        progress = overallPct / 100f,
+                        progress = { overallPct / 100f },
                         modifier = Modifier.fillMaxWidth().height(8.dp),
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -70,7 +70,7 @@ fun ProgressScreen(viewModel: ProgressViewModel) {
                         Text("$otPct%", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(4.dp))
                         LinearProgressIndicator(
-                            progress = otPct / 100f,
+                            progress = { otPct / 100f },
                             modifier = Modifier.fillMaxWidth(),
                         )
                         Text(
@@ -86,7 +86,7 @@ fun ProgressScreen(viewModel: ProgressViewModel) {
                         Text("$ntPct%", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(4.dp))
                         LinearProgressIndicator(
-                            progress = ntPct / 100f,
+                            progress = { ntPct / 100f },
                             modifier = Modifier.fillMaxWidth(),
                         )
                         Text(
@@ -137,7 +137,7 @@ private fun BookProgressRow(bookProgress: BookProgress) {
             modifier = Modifier.width(120.dp)
         )
         LinearProgressIndicator(
-            progress = pct,
+            progress = { pct },
             modifier = Modifier.weight(1f).height(6.dp),
         )
         Spacer(modifier = Modifier.width(8.dp))

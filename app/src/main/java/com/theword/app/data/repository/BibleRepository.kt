@@ -6,6 +6,7 @@ import com.theword.app.data.local.*
 import com.theword.app.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 class BibleRepository(
@@ -16,7 +17,13 @@ class BibleRepository(
     // In-memory cache
     private val translationsCache = ConcurrentHashMap<String, List<Translation>>()
     private val booksCache = ConcurrentHashMap<String, List<BibleBook>>()
-    private val chapterCache = ConcurrentHashMap<String, List<ChapterContent>>()
+    private val chapterCache: MutableMap<String, List<ChapterContent>> = Collections.synchronizedMap(
+        object : LinkedHashMap<String, List<ChapterContent>>(50, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<ChapterContent>>): Boolean {
+                return size > 50
+            }
+        }
+    )
     private val commentariesCache = ConcurrentHashMap<String, List<Commentary>>()
 
     // ---- Translations ----
@@ -81,36 +88,40 @@ class BibleRepository(
     suspend fun getChapter(translationId: String, bookId: String, chapter: Int): List<ChapterContent> {
         val key = "$translationId|$bookId|$chapter"
         chapterCache[key]?.let { return it }
-        val response = api.getChapter(translationId, bookId, chapter)
-        val footnotes = (response.chapter?.footnotes ?: emptyList()).associateBy { it.noteId }
-        val content = (response.chapter?.content ?: emptyList()).mapNotNull { item ->
-            when (item.type) {
-                "heading" -> {
-                    val text = extractTextFromContent(item.content)
-                    ChapterContent.Heading(text)
+        return try {
+            val response = api.getChapter(translationId, bookId, chapter)
+            val footnotes = (response.chapter?.footnotes ?: emptyList()).associateBy { it.noteId }
+            val content = (response.chapter?.content ?: emptyList()).mapNotNull { item ->
+                when (item.type) {
+                    "heading" -> {
+                        val text = extractTextFromContent(item.content)
+                        ChapterContent.Heading(text)
+                    }
+                    "verse" -> {
+                        val number = item.number ?: return@mapNotNull null
+                        val parts = parseVerseParts(item.content, footnotes)
+                        val plainText = parts.joinToString("") {
+                            when (it) {
+                                is VersePart.Text -> it.text
+                                is VersePart.Poem -> it.text
+                                is VersePart.Footnote -> ""
+                            }
+                        }.trim()
+                        ChapterContent.VerseContent(Verse(number, plainText, parts))
+                    }
+                    "line_break" -> ChapterContent.LineBreak()
+                    "hebrew_subtitle" -> {
+                        val text = extractTextFromContent(item.content)
+                        ChapterContent.HebrewSubtitle(text)
+                    }
+                    else -> null
                 }
-                "verse" -> {
-                    val number = item.number ?: return@mapNotNull null
-                    val parts = parseVerseParts(item.content, footnotes)
-                    val plainText = parts.joinToString("") {
-                        when (it) {
-                            is VersePart.Text -> it.text
-                            is VersePart.Poem -> it.text
-                            is VersePart.Footnote -> ""
-                        }
-                    }.trim()
-                    ChapterContent.VerseContent(Verse(number, plainText, parts))
-                }
-                "line_break" -> ChapterContent.LineBreak()
-                "hebrew_subtitle" -> {
-                    val text = extractTextFromContent(item.content)
-                    ChapterContent.HebrewSubtitle(text)
-                }
-                else -> null
             }
+            chapterCache[key] = content
+            content
+        } catch (e: Exception) {
+            emptyList()
         }
-        chapterCache[key] = content
-        return content
     }
 
     suspend fun getVerseText(translationId: String, bookId: String, chapter: Int, verseNumber: Int): String? {
@@ -305,16 +316,3 @@ class BibleRepository(
         }
     }
 }
-
-data class CommentaryContent(
-    val name: String,
-    val bookName: String,
-    val chapterNumber: Int,
-    val introduction: String?,
-    val sections: List<CommentarySection>
-)
-
-data class CommentarySection(
-    val verseRange: String,
-    val text: String
-)

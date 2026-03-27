@@ -58,12 +58,12 @@ fun PrayerScreen() {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = !showEvening,
-                onClick = { showEvening = false; currentIndex = 0 },
+                onClick = { showEvening = false; currentIndex = 0; timerRunning = false; elapsedSeconds = 0 },
                 label = { Text("☀️ Morning") }
             )
             FilterChip(
                 selected = showEvening,
-                onClick = { showEvening = true; currentIndex = 0 },
+                onClick = { showEvening = true; currentIndex = 0; timerRunning = false; elapsedSeconds = 0 },
                 label = { Text("🌙 Evening") }
             )
         }

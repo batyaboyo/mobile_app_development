@@ -23,13 +23,14 @@ fun HomeScreen(
     onNavigateToBible: () -> Unit,
     onNavigateToStories: () -> Unit,
     onNavigateToPrayer: () -> Unit,
-    onNavigateToDevotion: () -> Unit
+    onNavigateToDevotion: () -> Unit,
+    onNavigateToProgress: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentDate = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date()) }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(top = 24.dp, start = 16.dp, end = 16.dp)
+        modifier = Modifier.fillMaxSize().padding(top = 8.dp, start = 16.dp, end = 16.dp)
     ) {
         Text(
             text = currentDate,
@@ -52,9 +53,10 @@ fun HomeScreen(
 
         val tabs = listOf("Story", "Prayer", "Devotion")
         TabRow(
-            selectedTabIndex = -1, // No tab is persistently "selected" since they are navigation links
+            selectedTabIndex = 0, // Prevent crash, hide indicator below
             containerColor = MaterialTheme.colorScheme.surface,
-            divider = {}
+            divider = {},
+            indicator = {}
         ) {
             tabs.forEach { title ->
                 Tab(

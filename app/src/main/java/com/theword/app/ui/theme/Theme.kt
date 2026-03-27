@@ -28,6 +28,8 @@ private val LightColorScheme = lightColorScheme(
     onSurfaceVariant = md_theme_light_onSurfaceVariant,
     error = md_theme_light_error,
     onError = md_theme_light_onError,
+    errorContainer = md_theme_light_errorContainer,
+    onErrorContainer = md_theme_light_onErrorContainer,
     outline = md_theme_light_outline,
 )
 
@@ -52,6 +54,8 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = md_theme_dark_onSurfaceVariant,
     error = md_theme_dark_error,
     onError = md_theme_dark_onError,
+    errorContainer = md_theme_dark_errorContainer,
+    onErrorContainer = md_theme_dark_onErrorContainer,
     outline = md_theme_dark_outline,
 )
 
@@ -59,8 +63,12 @@ private val DarkColorScheme = darkColorScheme(
 fun TheWordTheme(
     content: @Composable () -> Unit
 ) {
-    val isDarkMode by TheWordApplication.instance.preferencesManager.darkMode
-        .collectAsState(initial = isSystemInDarkTheme())
+    val isDarkMode = if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+        isSystemInDarkTheme()
+    } else {
+        val darkModeFlow by TheWordApplication.instance.preferencesManager.darkMode.collectAsState(initial = isSystemInDarkTheme())
+        darkModeFlow
+    }
 
     val colorScheme = if (isDarkMode) DarkColorScheme else LightColorScheme
 

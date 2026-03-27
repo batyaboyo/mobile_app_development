@@ -10,12 +10,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DevotionScreen(viewModel: HomeViewModel) {
+fun DevotionScreen(viewModel: HomeViewModel, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
     val devotion = uiState.dailyDevotion
 
@@ -25,6 +27,10 @@ fun DevotionScreen(viewModel: HomeViewModel) {
             .padding(24.dp)
             .verticalScroll(rememberScrollState())
     ) {
+        IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         if (devotion != null) {
             Text(
                 "Daily Devotion",

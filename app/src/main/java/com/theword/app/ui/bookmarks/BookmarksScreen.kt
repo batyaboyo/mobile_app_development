@@ -145,7 +145,7 @@ fun BookmarkCard(
                             text = { Text("Remove from collection") },
                             onClick = { showMenu = false; onMoveToCollection(null) }
                         )
-                        Divider()
+                        HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
                             onClick = { showMenu = false; onRemove() }

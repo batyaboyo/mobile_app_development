@@ -27,6 +27,8 @@ import com.theword.app.ui.bookmarks.BookmarksViewModel
 import com.theword.app.ui.home.HomeScreen
 import com.theword.app.ui.home.HomeViewModel
 import com.theword.app.ui.prayer.PrayerScreen
+import com.theword.app.ui.progress.ProgressScreen
+import com.theword.app.ui.progress.ProgressViewModel
 import com.theword.app.ui.quiz.QuizScreen
 import com.theword.app.ui.quiz.QuizViewModel
 import com.theword.app.ui.stories.StoriesScreen
@@ -46,6 +48,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector,
     data object Stories : Screen("stories", "Stories", Icons.Outlined.AutoStories, Icons.Filled.AutoStories)
     data object Prayer : Screen("prayer", "Prayer", Icons.Outlined.SelfImprovement, Icons.Filled.SelfImprovement)
     data object About : Screen("about", "About", Icons.Outlined.Info, Icons.Filled.Info)
+    data object Progress : Screen("progress", "Progress", Icons.Outlined.BarChart, Icons.Filled.BarChart)
 }
 
 val bottomNavItems = listOf(Screen.Home, Screen.Bible, Screen.Study, Screen.About)
@@ -119,7 +122,8 @@ fun TheWordApp() {
                     onNavigateToBible = { navController.navigate(Screen.Bible.route) },
                     onNavigateToStories = { navController.navigate(Screen.Stories.route) },
                     onNavigateToPrayer = { navController.navigate(Screen.Prayer.route) },
-                    onNavigateToDevotion = { navController.navigate("devotion") }
+                    onNavigateToDevotion = { navController.navigate("devotion") },
+                    onNavigateToProgress = { navController.navigate(Screen.Progress.route) }
                 )
             }
             composable(Screen.Bible.route) {
@@ -141,9 +145,12 @@ fun TheWordApp() {
                 QuizScreen(vm)
             }
             composable("devotion") {
-                // We fetch the shared HomeViewModel so we can display the Daily Devotion
-                val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
-                com.theword.app.ui.home.DevotionScreen(viewModel = vm)
+                // Share the HomeViewModel from the Home backstack entry
+                val homeEntry = remember(navBackStackEntry) {
+                    navController.getBackStackEntry(Screen.Home.route)
+                }
+                val vm: HomeViewModel = viewModel(viewModelStoreOwner = homeEntry, factory = HomeViewModel.Factory)
+                com.theword.app.ui.home.DevotionScreen(viewModel = vm, onBack = { navController.popBackStack() })
             }
             composable(Screen.Stories.route) {
                 StoriesScreen()
@@ -153,6 +160,10 @@ fun TheWordApp() {
             }
             composable(Screen.About.route) {
                 AboutScreen()
+            }
+            composable(Screen.Progress.route) {
+                val vm: ProgressViewModel = viewModel(factory = ProgressViewModel.Factory)
+                ProgressScreen(vm)
             }
         }
     }

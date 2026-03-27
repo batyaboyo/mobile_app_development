@@ -7,11 +7,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
+import com.theword.app.R
 
 val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",
     providerPackage = "com.google.android.gms",
-    certificates = emptyList() // Uses default Android font provider
+    certificates = R.array.com_google_android_gms_fonts_certs
 )
 
 val InterFont = GoogleFont("Inter")
@@ -25,11 +26,15 @@ val InterFamily = FontFamily(
     Font(googleFont = InterFont, fontProvider = provider, weight = FontWeight.Bold),
 )
 
+val InterFallback = FontFamily.SansSerif
+
 val MerriweatherFamily = FontFamily(
     Font(googleFont = MerriweatherFont, fontProvider = provider, weight = FontWeight.Light),
     Font(googleFont = MerriweatherFont, fontProvider = provider, weight = FontWeight.Normal),
     Font(googleFont = MerriweatherFont, fontProvider = provider, weight = FontWeight.Bold),
 )
+
+val MerriweatherFallback = FontFamily.Serif
 
 val AppTypography = Typography(
     displayLarge = TextStyle(fontFamily = InterFamily, fontWeight = FontWeight.Bold, fontSize = 32.sp),

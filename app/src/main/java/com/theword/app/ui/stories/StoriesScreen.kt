@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
@@ -21,7 +22,7 @@ import com.theword.app.domain.model.BibleStory
 @Composable
 fun StoriesScreen() {
     var selectedStory by remember { mutableStateOf<BibleStory?>(null) }
-    var filter by remember { mutableStateOf("All") }
+    var filter by rememberSaveable { mutableStateOf("All") }
 
     if (selectedStory != null) {
         StoryDetail(story = selectedStory!!, onBack = { selectedStory = null })

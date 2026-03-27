@@ -8,6 +8,7 @@ import com.theword.app.data.embedded.QuizData
 import com.theword.app.data.repository.BibleRepository
 import com.theword.app.domain.model.QuizAnswer
 import com.theword.app.domain.model.QuizQuestion
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -78,19 +79,23 @@ class QuizViewModel(private val repository: BibleRepository) : ViewModel() {
         val newAnswers = current.answers.toMutableList()
         newAnswers[current.currentIndex] = QuizAnswer(index, correct)
 
-        val nextIndex = current.currentIndex + 1
-        val isLast = nextIndex >= current.questions.size
+        // Show feedback immediately
+        _uiState.update { it.copy(answers = newAnswers) }
 
-        _uiState.update {
-            it.copy(
-                answers = newAnswers,
-                currentIndex = if (isLast) current.currentIndex else nextIndex,
-                isComplete = isLast
-            )
-        }
-
-        if (isLast) {
-            saveResult(newAnswers)
+        // Delay before advancing so user can see the result
+        viewModelScope.launch {
+            delay(1500L)
+            val nextIndex = current.currentIndex + 1
+            val isLast = nextIndex >= current.questions.size
+            _uiState.update {
+                it.copy(
+                    currentIndex = if (isLast) current.currentIndex else nextIndex,
+                    isComplete = isLast
+                )
+            }
+            if (isLast) {
+                saveResult(newAnswers)
+            }
         }
     }
 

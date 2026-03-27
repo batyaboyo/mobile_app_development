@@ -1,10 +1,8 @@
 package com.theword.app.ui.bible
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
+import com.theword.app.ui.util.ShareUtils
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -145,18 +143,11 @@ class BibleViewModel(private val repository: BibleRepository) : ViewModel() {
     }
 
     fun copyVerse(context: Context, reference: String, text: String) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("verse", "$text - $reference"))
-        Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+        ShareUtils.copyVerse(context, reference, text)
     }
 
     fun shareVerse(context: Context, reference: String, text: String) {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, "\"$text\" - $reference")
-            putExtra(Intent.EXTRA_SUBJECT, reference)
-        }
-        context.startActivity(Intent.createChooser(shareIntent, "Share verse"))
+        ShareUtils.shareVerse(context, reference, text)
     }
 
     fun saveHighlight(reference: String, color: String, note: String?) {

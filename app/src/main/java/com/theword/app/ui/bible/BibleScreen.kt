@@ -54,19 +54,35 @@ private fun VersionSelector(
     currentVersion: String,
     onVersionChange: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     val current = translations.find { it.id == currentVersion }
 
     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = { showSheet = true }, modifier = Modifier.fillMaxWidth()) {
             Text("${current?.shortName ?: currentVersion} — ${current?.name ?: ""}")
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            translations.forEach { t ->
-                DropdownMenuItem(
-                    text = { Text("${t.shortName} — ${t.name}") },
-                    onClick = { onVersionChange(t.id); expanded = false }
-                )
+    }
+
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false }
+        ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                items(translations.size) { i ->
+                    val t = translations[i]
+                    val isSelected = t.id == currentVersion
+                    ListItem(
+                        headlineContent = { Text("${t.shortName} — ${t.name}", fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                        leadingContent = { if (isSelected) Text("✓", color = MaterialTheme.colorScheme.primary) },
+                        modifier = Modifier.clickable {
+                            onVersionChange(t.id)
+                            showSheet = false
+                        }
+                    )
+                }
             }
         }
     }

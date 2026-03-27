@@ -1,5 +1,6 @@
 package com.theword.app.ui.study
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -23,7 +25,8 @@ data class StudyFeature(
     val title: String,
     val description: String,
     val icon: ImageVector,
-    val onClick: () -> Unit
+    val onClick: () -> Unit,
+    val comingSoon: Boolean = false
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,12 +35,14 @@ fun StudyScreen(
     onNavigateToQuiz: () -> Unit,
     onNavigateToBookmarks: () -> Unit
 ) {
+    val context = LocalContext.current
+    val comingSoon: () -> Unit = { Toast.makeText(context, "Coming Soon!", Toast.LENGTH_SHORT).show() }
     val features = listOf(
         StudyFeature("Daily Quiz", "Test your scripture knowledge", Icons.Filled.Quiz, onNavigateToQuiz),
         StudyFeature("Bookmarks", "Access your saved verses", Icons.Filled.Bookmark, onNavigateToBookmarks),
-        StudyFeature("Favorites", "Verses you've starred", Icons.Filled.Favorite, {}), // Placeholder
-        StudyFeature("Comfort", "Verses organized by emotion", Icons.Filled.SelfImprovement, {}), // Placeholder
-        StudyFeature("Notes", "Personal reflections and diaries", Icons.AutoMirrored.Filled.Notes, {}) // Placeholder
+        StudyFeature("Favorites", "Verses you've starred", Icons.Filled.Favorite, comingSoon, comingSoon = true),
+        StudyFeature("Comfort", "Verses organized by emotion", Icons.Filled.SelfImprovement, comingSoon, comingSoon = true),
+        StudyFeature("Notes", "Personal reflections and diaries", Icons.AutoMirrored.Filled.Notes, comingSoon, comingSoon = true)
     )
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -72,7 +77,17 @@ fun StudyScreen(
                     ) {
                         Icon(feature.icon, contentDescription = feature.title, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(feature.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(feature.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            if (feature.comingSoon) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                SuggestionChip(
+                                    onClick = {},
+                                    label = { Text("Soon", style = MaterialTheme.typography.labelSmall) },
+                                    modifier = Modifier.height(24.dp)
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(feature.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

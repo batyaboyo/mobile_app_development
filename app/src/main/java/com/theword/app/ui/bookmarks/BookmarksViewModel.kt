@@ -1,10 +1,8 @@
 package com.theword.app.ui.bookmarks
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
+import com.theword.app.ui.util.ShareUtils
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -57,17 +55,11 @@ class BookmarksViewModel(private val repository: BibleRepository) : ViewModel() 
     }
 
     fun copyVerse(context: Context, reference: String, text: String) {
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("verse", "$text - $reference"))
-        Toast.makeText(context, "Copied!", Toast.LENGTH_SHORT).show()
+        ShareUtils.copyVerse(context, reference, text)
     }
 
     fun shareVerse(context: Context, reference: String, text: String) {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, "\"$text\" - $reference")
-        }
-        context.startActivity(Intent.createChooser(intent, "Share"))
+        ShareUtils.shareVerse(context, reference, text)
     }
 
     companion object {

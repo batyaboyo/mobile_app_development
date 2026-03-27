@@ -60,7 +60,7 @@ private fun QuestionView(viewModel: QuizViewModel, uiState: QuizUiState) {
     Column {
         // Progress bar
         LinearProgressIndicator(
-            progress = (uiState.currentIndex + 1).toFloat() / uiState.questions.size,
+            progress = { (uiState.currentIndex + 1).toFloat() / uiState.questions.size },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.height(8.dp))

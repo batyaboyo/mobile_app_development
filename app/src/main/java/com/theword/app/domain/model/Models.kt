@@ -105,3 +105,16 @@ data class PopularVerse(
     val startVerse: Int? = null,
     val endVerse: Int? = null
 )
+
+data class CommentaryContent(
+    val name: String,
+    val bookName: String,
+    val chapterNumber: Int,
+    val introduction: String?,
+    val sections: List<CommentarySection>
+)
+
+data class CommentarySection(
+    val verseRange: String,
+    val text: String
+)
