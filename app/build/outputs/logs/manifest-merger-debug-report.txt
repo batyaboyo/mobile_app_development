@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-24:12
-INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-24:12
-INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-24:12
-INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-24:12
+ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-26:12
+INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-26:12
+INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-26:12
+INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:2:1-26:12
 MERGED from [androidx.navigation:navigation-common:2.7.6] C:\Users\batzt\.gradle\caches\transforms-3\6b42194d3e14d12d6a4ecc53905c618c\transformed\navigation-common-2.7.6\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-runtime:2.7.6] C:\Users\batzt\.gradle\caches\transforms-3\e59b6b55363c756899b36c01a472fc03\transformed\navigation-runtime-2.7.6\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-common-ktx:2.7.6] C:\Users\batzt\.gradle\caches\transforms-3\eb8dfc63ef50d2a35d53ab70bcb34afe\transformed\navigation-common-ktx-2.7.6\AndroidManifest.xml:2:1-7:12
@@ -78,8 +78,8 @@ ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidMan
 	android:name
 		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:5:22-64
 application
-ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:7:5-23:19
-INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:7:5-23:19
+ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:7:5-25:19
+INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:7:5-25:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.3] C:\Users\batzt\.gradle\caches\transforms-3\4236d84bf8eeda66973eee6c42c85d38\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.6.3] C:\Users\batzt\.gradle\caches\transforms-3\4236d84bf8eeda66973eee6c42c85d38\transformed\ui-tooling-release\AndroidManifest.xml:22:5-26:19
 MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\batzt\.gradle\caches\transforms-3\161d2e0566de4dbd90cbc47319c186f1\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
@@ -103,35 +103,39 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\batzt\.gradle\cach
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] C:\Users\batzt\.gradle\caches\transforms-3\440a64c1659b3784956be1ef27019da1\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:11:9-35
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:13:9-35
 	android:label
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:10:9-33
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:12:9-33
+	android:roundIcon
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:11:9-48
 	tools:targetApi
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:13:9-29
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:15:9-29
+	android:icon
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:10:9-43
 	android:allowBackup
 		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:9:9-35
 	android:theme
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:12:9-45
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:14:9-45
 	android:name
 		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:8:9-43
 activity#com.theword.app.MainActivity
-ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:14:9-22:20
+ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:16:9-24:20
 	android:exported
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:16:13-36
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:18:13-36
 	android:theme
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:17:13-49
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:19:13-49
 	android:name
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:15:13-41
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:17:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:18:13-21:29
+ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:20:13-23:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:19:17-69
+ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:21:17-69
 	android:name
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:19:25-66
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:21:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:20:17-77
+ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:22:17-77
 	android:name
-		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:20:27-74
+		ADDED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml:22:27-74
 uses-sdk
 INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\batzt\Desktop\b7b\projects\bible_app\app\src\main\AndroidManifest.xml

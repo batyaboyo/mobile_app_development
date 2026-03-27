@@ -40,15 +40,13 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector,
     data object Bible : Screen("bible", "Bible", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook)
     data object Study : Screen("study", "Study", Icons.Outlined.LibraryBooks, Icons.Filled.LibraryBooks)
     data object Bookmarks : Screen("bookmarks", "Bookmarks", Icons.Outlined.Bookmark, Icons.Filled.Bookmark)
-    data object Profile : Screen("profile", "Profile", Icons.Outlined.Person, Icons.Filled.Person)
-    
     data object Quiz : Screen("quiz", "Quiz", Icons.Outlined.Quiz, Icons.Filled.Quiz)
     data object Stories : Screen("stories", "Stories", Icons.Outlined.AutoStories, Icons.Filled.AutoStories)
     data object Prayer : Screen("prayer", "Prayer", Icons.Outlined.SelfImprovement, Icons.Filled.SelfImprovement)
     data object About : Screen("about", "About", Icons.Outlined.Info, Icons.Filled.Info)
 }
 
-val bottomNavItems = listOf(Screen.Home, Screen.Bible, Screen.Study, Screen.Bookmarks, Screen.Profile)
+val bottomNavItems = listOf(Screen.Home, Screen.Bible, Screen.Study, Screen.About)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,11 +114,7 @@ fun TheWordApp() {
                 val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
                 HomeScreen(
                     viewModel = vm,
-                    onNavigateToBible = { navController.navigate(Screen.Bible.route) },
-                    onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) },
-                    onNavigateToStories = { navController.navigate(Screen.Stories.route) },
-                    onNavigateToPrayer = { navController.navigate(Screen.Prayer.route) },
-                    onNavigateToAbout = { navController.navigate(Screen.About.route) }
+                    onNavigateToBible = { navController.navigate(Screen.Bible.route) }
                 )
             }
             composable(Screen.Bible.route) {
@@ -128,14 +122,14 @@ fun TheWordApp() {
                 BibleScreen(vm)
             }
             composable(Screen.Study.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Study Screen Coming Soon") }
+                com.theword.app.ui.study.StudyScreen(
+                    onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) },
+                    onNavigateToBookmarks = { navController.navigate(Screen.Bookmarks.route) }
+                )
             }
             composable(Screen.Bookmarks.route) {
                 val vm: BookmarksViewModel = viewModel(factory = BookmarksViewModel.Factory)
                 BookmarksScreen(vm, onNavigateToBible = { navController.navigate(Screen.Bible.route) })
-            }
-            composable(Screen.Profile.route) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Profile Screen Coming Soon") }
             }
             composable(Screen.Quiz.route) {
                 val vm: QuizViewModel = viewModel(factory = QuizViewModel.Factory)
