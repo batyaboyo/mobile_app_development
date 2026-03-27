@@ -1,0 +1,320 @@
+package com.theword.app.data.repository
+
+import com.theword.app.data.api.BibleApiService
+import com.theword.app.data.api.ContentItemDto
+import com.theword.app.data.local.*
+import com.theword.app.domain.model.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.util.concurrent.ConcurrentHashMap
+
+class BibleRepository(
+    private val api: BibleApiService,
+    private val db: AppDatabase,
+    val prefs: PreferencesManager
+) {
+    // In-memory cache
+    private val translationsCache = ConcurrentHashMap<String, List<Translation>>()
+    private val booksCache = ConcurrentHashMap<String, List<BibleBook>>()
+    private val chapterCache = ConcurrentHashMap<String, List<ChapterContent>>()
+    private val commentariesCache = ConcurrentHashMap<String, List<Commentary>>()
+
+    // ---- Translations ----
+
+    suspend fun getTranslations(): List<Translation> {
+        translationsCache["all"]?.let { return it }
+        return try {
+            val response = api.getTranslations()
+            val all = response.translations ?: emptyList()
+            val english = all
+                .filter { it.language == "eng" || it.languageEnglishName == "English" }
+                .map { Translation(it.id, it.name ?: it.englishName ?: it.id, it.shortName ?: it.id, it.language ?: "eng") }
+                .sortedWith(compareBy {
+                    val priority = listOf("BSB", "ENGWEBP", "eng_web", "eng_bbe", "eng_wbs", "eng_webc")
+                    val idx = priority.indexOf(it.id)
+                    if (idx >= 0) idx else 100
+                })
+            translationsCache["all"] = english
+            english
+        } catch (e: Exception) {
+            listOf(
+                Translation("BSB", "Berean Standard Bible", "BSB", "eng"),
+                Translation("ENGWEBP", "World English Bible", "WEB", "eng"),
+                Translation("eng_bbe", "Bible in Basic English", "BBE", "eng")
+            )
+        }
+    }
+
+    // ---- Commentaries ----
+
+    suspend fun getCommentaries(): List<Commentary> {
+        commentariesCache["all"]?.let { return it }
+        return try {
+            val response = api.getCommentaries()
+            val list = (response.commentaries ?: emptyList())
+                .map { Commentary(it.id, it.name ?: it.englishName ?: it.id) }
+            commentariesCache["all"] = list
+            list
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    // ---- Books ----
+
+    suspend fun getBooks(translationId: String): List<BibleBook> {
+        booksCache[translationId]?.let { return it }
+        return try {
+            val response = api.getBooks(translationId)
+            val books = (response.books ?: emptyList()).map {
+                BibleBook(it.id, it.name ?: it.commonName ?: it.id, it.numberOfChapters, it.order)
+            }
+            booksCache[translationId] = books
+            books
+        } catch (e: Exception) {
+            getFallbackBooks()
+        }
+    }
+
+    // ---- Chapter ----
+
+    suspend fun getChapter(translationId: String, bookId: String, chapter: Int): List<ChapterContent> {
+        val key = "$translationId|$bookId|$chapter"
+        chapterCache[key]?.let { return it }
+        val response = api.getChapter(translationId, bookId, chapter)
+        val footnotes = (response.chapter?.footnotes ?: emptyList()).associateBy { it.noteId }
+        val content = (response.chapter?.content ?: emptyList()).mapNotNull { item ->
+            when (item.type) {
+                "heading" -> {
+                    val text = extractTextFromContent(item.content)
+                    ChapterContent.Heading(text)
+                }
+                "verse" -> {
+                    val number = item.number ?: return@mapNotNull null
+                    val parts = parseVerseParts(item.content, footnotes)
+                    val plainText = parts.joinToString("") {
+                        when (it) {
+                            is VersePart.Text -> it.text
+                            is VersePart.Poem -> it.text
+                            is VersePart.Footnote -> ""
+                        }
+                    }.trim()
+                    ChapterContent.VerseContent(Verse(number, plainText, parts))
+                }
+                "line_break" -> ChapterContent.LineBreak()
+                "hebrew_subtitle" -> {
+                    val text = extractTextFromContent(item.content)
+                    ChapterContent.HebrewSubtitle(text)
+                }
+                else -> null
+            }
+        }
+        chapterCache[key] = content
+        return content
+    }
+
+    suspend fun getVerseText(translationId: String, bookId: String, chapter: Int, verseNumber: Int): String? {
+        val content = getChapter(translationId, bookId, chapter)
+        return content.filterIsInstance<ChapterContent.VerseContent>()
+            .find { it.verse.number == verseNumber }?.verse?.text
+    }
+
+    // ---- Commentary ----
+
+    suspend fun getCommentaryChapter(commentaryId: String, bookId: String, chapter: Int): CommentaryContent? {
+        return try {
+            val response = api.getCommentaryChapter(commentaryId, bookId, chapter)
+            val ch = response.chapter ?: return null
+            val name = response.commentary?.name ?: "Commentary"
+            val bookName = response.book?.name ?: ""
+            val sections = (ch.content ?: emptyList()).mapNotNull { item ->
+                if (item.type == "verse") {
+                    val text = extractTextFromContent(item.content)
+                    CommentarySection(item.number?.toString() ?: "", text)
+                } else null
+            }
+            CommentaryContent(name, bookName, ch.number, ch.introduction, sections)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    // ---- Bookmarks ----
+
+    fun getAllBookmarks(): Flow<List<Bookmark>> =
+        db.bookmarkDao().getAllBookmarks().map { list ->
+            list.map { Bookmark(it.reference, it.text, it.collection, it.bookmarkedAt) }
+        }
+
+    suspend fun isBookmarked(reference: String): Boolean =
+        db.bookmarkDao().getBookmark(reference) != null
+
+    suspend fun toggleBookmark(reference: String, text: String): Boolean {
+        val existing = db.bookmarkDao().getBookmark(reference)
+        return if (existing != null) {
+            db.bookmarkDao().deleteByReference(reference)
+            false
+        } else {
+            db.bookmarkDao().insertBookmark(BookmarkEntity(reference, text))
+            true
+        }
+    }
+
+    suspend fun removeBookmark(reference: String) {
+        db.bookmarkDao().deleteByReference(reference)
+    }
+
+    suspend fun moveBookmarkToCollection(reference: String, collection: String?) {
+        db.bookmarkDao().updateCollection(reference, collection)
+    }
+
+    // ---- Highlights ----
+
+    fun getAllHighlights(): Flow<List<Highlight>> =
+        db.highlightDao().getAllHighlights().map { list ->
+            list.map { Highlight(it.reference, it.color, it.note) }
+        }
+
+    suspend fun getHighlight(reference: String): Highlight? =
+        db.highlightDao().getHighlight(reference)?.let {
+            Highlight(it.reference, it.color, it.note)
+        }
+
+    suspend fun saveHighlight(reference: String, color: String, note: String?) {
+        if (color == "none" && note.isNullOrBlank()) {
+            db.highlightDao().deleteHighlight(reference)
+        } else {
+            db.highlightDao().insertHighlight(HighlightEntity(reference, color, note))
+        }
+    }
+
+    // ---- Reading Progress ----
+
+    fun getAllProgress(): Flow<List<ReadingProgressEntity>> =
+        db.readingProgressDao().getAllProgress()
+
+    fun getTotalChaptersRead(): Flow<Int> =
+        db.readingProgressDao().getTotalChaptersRead()
+
+    suspend fun markChapterRead(bookId: String, chapter: Int) {
+        val id = "${bookId}_$chapter"
+        db.readingProgressDao().markChapterRead(
+            ReadingProgressEntity(id, bookId, chapter)
+        )
+    }
+
+    // ---- Quiz ----
+
+    suspend fun getQuizResult(dateKey: String): QuizResultEntity? =
+        db.quizResultDao().getResult(dateKey)
+
+    suspend fun saveQuizResult(dateKey: String, questionsJson: String, answersJson: String, score: Int, total: Int) {
+        db.quizResultDao().insertResult(
+            QuizResultEntity(dateKey, questionsJson, answersJson, score, total)
+        )
+    }
+
+    // ---- Helpers ----
+
+    @Suppress("UNCHECKED_CAST")
+    private fun extractTextFromContent(content: Any?): String {
+        return when (content) {
+            is String -> content
+            is List<*> -> (content as List<Any>).joinToString("") { part ->
+                when (part) {
+                    is String -> part
+                    is Map<*, *> -> (part["text"] as? String) ?: ""
+                    else -> ""
+                }
+            }
+            is Map<*, *> -> (content["text"] as? String) ?: ""
+            else -> ""
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun parseVerseParts(content: Any?, footnotes: Map<Int, com.theword.app.data.api.FootnoteDto>): List<VersePart> {
+        if (content !is List<*>) return emptyList()
+        return (content as List<Any>).mapNotNull { part ->
+            when (part) {
+                is String -> VersePart.Text(part)
+                is Map<*, *> -> {
+                    val noteId = (part["noteId"] as? Number)?.toInt()
+                    val text = part["text"] as? String
+                    val poem = (part["poem"] as? Number)?.toInt()
+                    when {
+                        noteId != null -> {
+                            val fn = footnotes[noteId]
+                            if (fn != null) VersePart.Footnote(fn.caller ?: "*", fn.text ?: "")
+                            else null
+                        }
+                        text != null && poem != null -> VersePart.Poem(text, poem)
+                        text != null -> VersePart.Text(text)
+                        else -> null
+                    }
+                }
+                else -> null
+            }
+        }
+    }
+
+    private fun getFallbackBooks(): List<BibleBook> {
+        val otBooks = listOf(
+            "Genesis" to 50, "Exodus" to 40, "Leviticus" to 27, "Numbers" to 36, "Deuteronomy" to 34,
+            "Joshua" to 24, "Judges" to 21, "Ruth" to 4, "1 Samuel" to 31, "2 Samuel" to 24,
+            "1 Kings" to 22, "2 Kings" to 25, "1 Chronicles" to 29, "2 Chronicles" to 36,
+            "Ezra" to 10, "Nehemiah" to 13, "Esther" to 10, "Job" to 42, "Psalms" to 150,
+            "Proverbs" to 31, "Ecclesiastes" to 12, "Song of Solomon" to 8, "Isaiah" to 66,
+            "Jeremiah" to 52, "Lamentations" to 5, "Ezekiel" to 48, "Daniel" to 12,
+            "Hosea" to 14, "Joel" to 3, "Amos" to 9, "Obadiah" to 1, "Jonah" to 4,
+            "Micah" to 7, "Nahum" to 3, "Habakkuk" to 3, "Zephaniah" to 3, "Haggai" to 2,
+            "Zechariah" to 14, "Malachi" to 4
+        )
+        val ntBooks = listOf(
+            "Matthew" to 28, "Mark" to 16, "Luke" to 24, "John" to 21, "Acts" to 28,
+            "Romans" to 16, "1 Corinthians" to 16, "2 Corinthians" to 13, "Galatians" to 6,
+            "Ephesians" to 6, "Philippians" to 4, "Colossians" to 4, "1 Thessalonians" to 5,
+            "2 Thessalonians" to 3, "1 Timothy" to 6, "2 Timothy" to 4, "Titus" to 3,
+            "Philemon" to 1, "Hebrews" to 13, "James" to 5, "1 Peter" to 5, "2 Peter" to 3,
+            "1 John" to 5, "2 John" to 1, "3 John" to 1, "Jude" to 1, "Revelation" to 22
+        )
+        val bookNameToId = mapOf(
+            "Genesis" to "GEN", "Exodus" to "EXO", "Leviticus" to "LEV", "Numbers" to "NUM",
+            "Deuteronomy" to "DEU", "Joshua" to "JOS", "Judges" to "JDG", "Ruth" to "RUT",
+            "1 Samuel" to "1SA", "2 Samuel" to "2SA", "1 Kings" to "1KI", "2 Kings" to "2KI",
+            "1 Chronicles" to "1CH", "2 Chronicles" to "2CH", "Ezra" to "EZR", "Nehemiah" to "NEH",
+            "Esther" to "EST", "Job" to "JOB", "Psalms" to "PSA", "Proverbs" to "PRO",
+            "Ecclesiastes" to "ECC", "Song of Solomon" to "SNG", "Isaiah" to "ISA", "Jeremiah" to "JER",
+            "Lamentations" to "LAM", "Ezekiel" to "EZK", "Daniel" to "DAN", "Hosea" to "HOS",
+            "Joel" to "JOL", "Amos" to "AMO", "Obadiah" to "OBA", "Jonah" to "JON",
+            "Micah" to "MIC", "Nahum" to "NAM", "Habakkuk" to "HAB", "Zephaniah" to "ZEP",
+            "Haggai" to "HAG", "Zechariah" to "ZEC", "Malachi" to "MAL",
+            "Matthew" to "MAT", "Mark" to "MRK", "Luke" to "LUK", "John" to "JHN",
+            "Acts" to "ACT", "Romans" to "ROM", "1 Corinthians" to "1CO", "2 Corinthians" to "2CO",
+            "Galatians" to "GAL", "Ephesians" to "EPH", "Philippians" to "PHP",
+            "Colossians" to "COL", "1 Thessalonians" to "1TH", "2 Thessalonians" to "2TH",
+            "1 Timothy" to "1TI", "2 Timothy" to "2TI", "Titus" to "TIT", "Philemon" to "PHM",
+            "Hebrews" to "HEB", "James" to "JAS", "1 Peter" to "1PE", "2 Peter" to "2PE",
+            "1 John" to "1JN", "2 John" to "2JN", "3 John" to "3JN", "Jude" to "JUD",
+            "Revelation" to "REV"
+        )
+        return otBooks.mapIndexed { i, (name, ch) ->
+            BibleBook(bookNameToId[name] ?: name, name, ch, i + 1)
+        } + ntBooks.mapIndexed { i, (name, ch) ->
+            BibleBook(bookNameToId[name] ?: name, name, ch, 40 + i)
+        }
+    }
+}
+
+data class CommentaryContent(
+    val name: String,
+    val bookName: String,
+    val chapterNumber: Int,
+    val introduction: String?,
+    val sections: List<CommentarySection>
+)
+
+data class CommentarySection(
+    val verseRange: String,
+    val text: String
+)
