@@ -1,7 +1,6 @@
 package com.theword.app.ui.bookmarks
 
 import android.content.Context
-import android.widget.Toast
 import com.theword.app.ui.util.ShareUtils
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
