@@ -1,35 +1,22 @@
 package com.theword.app.ui.home
 
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import com.theword.app.data.embedded.Devotion
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-
-data class Feature(val icon: String, val title: String, val description: String)
-
-val features = listOf(
-    Feature("📚", "Read the Bible", "All 66 books, organized by Old and New Testament."),
-    Feature("🔍", "Search Verses", "Find specific verses or search by keywords."),
-    Feature("🔖", "Bookmark & Save", "Save your favorite verses and access them anytime."),
-    Feature("📜", "Multiple Versions", "Read in BSB, WEB, BBE, and more translations."),
-    Feature("📝", "Commentaries", "Study with Matthew Henry, John Gill, and others."),
-    Feature("🌓", "Dark Mode", "Switch between light and dark themes."),
-    Feature("❓", "Daily Quiz", "Test your Bible knowledge with a new quiz every day."),
-    Feature("🌈", "Bible Stories", "Kid-friendly summaries of important Bible stories."),
-    Feature("🎨", "Highlights & Notes", "Highlight verses with colors and add notes."),
-    Feature("📊", "Reading Progress", "Track your Bible reading journey."),
-    Feature("⚖️", "Compare Translations", "View verses side by side across translations."),
-    Feature("📂", "Bookmark Collections", "Organize bookmarks into custom folders."),
-)
+import com.theword.app.data.embedded.Devotion
+import com.theword.app.domain.model.BibleStory
+import com.theword.app.domain.model.Prayer
 
 @Composable
 fun HomeScreen(
@@ -37,44 +24,46 @@ fun HomeScreen(
     onNavigateToBible: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("Verse", "Story", "Prayer", "Devotion")
 
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 160.dp),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp)
     ) {
-        // Hero section (span full width)
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)
-            ) {
-                Text("Welcome to The Word", style = MaterialTheme.typography.displaySmall)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "Your personal Bible study companion",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        val currentDate = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date()) }
+
+        Text(
+            text = currentDate,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp, start = 8.dp)
+        )
+
+        ScrollableTabRow(
+            selectedTabIndex = selectedTabIndex,
+            edgePadding = 8.dp,
+            modifier = Modifier.padding(bottom = 16.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            divider = {}
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = { Text(title) }
                 )
             }
         }
 
-        // Daily Verse Card (span full width)
-        item(span = { GridItemSpan(maxLineSpan) }) {
-            DailyVerseCard(uiState, onNavigateToBible, onRetry = { viewModel.loadDailyVerse() })
-        }
-
-        // Daily Devotion Card (span full width)
-        if (uiState.dailyDevotion != null) {
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                DailyDevotionCard(uiState.dailyDevotion!!)
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (selectedTabIndex) {
+                0 -> DailyVerseCard(uiState, onNavigateToBible, onRetry = { viewModel.loadDailyContent() })
+                1 -> uiState.dailyStory?.let { DailyStoryCard(it) }
+                2 -> uiState.dailyPrayer?.let { DailyPrayerCard(it) }
+                3 -> uiState.dailyDevotion?.let { DailyDevotionCard(it) }
             }
-        }
-
-        // Feature cards
-        items(features) { feature ->
-            FeatureCard(feature)
         }
     }
 }
@@ -86,12 +75,12 @@ fun DailyVerseCard(
     onRetry: () -> Unit
 ) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
             Text("Verse of the Day", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -129,22 +118,45 @@ fun DailyVerseCard(
 }
 
 @Composable
-fun FeatureCard(feature: Feature) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(feature.icon, style = MaterialTheme.typography.displayMedium, textAlign = TextAlign.Center)
+fun DailyStoryCard(story: BibleStory) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
+            Text("Story of the Day", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("${story.icon} ${story.title}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(story.reference, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onTertiaryContainer)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(feature.title, style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                feature.description,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(story.snippet, style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Moral: ${story.moral}", style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
+        }
+    }
+}
+
+@Composable
+fun DailyPrayerCard(prayer: Prayer) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
+            Text("Prayer of the Day", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(prayer.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(prayer.verseRef, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(prayer.verse, style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(prayer.text, style = MaterialTheme.typography.bodyMedium)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(prayer.closing, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -152,15 +164,15 @@ fun FeatureCard(feature: Feature) {
 @Composable
 fun DailyDevotionCard(devotion: Devotion) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState())) {
             Text("Daily Devotion", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(12.dp))
-            Text(devotion.title, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Text(devotion.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(devotion.reference, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
             Spacer(modifier = Modifier.height(8.dp))
             Text(devotion.text, style = MaterialTheme.typography.bodyMedium)
