@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.theword.app.data.embedded.StoriesData
+import com.theword.app.data.embedded.STORIES_DATA
 import com.theword.app.domain.model.BibleStory
 
 @Composable
@@ -33,9 +33,9 @@ fun StoriesScreen() {
 @Composable
 private fun StoryGrid(filter: String, onFilterChange: (String) -> Unit, onSelect: (BibleStory) -> Unit) {
     val stories = when (filter) {
-        "Old Testament" -> StoriesData.stories.filter { it.testament == "Old Testament" }
-        "New Testament" -> StoriesData.stories.filter { it.testament == "New Testament" }
-        else -> StoriesData.stories
+        "Old Testament" -> STORIES_DATA.filter { it.testament == "old-testament" }
+        "New Testament" -> STORIES_DATA.filter { it.testament == "new-testament" }
+        else -> STORIES_DATA
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
