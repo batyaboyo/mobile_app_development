@@ -38,6 +38,8 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import java.util.Calendar
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
     data object Home : Screen("home", "Home", Icons.Outlined.Home, Icons.Filled.Home)
@@ -63,10 +65,31 @@ fun TheWordApp() {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val currentRoute = currentDestination?.route
+
+    // Check if we should show a back button
+    val canPop = navController.previousBackStackEntry != null
+    val isHome = currentRoute == Screen.Home.route
+    val showBack = !isHome
 
     Scaffold(
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    if (showBack) {
+                        IconButton(onClick = {
+                            if (canPop) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                                }
+                            }
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    }
+                },
                 title = { Text("📖 The Word") },
                 actions = {
                     // Dark mode toggle
@@ -119,15 +142,43 @@ fun TheWordApp() {
                 val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
                 HomeScreen(
                     viewModel = vm,
-                    onNavigateToBible = { navController.navigate(Screen.Bible.route) },
-                    onNavigateToStories = { navController.navigate(Screen.Stories.route) },
-                    onNavigateToPrayer = { navController.navigate(Screen.Prayer.route) },
+                    onNavigateToBible = { bookId, chapter ->
+                        val route = if (bookId != null && chapter != null) {
+                            Screen.Bible.route + "?bookId=$bookId&chapter=$chapter"
+                        } else {
+                            Screen.Bible.route
+                        }
+                        navController.navigate(route)
+                    },
+                    onNavigateToStories = { storyId ->
+                        val route = if (storyId != null) Screen.Stories.route + "?storyId=$storyId" else Screen.Stories.route
+                        navController.navigate(route)
+                    },
+                    onNavigateToPrayer = { isEvening, index ->
+                        val route = if (isEvening != null && index != null) {
+                            Screen.Prayer.route + "?isEvening=$isEvening&index=$index"
+                        } else {
+                            Screen.Prayer.route
+                        }
+                        navController.navigate(route)
+                    },
                     onNavigateToDevotion = { navController.navigate("devotion") },
                     onNavigateToProgress = { navController.navigate(Screen.Progress.route) }
                 )
             }
-            composable(Screen.Bible.route) {
+            composable(Screen.Bible.route + "?bookId={bookId}&chapter={chapter}") { backStackEntry ->
+                val bookId = backStackEntry.arguments?.getString("bookId")
+                val chapter = backStackEntry.arguments?.getString("chapter")?.toIntOrNull()
+                
                 val vm: BibleViewModel = viewModel(factory = BibleViewModel.Factory)
+                
+                // If deep linking, select the chapter
+                LaunchedEffect(bookId, chapter) {
+                    if (bookId != null && chapter != null) {
+                        vm.selectChapterDeepLink(bookId, chapter)
+                    }
+                }
+                
                 BibleScreen(vm)
             }
             composable(Screen.Study.route) {
@@ -152,11 +203,14 @@ fun TheWordApp() {
                 val vm: HomeViewModel = viewModel(viewModelStoreOwner = homeEntry, factory = HomeViewModel.Factory)
                 com.theword.app.ui.home.DevotionScreen(viewModel = vm, onBack = { navController.popBackStack() })
             }
-            composable(Screen.Stories.route) {
-                StoriesScreen()
+            composable(Screen.Stories.route + "?storyId={storyId}") { backStackEntry ->
+                val storyId = backStackEntry.arguments?.getString("storyId")
+                StoriesScreen(initialStoryId = storyId)
             }
-            composable(Screen.Prayer.route) {
-                PrayerScreen()
+            composable(Screen.Prayer.route + "?isEvening={isEvening}&index={index}") { backStackEntry ->
+                val isEvening = backStackEntry.arguments?.getString("isEvening")?.toBoolean()
+                val index = backStackEntry.arguments?.getString("index")?.toIntOrNull()
+                PrayerScreen(initialIsEvening = isEvening, initialIndex = index)
             }
             composable(Screen.About.route) {
                 AboutScreen()

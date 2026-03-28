@@ -102,6 +102,27 @@ class BibleViewModel(private val repository: BibleRepository) : ViewModel() {
             else -> {}
         }
     }
+    
+    fun selectChapterDeepLink(bookId: String, chapter: Int) {
+        viewModelScope.launch {
+            // Ensure books are loaded
+            if (_uiState.value.books.isEmpty()) {
+                val books = repository.getBooks(_uiState.value.currentVersion)
+                _uiState.update { it.copy(books = books) }
+            }
+            
+            val book = _uiState.value.books.find { it.id == bookId }
+            if (book != null) {
+                _uiState.update { it.copy(
+                    selectedBook = book,
+                    selectedChapter = chapter,
+                    navState = BibleNavState.VERSES,
+                    isLoading = true
+                ) }
+                selectChapter(chapter)
+            }
+        }
+    }
 
     fun previousChapter() {
         val ch = _uiState.value.selectedChapter

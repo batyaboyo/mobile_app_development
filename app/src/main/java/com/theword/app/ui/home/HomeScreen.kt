@@ -3,6 +3,7 @@ package com.theword.app.ui.home
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.Calendar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,14 +26,15 @@ import androidx.compose.material.icons.filled.*
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onNavigateToBible: () -> Unit,
-    onNavigateToStories: () -> Unit,
-    onNavigateToPrayer: () -> Unit,
+    onNavigateToBible: (String?, Int?) -> Unit,
+    onNavigateToStories: (String?) -> Unit,
+    onNavigateToPrayer: (Boolean?, Int?) -> Unit,
     onNavigateToDevotion: () -> Unit,
     onNavigateToProgress: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentDate = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date()) }
+    var showContentPopup by remember { mutableStateOf<DailyVerse?>(null) }
 
     Column(
         modifier = Modifier
@@ -77,18 +79,22 @@ fun HomeScreen(
                 subtitle = uiState.dailyStory!!.title,
                 snippet = uiState.dailyStory!!.snippet,
                 icon = Icons.Filled.AutoStories,
-                onClick = onNavigateToStories
+                onClick = { onNavigateToStories(uiState.dailyStory!!.id) }
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
 
         if (uiState.dailyPrayer != null) {
+            val calendar = Calendar.getInstance()
+            val isEvening = calendar.get(Calendar.HOUR_OF_DAY) >= 17
+            val index = calendar.get(Calendar.DAY_OF_YEAR) // Matches HomeViewModel logic
+            
             DailyContentCard(
                 title = "Daily Prayer",
                 subtitle = uiState.dailyPrayer!!.title,
                 snippet = uiState.dailyPrayer!!.text,
                 icon = Icons.Filled.SelfImprovement,
-                onClick = onNavigateToPrayer
+                onClick = { onNavigateToPrayer(isEvening, index) }
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -99,7 +105,7 @@ fun HomeScreen(
                 subtitle = uiState.dailyPsalm!!.reference,
                 snippet = uiState.dailyPsalm!!.text,
                 icon = Icons.Filled.MusicNote,
-                onClick = { /* Navigate to Bible at specific chapter */ }
+                onClick = { showContentPopup = uiState.dailyPsalm }
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -110,10 +116,46 @@ fun HomeScreen(
                 subtitle = uiState.dailyProverb!!.reference,
                 snippet = uiState.dailyProverb!!.text,
                 icon = Icons.Filled.FormatQuote,
-                onClick = { /* Navigate to Bible at specific chapter */ }
+                onClick = { showContentPopup = uiState.dailyProverb }
             )
             Spacer(modifier = Modifier.height(12.dp))
         }
+
+        // Added Reading Progress card to use the onNavigateToProgress parameter
+        DailyContentCard(
+            title = "Personal Growth",
+            subtitle = "Reading Progress",
+            snippet = "Track your spiritual journey and daily streaks.",
+            icon = Icons.Filled.BarChart,
+            onClick = onNavigateToProgress
+        )
+    }
+
+    // Popup for Psalms and Proverbs
+    if (showContentPopup != null) {
+        AlertDialog(
+            onDismissRequest = { showContentPopup = null },
+            confirmButton = {
+                TextButton(onClick = { showContentPopup = null }) {
+                    Text("Close")
+                }
+            },
+            title = {
+                Text(
+                    showContentPopup!!.reference,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    showContentPopup!!.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2
+                )
+            },
+            shape = RoundedCornerShape(28.dp)
+        )
     }
 }
 
@@ -158,7 +200,7 @@ fun DailyContentCard(
 @Composable
 fun HeroVerseCard(
     uiState: HomeUiState,
-    onNavigateToBible: () -> Unit,
+    onNavigateToBible: (String?, Int?) -> Unit,
     onRetry: () -> Unit
 ) {
     val gradientBrush = Brush.linearGradient(
@@ -218,14 +260,14 @@ fun HeroVerseCard(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 FilledTonalButton(
-                    onClick = onNavigateToBible,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.onPrimary,
-                        contentColor = MaterialTheme.colorScheme.primary
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = { 
+                        // Parse bookId and chapter from reference (e.g. "John 3:16")
+                        // For simplicity, we can just navigate to Bible for now, 
+                        // but ideally we'd parse and use selectChapterDeepLink
+                        onNavigateToBible(null, null) 
+                    }
                 ) {
-                    Text("Read Chapter", fontWeight = FontWeight.Bold)
+                    Text("Read Full Chapter")
                 }
             }
         }

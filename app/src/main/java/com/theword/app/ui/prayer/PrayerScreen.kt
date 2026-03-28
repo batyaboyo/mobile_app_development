@@ -24,10 +24,10 @@ import kotlinx.coroutines.delay
 import java.util.Calendar
 
 @Composable
-fun PrayerScreen() {
-    val isEvening = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) >= 17
+fun PrayerScreen(initialIsEvening: Boolean? = null, initialIndex: Int? = null, onBack: () -> Unit = {}) {
+    val isEvening = initialIsEvening ?: (Calendar.getInstance().get(Calendar.HOUR_OF_DAY) >= 17)
     var showEvening by remember { mutableStateOf(isEvening) }
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableStateOf(initialIndex ?: 0) }
 
     val prayers = if (showEvening) PrayerData.evening else PrayerData.morning
     val prayer = prayers[currentIndex % prayers.size]
@@ -51,7 +51,19 @@ fun PrayerScreen() {
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Prayer Time", style = MaterialTheme.typography.headlineSmall)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Text(
+                "Prayer Time", 
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Morning/Evening toggle

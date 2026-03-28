@@ -20,19 +20,25 @@ import com.theword.app.data.embedded.STORIES_DATA
 import com.theword.app.domain.model.BibleStory
 
 @Composable
-fun StoriesScreen() {
-    var selectedStory by remember { mutableStateOf<BibleStory?>(null) }
+fun StoriesScreen(initialStoryId: String? = null, onBack: () -> Unit = {}) {
+    var selectedStory by remember { 
+        mutableStateOf<BibleStory?>(
+            if (initialStoryId != null) STORIES_DATA.find { it.id == initialStoryId } else null
+        )
+    }
     var filter by rememberSaveable { mutableStateOf("All") }
 
     if (selectedStory != null) {
-        StoryDetail(story = selectedStory!!, onBack = { selectedStory = null })
+        StoryDetail(story = selectedStory!!, onBack = { 
+            if (initialStoryId != null) onBack() else selectedStory = null 
+        })
     } else {
-        StoryGrid(filter = filter, onFilterChange = { filter = it }, onSelect = { selectedStory = it })
+        StoryGrid(filter = filter, onFilterChange = { filter = it }, onSelect = { selectedStory = it }, onBack = onBack)
     }
 }
 
 @Composable
-private fun StoryGrid(filter: String, onFilterChange: (String) -> Unit, onSelect: (BibleStory) -> Unit) {
+private fun StoryGrid(filter: String, onFilterChange: (String) -> Unit, onSelect: (BibleStory) -> Unit, onBack: () -> Unit) {
     val stories = when (filter) {
         "Old Testament" -> STORIES_DATA.filter { it.testament == "old-testament" }
         "New Testament" -> STORIES_DATA.filter { it.testament == "new-testament" }
@@ -40,11 +46,19 @@ private fun StoryGrid(filter: String, onFilterChange: (String) -> Unit, onSelect
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            "Bible Stories for Kids",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(16.dp)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, start = 8.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Text(
+                "Bible Stories",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
 
         Row(modifier = Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("All", "Old Testament", "New Testament").forEach { f ->
