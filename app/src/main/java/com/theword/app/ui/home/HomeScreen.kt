@@ -20,9 +20,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun HomeScreen(
@@ -133,13 +135,13 @@ fun HomeScreen(
     }
 
     // Popup for Psalms and Proverbs
-    if (showContentPopup != null) {
+    showContentPopup?.let { content ->
         DailyContentDialog(
-            content = showContentPopup!!,
+            content = content,
             onDismiss = { showContentPopup = null },
             onReadFullChapter = {
                 showContentPopup = null
-                onNavigateToBible(null, null) 
+                onNavigateToBible(content.bookId, content.chapter) 
             }
         )
     }
@@ -158,11 +160,17 @@ fun DailyContentDialog(
         )
     )
 
-    Dialog(onDismissRequest = onDismiss) {
-        Card(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            shape = RoundedCornerShape(28.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 8.dp
         ) {
             Box(
                 modifier = Modifier
@@ -188,8 +196,8 @@ fun DailyContentDialog(
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold,
                         fontStyle = FontStyle.Italic,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.2
+                        textAlign = TextAlign.Center,
+                        lineHeight = 32.sp
                     )
                     
                     Spacer(modifier = Modifier.height(32.dp))
@@ -322,10 +330,7 @@ fun HeroVerseCard(
                 Spacer(modifier = Modifier.height(24.dp))
                 FilledTonalButton(
                     onClick = { 
-                        // Parse bookId and chapter from reference (e.g. "John 3:16")
-                        // For simplicity, we can just navigate to Bible for now, 
-                        // but ideally we'd parse and use selectChapterDeepLink
-                        onNavigateToBible(null, null) 
+                        onNavigateToBible(uiState.dailyVerse?.bookId, uiState.dailyVerse?.chapter) 
                     }
                 ) {
                     Text("Read Full Chapter")

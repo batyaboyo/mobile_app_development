@@ -16,7 +16,12 @@ import com.theword.app.domain.model.Prayer
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-data class DailyVerse(val reference: String, val text: String)
+data class DailyVerse(
+    val reference: String, 
+    val text: String,
+    val bookId: String? = null,
+    val chapter: Int? = null
+)
 
 data class HomeUiState(
     val dailyVerse: DailyVerse? = null,
@@ -67,26 +72,26 @@ class HomeViewModel(private val repository: BibleRepository) : ViewModel() {
                 val psalmContent = repository.getChapter(version, "PSA", psalmChapter)
                 val psalmText = psalmContent
                     .filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
-                    .take(3) // Get first 3 verses as a snippet
-                    .joinToString(" ") { it.verse.text }
+                    .take(5) // Get a slightly longer snippet
+                    .joinToString(" ") { "${it.verse.number} ${it.verse.text}" }
 
                 // Fetch Daily Proverb (PRO)
                 val proverbChapter = (dayOfYear % 31) + 1
                 val proverbContent = repository.getChapter(version, "PRO", proverbChapter)
                 val proverbText = proverbContent
                     .filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
-                    .take(2) // Get first 2 verses as a snippet
-                    .joinToString(" ") { it.verse.text }
+                    .take(3) // Get a slightly longer snippet
+                    .joinToString(" ") { "${it.verse.number} ${it.verse.text}" }
 
                 if (text.isNotBlank()) {
                     _uiState.update {
                         it.copy(
-                            dailyVerse = DailyVerse(verseInfo.ref, text),
+                            dailyVerse = DailyVerse(verseInfo.ref, text, verseInfo.bookId, verseInfo.chapter),
                             dailyDevotion = devotionInfo,
                             dailyStory = storyInfo,
                             dailyPrayer = prayerInfo,
-                            dailyPsalm = DailyVerse("Psalm $psalmChapter", psalmText),
-                            dailyProverb = DailyVerse("Proverbs $proverbChapter", proverbText),
+                            dailyPsalm = DailyVerse("Psalm $psalmChapter", psalmText, "PSA", psalmChapter),
+                            dailyProverb = DailyVerse("Proverbs $proverbChapter", proverbText, "PRO", proverbChapter),
                             isLoading = false
                         )
                     }
