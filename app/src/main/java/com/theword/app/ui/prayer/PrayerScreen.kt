@@ -4,8 +4,10 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,9 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.theword.app.data.embedded.PrayerData
@@ -66,11 +70,11 @@ fun PrayerScreen(initialIsEvening: Boolean? = null, initialIndex: Int? = null, o
 
     fun triggerFireworks(centerX: Float, centerY: Float) {
         val colors = listOf(
-            androidx.compose.ui.graphics.Color(0xFFFFD700), // Gold
-            androidx.compose.ui.graphics.Color(0xFFFF4500), // OrangeRed
-            androidx.compose.ui.graphics.Color(0xFF00BFFF), // DeepSkyBlue
-            androidx.compose.ui.graphics.Color(0xFFADFF2F), // GreenYellow
-            androidx.compose.ui.graphics.Color(0xFFFF69B4)  // HotPink
+            Color(0xFFFFD700), // Gold
+            Color(0xFFFF4500), // OrangeRed
+            Color(0xFF00BFFF), // DeepSkyBlue
+            Color(0xFFADFF2F), // GreenYellow
+            Color(0xFFFF69B4)  // HotPink
         )
         repeat(30) {
             val angle = Math.random() * 2 * Math.PI
@@ -176,7 +180,7 @@ fun PrayerScreen(initialIsEvening: Boolean? = null, initialIndex: Int? = null, o
                     .width(180.dp),
                 shape = RoundedCornerShape(32.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isPrayed) androidx.compose.ui.graphics.Color(0xFFFFD700) else MaterialTheme.colorScheme.primary,
+                    containerColor = if (isPrayed) Color(0xFFFFD700) else MaterialTheme.colorScheme.primary,
                     contentColor = if (isPrayed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
@@ -206,7 +210,7 @@ data class Particle(
     val y: Float,
     val vx: Float,
     val vy: Float,
-    val color: androidx.compose.ui.graphics.Color,
+    val color: Color,
     val alpha: Float,
     val size: Float
 )
