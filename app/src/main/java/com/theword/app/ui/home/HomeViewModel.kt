@@ -70,18 +70,20 @@ class HomeViewModel(private val repository: BibleRepository) : ViewModel() {
                 // Fetch Daily Psalm (PSA)
                 val psalmChapter = (dayOfYear % 150) + 1
                 val psalmContent = repository.getChapter(version, "PSA", psalmChapter)
-                val psalmText = psalmContent
-                    .filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
-                    .take(5) // Get a slightly longer snippet
-                    .joinToString(" ") { "${it.verse.number} ${it.verse.text}" }
+                val psalmVerses = psalmContent.filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
+                val psalmVerseIdx = dayOfYear % psalmVerses.size.coerceAtLeast(1)
+                val psalmVerse = psalmVerses.getOrNull(psalmVerseIdx)
+                val psalmText = psalmVerse?.verse?.text ?: ""
+                val psalmRef = "Psalm $psalmChapter:${psalmVerse?.verse?.number ?: 1}"
 
                 // Fetch Daily Proverb (PRO)
                 val proverbChapter = (dayOfYear % 31) + 1
                 val proverbContent = repository.getChapter(version, "PRO", proverbChapter)
-                val proverbText = proverbContent
-                    .filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
-                    .take(3) // Get a slightly longer snippet
-                    .joinToString(" ") { "${it.verse.number} ${it.verse.text}" }
+                val proverbVerses = proverbContent.filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
+                val proverbVerseIdx = dayOfYear % proverbVerses.size.coerceAtLeast(1)
+                val proverbVerse = proverbVerses.getOrNull(proverbVerseIdx)
+                val proverbText = proverbVerse?.verse?.text ?: ""
+                val proverbRef = "Proverbs $proverbChapter:${proverbVerse?.verse?.number ?: 1}"
 
                 if (text.isNotBlank()) {
                     _uiState.update {
@@ -90,12 +92,13 @@ class HomeViewModel(private val repository: BibleRepository) : ViewModel() {
                             dailyDevotion = devotionInfo,
                             dailyStory = storyInfo,
                             dailyPrayer = prayerInfo,
-                            dailyPsalm = DailyVerse("Psalm $psalmChapter", psalmText, "PSA", psalmChapter),
-                            dailyProverb = DailyVerse("Proverbs $proverbChapter", proverbText, "PRO", proverbChapter),
+                            dailyPsalm = DailyVerse(psalmRef, psalmText, "PSA", psalmChapter),
+                            dailyProverb = DailyVerse(proverbRef, proverbText, "PRO", proverbChapter),
                             isLoading = false
                         )
                     }
-                } else {
+                }
+ else {
                     _uiState.update { it.copy(isLoading = false, error = "Verse not found") }
                 }
             } catch (e: Exception) {
