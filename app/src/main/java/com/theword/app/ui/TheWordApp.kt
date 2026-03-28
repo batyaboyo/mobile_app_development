@@ -111,7 +111,23 @@ fun TheWordApp() {
         bottomBar = {
             NavigationBar {
                 bottomNavItems.forEach { screen ->
-                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                    // Logic to highlight the correct tab even when on sub-screens
+                    val isChildOfHome = screen == Screen.Home && (
+                        currentRoute?.startsWith("stories") == true || 
+                        currentRoute?.startsWith("prayer") == true || 
+                        currentRoute == "devotion" || 
+                        currentRoute == Screen.Progress.route
+                    )
+                    val isChildOfStudy = screen == Screen.Study && (
+                        currentRoute == Screen.Bookmarks.route || 
+                        currentRoute == Screen.Quiz.route
+                    )
+                    
+                    val selected = currentDestination?.hierarchy?.any { 
+                        val route = it.route ?: ""
+                        route == screen.route || route.startsWith("${screen.route}?")
+                    } == true || isChildOfHome || isChildOfStudy
+
                     NavigationBarItem(
                         icon = {
                             Icon(
@@ -122,10 +138,21 @@ fun TheWordApp() {
                         label = { Text(screen.label) },
                         selected = selected,
                         onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (screen.route == Screen.Home.route) {
+                                // Hard reset to home when clicking the Home tab from any sub-screen
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = false
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = false
+                                }
+                            } else {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         }
                     )
@@ -179,7 +206,7 @@ fun TheWordApp() {
                     }
                 }
                 
-                BibleScreen(vm)
+                BibleScreen(vm, onBack = { navController.popBackStack() })
             }
             composable(Screen.Study.route) {
                 com.theword.app.ui.study.StudyScreen(
@@ -205,19 +232,19 @@ fun TheWordApp() {
             }
             composable(Screen.Stories.route + "?storyId={storyId}") { backStackEntry ->
                 val storyId = backStackEntry.arguments?.getString("storyId")
-                StoriesScreen(initialStoryId = storyId)
+                StoriesScreen(initialStoryId = storyId, onBack = { navController.popBackStack() })
             }
             composable(Screen.Prayer.route + "?isEvening={isEvening}&index={index}") { backStackEntry ->
                 val isEvening = backStackEntry.arguments?.getString("isEvening")?.toBoolean()
                 val index = backStackEntry.arguments?.getString("index")?.toIntOrNull()
-                PrayerScreen(initialIsEvening = isEvening, initialIndex = index)
+                PrayerScreen(initialIsEvening = isEvening, initialIndex = index, onBack = { navController.popBackStack() })
             }
             composable(Screen.About.route) {
                 AboutScreen()
             }
             composable(Screen.Progress.route) {
                 val vm: ProgressViewModel = viewModel(factory = ProgressViewModel.Factory)
-                ProgressScreen(vm)
+                ProgressScreen(vm, onBack = { navController.popBackStack() })
             }
         }
     }

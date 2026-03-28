@@ -8,9 +8,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 @Composable
-fun ProgressScreen(viewModel: ProgressViewModel) {
+fun ProgressScreen(viewModel: ProgressViewModel, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
 
     if (uiState.isLoading) {
@@ -30,7 +32,12 @@ fun ProgressScreen(viewModel: ProgressViewModel) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text("Reading Progress", style = MaterialTheme.typography.headlineSmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+                Text("Reading Progress", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 8.dp))
+            }
         }
 
         // Overall progress

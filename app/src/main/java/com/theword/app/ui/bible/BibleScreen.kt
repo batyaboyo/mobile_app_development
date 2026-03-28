@@ -27,7 +27,7 @@ import com.theword.app.domain.model.*
 import com.theword.app.ui.theme.*
 
 @Composable
-fun BibleScreen(viewModel: BibleViewModel) {
+fun BibleScreen(viewModel: BibleViewModel, onBack: () -> Unit = {}) {
     val uiState by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -41,7 +41,7 @@ fun BibleScreen(viewModel: BibleViewModel) {
         }
 
         when (uiState.navState) {
-            BibleNavState.BOOKS -> BooksList(uiState.books, uiState.isLoading) { viewModel.selectBook(it) }
+            BibleNavState.BOOKS -> BooksList(uiState.books, uiState.isLoading, onBack) { viewModel.selectBook(it) }
             BibleNavState.CHAPTERS -> ChapterGrid(uiState.selectedBook!!, viewModel)
             BibleNavState.VERSES -> VerseDisplay(uiState, viewModel)
         }
@@ -89,7 +89,7 @@ private fun VersionSelector(
 }
 
 @Composable
-private fun BooksList(books: List<BibleBook>, isLoading: Boolean, onSelect: (BibleBook) -> Unit) {
+private fun BooksList(books: List<BibleBook>, isLoading: Boolean, onBack: () -> Unit, onSelect: (BibleBook) -> Unit) {
     if (isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -105,6 +105,18 @@ private fun BooksList(books: List<BibleBook>, isLoading: Boolean, onSelect: (Bib
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+                Text(
+                    "Select Book",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
         item {
             Text(
                 "Old Testament",

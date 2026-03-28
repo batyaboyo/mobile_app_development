@@ -32,18 +32,60 @@ fun PrayerScreen(initialIsEvening: Boolean? = null, initialIndex: Int? = null, o
     val prayers = if (showEvening) PrayerData.evening else PrayerData.morning
     val prayer = prayers[currentIndex % prayers.size]
 
-    // Timer state
-    var timerRunning by remember { mutableStateOf(false) }
-    var elapsedSeconds by remember { mutableIntStateOf(0) }
-    val totalSeconds = 120 // 2 minutes
+    // Prayer state
+    var isPrayed by remember(currentIndex, showEvening) { mutableStateOf(false) }
+    
+    // Fireworks/Particle state
+    val particles = remember { mutableStateListOf<Particle>() }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(timerRunning) {
-        if (timerRunning) {
-            while (elapsedSeconds < totalSeconds) {
-                delay(1000)
-                elapsedSeconds++
+    LaunchedEffect(particles.isNotEmpty()) {
+        if (particles.isNotEmpty()) {
+            while (particles.isNotEmpty()) {
+                withFrameNanos { frameTime ->
+                    val toRemove = mutableListOf<Int>()
+                    for (i in particles.indices) {
+                        val p = particles[i]
+                        val updated = p.copy(
+                            x = p.x + p.vx,
+                            y = p.y + p.vy,
+                            vy = p.vy + 0.2f, // gravity
+                            alpha = p.alpha - 0.02f
+                        )
+                        if (updated.alpha <= 0) {
+                            toRemove.add(i)
+                        } else {
+                            particles[i] = updated
+                        }
+                    }
+                    toRemove.reversed().forEach { particles.removeAt(it) }
+                }
             }
-            timerRunning = false
+        }
+    }
+
+    fun triggerFireworks(centerX: Float, centerY: Float) {
+        val colors = listOf(
+            androidx.compose.ui.graphics.Color(0xFFFFD700), // Gold
+            androidx.compose.ui.graphics.Color(0xFFFF4500), // OrangeRed
+            androidx.compose.ui.graphics.Color(0xFF00BFFF), // DeepSkyBlue
+            androidx.compose.ui.graphics.Color(0xFFADFF2F), // GreenYellow
+            androidx.compose.ui.graphics.Color(0xFFFF69B4)  // HotPink
+        )
+        repeat(30) {
+            val angle = Math.random() * 2 * Math.PI
+            val speed = Math.random() * 15 + 5
+            particles.add(
+                Particle(
+                    x = centerX,
+                    y = centerY,
+                    vx = (Math.cos(angle) * speed).toFloat(),
+                    vy = (Math.sin(angle) * speed).toFloat(),
+                    color = colors.random(),
+                    alpha = 1f,
+                    size = (Math.random() * 10 + 5).toFloat()
+                )
+            )
         }
     }
 
@@ -70,12 +112,12 @@ fun PrayerScreen(initialIsEvening: Boolean? = null, initialIndex: Int? = null, o
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = !showEvening,
-                onClick = { showEvening = false; currentIndex = 0; timerRunning = false; elapsedSeconds = 0 },
+                onClick = { showEvening = false; currentIndex = 0 },
                 label = { Text("☀️ Morning") }
             )
             FilterChip(
                 selected = showEvening,
-                onClick = { showEvening = true; currentIndex = 0; timerRunning = false; elapsedSeconds = 0 },
+                onClick = { showEvening = true; currentIndex = 0 },
                 label = { Text("🌙 Evening") }
             )
         }
@@ -105,70 +147,67 @@ fun PrayerScreen(initialIsEvening: Boolean? = null, initialIndex: Int? = null, o
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Timer
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(160.dp)) {
-            val progress = if (totalSeconds > 0) elapsedSeconds.toFloat() / totalSeconds else 0f
-            val arcColor = MaterialTheme.colorScheme.primary
-            val trackColor = MaterialTheme.colorScheme.surfaceVariant
-
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val strokeWidth = 12.dp.toPx()
-                val arcSize = size.minDimension - strokeWidth
-                val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
-                drawArc(
-                    color = trackColor,
-                    startAngle = -90f,
-                    sweepAngle = 360f,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = Size(arcSize, arcSize),
-                    style = Stroke(strokeWidth, cap = StrokeCap.Round)
-                )
-                drawArc(
-                    color = arcColor,
-                    startAngle = -90f,
-                    sweepAngle = 360f * progress,
-                    useCenter = false,
-                    topLeft = topLeft,
-                    size = Size(arcSize, arcSize),
-                    style = Stroke(strokeWidth, cap = StrokeCap.Round)
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Amen button with fireworks overlay
+        Box(contentAlignment = Alignment.Center) {
+            if (particles.isNotEmpty()) {
+                Canvas(modifier = Modifier.size(300.dp)) {
+                    particles.forEach { p ->
+                        drawCircle(
+                            color = p.color,
+                            radius = p.size,
+                            center = Offset(p.x, p.y),
+                            alpha = p.alpha
+                        )
+                    }
+                }
+            }
+            
+            Button(
+                onClick = { 
+                    if (!isPrayed) {
+                        isPrayed = true
+                        triggerFireworks(0f, 0f) // Center of the Box
+                    }
+                },
+                modifier = Modifier
+                    .height(64.dp)
+                    .width(180.dp),
+                shape = RoundedCornerShape(32.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isPrayed) androidx.compose.ui.graphics.Color(0xFFFFD700) else MaterialTheme.colorScheme.primary,
+                    contentColor = if (isPrayed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+            ) {
+                Text(
+                    if (isPrayed) "🙏 Blessed" else "✨ Amen",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
                 )
             }
+        }
 
-            val minutes = (totalSeconds - elapsedSeconds) / 60
-            val seconds = (totalSeconds - elapsedSeconds) % 60
+        if (isPrayed) {
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                String.format("%d:%02d", minutes, seconds),
-                style = MaterialTheme.typography.headlineMedium,
+                "You have prayed this prayer. May it be so.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary,
                 textAlign = TextAlign.Center
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Timer controls
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            FilledTonalButton(
-                onClick = {
-                    if (timerRunning) { timerRunning = false } else { elapsedSeconds = 0; timerRunning = true }
-                }
-            ) {
-                Text(if (timerRunning) "⏸ Pause" else "▶ Start Timer")
-            }
-            if (elapsedSeconds > 0) {
-                OutlinedButton(onClick = { timerRunning = false; elapsedSeconds = 0 }) {
-                    Text("Reset")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Next prayer
-        OutlinedButton(onClick = { currentIndex = (currentIndex + 1) % prayers.size }) {
-            Text("Next Prayer")
-        }
     }
 }
+
+data class Particle(
+    val x: Float,
+    val y: Float,
+    val vx: Float,
+    val vy: Float,
+    val color: androidx.compose.ui.graphics.Color,
+    val alpha: Float,
+    val size: Float
+)
+
