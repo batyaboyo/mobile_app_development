@@ -120,13 +120,23 @@ class BibleViewModel(private val repository: BibleRepository) : ViewModel() {
             _uiState.update { it.copy(currentVersion = versionId, isLoading = true) }
             try {
                 val books = repository.getBooks(versionId)
-                _uiState.update { it.copy(books = books, isLoading = false) }
+                val willReloadChapter = _uiState.value.navState == BibleNavState.VERSES && _uiState.value.selectedBook != null
+                
+                _uiState.update { 
+                    it.copy(
+                        books = books, 
+                        isLoading = if (willReloadChapter) it.isLoading else false 
+                    ) 
+                }
+                
                 // Reload current chapter if viewing one
-                if (_uiState.value.navState == BibleNavState.VERSES && _uiState.value.selectedBook != null) {
+                if (willReloadChapter) {
                     val book = books.find { it.id == _uiState.value.selectedBook!!.id }
                     if (book != null) {
                         _uiState.update { it.copy(selectedBook = book) }
                         selectChapter(_uiState.value.selectedChapter)
+                    } else {
+                        _uiState.update { it.copy(isLoading = false) }
                     }
                 }
             } catch (e: Exception) {

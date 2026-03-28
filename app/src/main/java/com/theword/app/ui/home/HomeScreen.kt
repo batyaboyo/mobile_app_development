@@ -15,7 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 
 @Composable
 fun HomeScreen(
@@ -30,7 +35,10 @@ fun HomeScreen(
     val currentDate = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date()) }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
     ) {
         Text(
             text = currentDate,
@@ -45,30 +53,102 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(32.dp))
         
         Text(
-            text = "Daily Spiritual Content", 
+            text = "Daily Spiritual Feed", 
             style = MaterialTheme.typography.titleMedium, 
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
         )
 
-        val tabs = listOf("Story", "Prayer", "Devotion")
-        TabRow(
-            selectedTabIndex = 0, // Prevent crash, hide indicator below
-            containerColor = MaterialTheme.colorScheme.surface,
-            divider = {},
-            indicator = {}
+        // Cards instead of tabs
+        if (uiState.dailyDevotion != null) {
+            DailyContentCard(
+                title = "Daily Devotion",
+                subtitle = uiState.dailyDevotion!!.title,
+                snippet = uiState.dailyDevotion!!.text,
+                icon = Icons.Filled.HistoryEdu,
+                onClick = onNavigateToDevotion
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        if (uiState.dailyStory != null) {
+            DailyContentCard(
+                title = "Bible Story",
+                subtitle = uiState.dailyStory!!.title,
+                snippet = uiState.dailyStory!!.snippet,
+                icon = Icons.Filled.AutoStories,
+                onClick = onNavigateToStories
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        if (uiState.dailyPrayer != null) {
+            DailyContentCard(
+                title = "Daily Prayer",
+                subtitle = uiState.dailyPrayer!!.title,
+                snippet = uiState.dailyPrayer!!.text,
+                icon = Icons.Filled.SelfImprovement,
+                onClick = onNavigateToPrayer
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        if (uiState.dailyPsalm != null) {
+            DailyContentCard(
+                title = "Daily Psalm",
+                subtitle = uiState.dailyPsalm!!.reference,
+                snippet = uiState.dailyPsalm!!.text,
+                icon = Icons.Filled.MusicNote,
+                onClick = { /* Navigate to Bible at specific chapter */ }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        if (uiState.dailyProverb != null) {
+            DailyContentCard(
+                title = "Daily Proverb",
+                subtitle = uiState.dailyProverb!!.reference,
+                snippet = uiState.dailyProverb!!.text,
+                icon = Icons.Filled.FormatQuote,
+                onClick = { /* Navigate to Bible at specific chapter */ }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun DailyContentCard(
+    title: String,
+    subtitle: String,
+    snippet: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            tabs.forEach { title ->
-                Tab(
-                    selected = false,
-                    onClick = {
-                        when(title) {
-                            "Story" -> onNavigateToStories()
-                            "Prayer" -> onNavigateToPrayer()
-                            "Devotion" -> onNavigateToDevotion()
-                        }
-                    },
-                    text = { Text(title, fontWeight = FontWeight.SemiBold) }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                Text(subtitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    snippet,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

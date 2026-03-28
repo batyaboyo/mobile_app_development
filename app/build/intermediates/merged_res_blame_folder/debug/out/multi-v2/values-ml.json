@@ -21,23 +21,6 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\165148a5632eca232c7755e5d0d74563\\transformed\\ui-release\\res\\values-ml\\values-ml.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "105,200,287,386,490,580,666,767,854,942,1009,1076,1162,1249,1327,1403,1470",
-                        "endColumns": "94,86,98,103,89,85,100,86,87,66,66,85,86,77,75,66,118",
-                        "endOffsets": "195,282,381,485,575,661,762,849,937,1004,1071,1157,1244,1322,1398,1465,1584"
-                    },
-                    "to": {
-                        "startLines": "9,10,11,12,13,14,15,72,73,74,75,76,77,78,80,81,82",
-                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
-                        "startOffsets": "842,937,1024,1123,1227,1317,1403,7880,7967,8055,8122,8189,8275,8362,8541,8617,8684",
-                        "endColumns": "94,86,98,103,89,85,100,86,87,66,66,85,86,77,75,66,118",
-                        "endOffsets": "932,1019,1118,1222,1312,1398,1499,7962,8050,8117,8184,8270,8357,8435,8612,8679,8798"
-                    }
-                },
-                {
                     "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\440a64c1659b3784956be1ef27019da1\\transformed\\core-1.12.0\\res\\values-ml\\values-ml.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
@@ -55,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\0456fb6ed6a9f65b690f7ec19420bf84\\transformed\\foundation-release\\res\\values-ml\\values-ml.xml",
+                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\e67a0f898128de0e5e0f2bf78eeccd38\\transformed\\foundation-release\\res\\values-ml\\values-ml.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -69,6 +52,23 @@
                         "startOffsets": "8803,8891",
                         "endColumns": "87,91",
                         "endOffsets": "8886,8978"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\f25f15f28db7bb76c8133eb5a440a42c\\transformed\\ui-release\\res\\values-ml\\values-ml.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "105,200,287,386,490,580,666,767,854,942,1009,1076,1162,1249,1327,1403,1470",
+                        "endColumns": "94,86,98,103,89,85,100,86,87,66,66,85,86,77,75,66,118",
+                        "endOffsets": "195,282,381,485,575,661,762,849,937,1004,1071,1157,1244,1322,1398,1465,1584"
+                    },
+                    "to": {
+                        "startLines": "9,10,11,12,13,14,15,72,73,74,75,76,77,78,80,81,82",
+                        "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
+                        "startOffsets": "842,937,1024,1123,1227,1317,1403,7880,7967,8055,8122,8189,8275,8362,8541,8617,8684",
+                        "endColumns": "94,86,98,103,89,85,100,86,87,66,66,85,86,77,75,66,118",
+                        "endOffsets": "932,1019,1118,1222,1312,1398,1499,7962,8050,8117,8184,8270,8357,8435,8612,8679,8798"
                     }
                 }
             ]

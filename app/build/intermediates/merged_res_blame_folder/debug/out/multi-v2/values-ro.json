@@ -21,23 +21,6 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\0456fb6ed6a9f65b690f7ec19420bf84\\transformed\\foundation-release\\res\\values-ro\\values-ro.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,150",
-                        "endColumns": "94,99",
-                        "endOffsets": "145,245"
-                    },
-                    "to": {
-                        "startLines": "83,84",
-                        "startColumns": "4,4",
-                        "startOffsets": "8645,8740",
-                        "endColumns": "94,99",
-                        "endOffsets": "8735,8835"
-                    }
-                },
-                {
                     "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\440a64c1659b3784956be1ef27019da1\\transformed\\core-1.12.0\\res\\values-ro\\values-ro.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
@@ -55,7 +38,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\165148a5632eca232c7755e5d0d74563\\transformed\\ui-release\\res\\values-ro\\values-ro.xml",
+                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\f25f15f28db7bb76c8133eb5a440a42c\\transformed\\ui-release\\res\\values-ro\\values-ro.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4",
@@ -69,6 +52,23 @@
                         "startOffsets": "832,929,1013,1110,1212,1300,1378,7720,7811,7893,7965,8034,8122,8212,8386,8463,8530",
                         "endColumns": "96,83,96,101,87,77,86,90,81,71,68,87,89,72,76,66,114",
                         "endOffsets": "924,1008,1105,1207,1295,1373,1460,7806,7888,7960,8029,8117,8207,8280,8458,8525,8640"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\batzt\\.gradle\\caches\\transforms-3\\e67a0f898128de0e5e0f2bf78eeccd38\\transformed\\foundation-release\\res\\values-ro\\values-ro.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,150",
+                        "endColumns": "94,99",
+                        "endOffsets": "145,245"
+                    },
+                    "to": {
+                        "startLines": "83,84",
+                        "startColumns": "4,4",
+                        "startOffsets": "8645,8740",
+                        "endColumns": "94,99",
+                        "endOffsets": "8735,8835"
                     }
                 }
             ]

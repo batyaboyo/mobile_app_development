@@ -23,6 +23,8 @@ data class HomeUiState(
     val dailyDevotion: Devotion? = null,
     val dailyStory: BibleStory? = null,
     val dailyPrayer: Prayer? = null,
+    val dailyPsalm: DailyVerse? = null,
+    val dailyProverb: DailyVerse? = null,
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -60,6 +62,22 @@ class HomeViewModel(private val repository: BibleRepository) : ViewModel() {
                     verses.find { it.verse.number == verseInfo.verse }?.verse?.text ?: ""
                 }
 
+                // Fetch Daily Psalm (PSA)
+                val psalmChapter = (dayOfYear % 150) + 1
+                val psalmContent = repository.getChapter(version, "PSA", psalmChapter)
+                val psalmText = psalmContent
+                    .filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
+                    .take(3) // Get first 3 verses as a snippet
+                    .joinToString(" ") { it.verse.text }
+
+                // Fetch Daily Proverb (PRO)
+                val proverbChapter = (dayOfYear % 31) + 1
+                val proverbContent = repository.getChapter(version, "PRO", proverbChapter)
+                val proverbText = proverbContent
+                    .filterIsInstance<com.theword.app.domain.model.ChapterContent.VerseContent>()
+                    .take(2) // Get first 2 verses as a snippet
+                    .joinToString(" ") { it.verse.text }
+
                 if (text.isNotBlank()) {
                     _uiState.update {
                         it.copy(
@@ -67,6 +85,8 @@ class HomeViewModel(private val repository: BibleRepository) : ViewModel() {
                             dailyDevotion = devotionInfo,
                             dailyStory = storyInfo,
                             dailyPrayer = prayerInfo,
+                            dailyPsalm = DailyVerse("Psalm $psalmChapter", psalmText),
+                            dailyProverb = DailyVerse("Proverbs $proverbChapter", proverbText),
                             isLoading = false
                         )
                     }
