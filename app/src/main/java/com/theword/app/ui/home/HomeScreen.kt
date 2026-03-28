@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.window.Dialog
 
 @Composable
 fun HomeScreen(
@@ -133,29 +134,89 @@ fun HomeScreen(
 
     // Popup for Psalms and Proverbs
     if (showContentPopup != null) {
-        AlertDialog(
-            onDismissRequest = { showContentPopup = null },
-            confirmButton = {
-                TextButton(onClick = { showContentPopup = null }) {
-                    Text("Close")
-                }
-            },
-            title = {
-                Text(
-                    showContentPopup!!.reference,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    showContentPopup!!.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2
-                )
-            },
-            shape = RoundedCornerShape(28.dp)
+        DailyContentDialog(
+            content = showContentPopup!!,
+            onDismiss = { showContentPopup = null },
+            onReadFullChapter = {
+                showContentPopup = null
+                onNavigateToBible(null, null) 
+            }
         )
+    }
+}
+
+@Composable
+fun DailyContentDialog(
+    content: DailyVerse,
+    onDismiss: () -> Unit,
+    onReadFullChapter: () -> Unit
+) {
+    val gradientBrush = Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.tertiary
+        )
+    )
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            shape = RoundedCornerShape(28.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(gradientBrush)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = content.reference,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = "\"${content.text}\"",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        lineHeight = MaterialTheme.typography.headlineSmall.lineHeight * 1.2
+                    )
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    Button(
+                        onClick = onReadFullChapter,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.onPrimary,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Read Full Chapter", fontWeight = FontWeight.Bold)
+                    }
+                    
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                        )
+                    ) {
+                        Text("Dismiss")
+                    }
+                }
+            }
+        }
     }
 }
 
