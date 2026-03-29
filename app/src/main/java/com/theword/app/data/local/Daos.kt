@@ -67,4 +67,43 @@ interface QuizResultDao {
 
     @Query("SELECT COUNT(*) FROM quiz_results")
     suspend fun getTotalQuizzesTaken(): Int
+
+    @Query("SELECT * FROM quiz_results ORDER BY dateKey DESC")
+    suspend fun getAllResults(): List<QuizResultEntity>
+}
+
+@Dao
+interface BibleCacheDao {
+    // Translations
+    @Query("SELECT * FROM bible_translations_cache")
+    suspend fun getTranslations(): List<TranslationCacheEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTranslations(translations: List<TranslationCacheEntity>)
+
+    // Books
+    @Query("SELECT * FROM bible_books_cache WHERE translationId = :translationId ORDER BY `order` ASC")
+    suspend fun getBooks(translationId: String): List<BookCacheEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBooks(books: List<BookCacheEntity>)
+
+    // Chapters
+    @Query("SELECT * FROM bible_chapters_cache WHERE translationId = :translationId AND bookId = :bookId AND chapter = :chapter LIMIT 1")
+    suspend fun getChapter(translationId: String, bookId: String, chapter: Int): ChapterCacheEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChapter(chapter: ChapterCacheEntity)
+}
+
+@Dao
+interface JournalDao {
+    @Query("SELECT * FROM journal_entries ORDER BY timestamp DESC")
+    fun getAllEntries(): Flow<List<JournalEntryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEntry(entry: JournalEntryEntity)
+
+    @Query("DELETE FROM journal_entries WHERE id = :id")
+    suspend fun deleteEntry(id: Long)
 }

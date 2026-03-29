@@ -18,6 +18,7 @@ import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
 import java.lang.SuppressWarnings;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -164,6 +165,59 @@ public final class QuizResultDao_Impl implements QuizResultDao {
             _result = _tmp;
           } else {
             _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object getAllResults(final Continuation<? super List<QuizResultEntity>> $completion) {
+    final String _sql = "SELECT * FROM quiz_results ORDER BY dateKey DESC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<QuizResultEntity>>() {
+      @Override
+      @NonNull
+      public List<QuizResultEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfDateKey = CursorUtil.getColumnIndexOrThrow(_cursor, "dateKey");
+          final int _cursorIndexOfQuestionsJson = CursorUtil.getColumnIndexOrThrow(_cursor, "questionsJson");
+          final int _cursorIndexOfAnswersJson = CursorUtil.getColumnIndexOrThrow(_cursor, "answersJson");
+          final int _cursorIndexOfScore = CursorUtil.getColumnIndexOrThrow(_cursor, "score");
+          final int _cursorIndexOfTotal = CursorUtil.getColumnIndexOrThrow(_cursor, "total");
+          final List<QuizResultEntity> _result = new ArrayList<QuizResultEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final QuizResultEntity _item;
+            final String _tmpDateKey;
+            if (_cursor.isNull(_cursorIndexOfDateKey)) {
+              _tmpDateKey = null;
+            } else {
+              _tmpDateKey = _cursor.getString(_cursorIndexOfDateKey);
+            }
+            final String _tmpQuestionsJson;
+            if (_cursor.isNull(_cursorIndexOfQuestionsJson)) {
+              _tmpQuestionsJson = null;
+            } else {
+              _tmpQuestionsJson = _cursor.getString(_cursorIndexOfQuestionsJson);
+            }
+            final String _tmpAnswersJson;
+            if (_cursor.isNull(_cursorIndexOfAnswersJson)) {
+              _tmpAnswersJson = null;
+            } else {
+              _tmpAnswersJson = _cursor.getString(_cursorIndexOfAnswersJson);
+            }
+            final int _tmpScore;
+            _tmpScore = _cursor.getInt(_cursorIndexOfScore);
+            final int _tmpTotal;
+            _tmpTotal = _cursor.getInt(_cursorIndexOfTotal);
+            _item = new QuizResultEntity(_tmpDateKey,_tmpQuestionsJson,_tmpAnswersJson,_tmpScore,_tmpTotal);
+            _result.add(_item);
           }
           return _result;
         } finally {

@@ -10,9 +10,13 @@ import androidx.room.RoomDatabase
         BookmarkEntity::class,
         HighlightEntity::class,
         ReadingProgressEntity::class,
-        QuizResultEntity::class
+        QuizResultEntity::class,
+        TranslationCacheEntity::class,
+        BookCacheEntity::class,
+        ChapterCacheEntity::class,
+        JournalEntryEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -21,6 +25,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun highlightDao(): HighlightDao
     abstract fun readingProgressDao(): ReadingProgressDao
     abstract fun quizResultDao(): QuizResultDao
+    abstract fun bibleCacheDao(): BibleCacheDao
+    abstract fun journalDao(): JournalDao
 
     companion object {
         @Volatile
@@ -32,7 +38,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "theword_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

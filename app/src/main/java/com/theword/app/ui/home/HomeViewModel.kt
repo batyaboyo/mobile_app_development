@@ -94,15 +94,25 @@ class HomeViewModel(private val repository: BibleRepository) : ViewModel() {
                             dailyPrayer = prayerInfo,
                             dailyPsalm = DailyVerse(psalmRef, psalmText, "PSA", psalmChapter),
                             dailyProverb = DailyVerse(proverbRef, proverbText, "PRO", proverbChapter),
-                            isLoading = false
+                            isLoading = false,
+                            error = null
                         )
                     }
-                }
- else {
-                    _uiState.update { it.copy(isLoading = false, error = "Verse not found") }
+                } else {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false, 
+                            error = "offline_limited" // Custom flag for UI to show a "Connect to sync" message
+                        ) 
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false, 
+                        error = "Unable to connect. Some content may be unavailable." 
+                    ) 
+                }
             }
         }
     }

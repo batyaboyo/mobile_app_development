@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.unit.dp
 import com.theword.app.data.embedded.PrayerData
 import com.theword.app.domain.model.Prayer
@@ -129,25 +130,27 @@ fun PrayerScreen(initialIsEvening: Boolean? = null, initialIndex: Int? = null, o
         Spacer(modifier = Modifier.height(16.dp))
 
         // Prayer card
-        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(prayer.title, style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    "\"${prayer.verse}\"",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    "— ${prayer.verseRef}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(prayer.text, style = MaterialTheme.typography.bodyLarge)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(prayer.closing, style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
+        SelectionContainer {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(prayer.title, style = MaterialTheme.typography.titleLarge)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "\"${prayer.verse}\"",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "— ${prayer.verseRef}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(prayer.text, style = MaterialTheme.typography.bodyLarge)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(prayer.closing, style = MaterialTheme.typography.bodyMedium, fontStyle = FontStyle.Italic)
+                }
             }
         }
 

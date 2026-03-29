@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.selection.SelectionContainer
 import com.theword.app.domain.model.*
 import com.theword.app.ui.theme.*
 
@@ -241,88 +242,98 @@ private fun VerseDisplay(uiState: BibleUiState, viewModel: BibleViewModel) {
         }
 
         // Verses
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(uiState.chapterContent.size) { index ->
-                when (val item = uiState.chapterContent[index]) {
-                    is ChapterContent.Heading -> {
-                        Text(
-                            item.text,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-                    is ChapterContent.VerseContent -> {
-                        val reference = "${book.name} ${uiState.selectedChapter}:${item.verse.number}"
-                        val isBookmarked = reference in uiState.bookmarkedRefs
-                        val highlight = uiState.highlightsMap[reference]
-                        val bgColor = getHighlightColor(highlight?.color)
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .then(if (bgColor != Color.Transparent) Modifier.background(bgColor) else Modifier)
-                                .padding(vertical = 4.dp, horizontal = 4.dp)
-                        ) {
+        SelectionContainer {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(uiState.chapterContent.size) { index ->
+                    when (val item = uiState.chapterContent[index]) {
+                        is ChapterContent.Heading -> {
                             Text(
-                                buildAnnotatedString {
-                                    withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)) {
-                                        append("${item.verse.number} ")
-                                    }
-                                    append(item.verse.text)
-                                },
-                                style = MaterialTheme.typography.bodyLarge
+                                item.text,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             )
+                        }
+                        is ChapterContent.VerseContent -> {
+                            val reference = "${book.name} ${uiState.selectedChapter}:${item.verse.number}"
+                            val isBookmarked = reference in uiState.bookmarkedRefs
+                            val highlight = uiState.highlightsMap[reference]
+                            val bgColor = getHighlightColor(highlight?.color)
 
-                            // Note indicator
-                            if (!highlight?.note.isNullOrBlank()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .then(if (bgColor != Color.Transparent) Modifier.background(bgColor) else Modifier)
+                                    .padding(vertical = 4.dp, horizontal = 4.dp)
+                            ) {
                                 Text(
-                                    "📝 ${highlight!!.note}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 2.dp)
+                                    buildAnnotatedString {
+                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = 10.sp, color = MaterialTheme.colorScheme.primary)) {
+                                            append("${item.verse.number} ")
+                                        }
+                                        append(item.verse.text)
+                                    },
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
-                            }
 
-                            // Action row
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                IconButton(onClick = {
-                                    highlightRef = reference
-                                    highlightText = item.verse.text
-                                    showHighlightDialog = true
-                                }, modifier = Modifier.size(32.dp)) {
-                                    Text("🎨", fontSize = 14.sp)
+                                // Note indicator
+                                if (!highlight?.note.isNullOrBlank()) {
+                                    Text(
+                                        "📝 ${highlight!!.note}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
                                 }
-                                IconButton(onClick = {
-                                    viewModel.toggleBookmark(reference, item.verse.text)
-                                }, modifier = Modifier.size(32.dp)) {
-                                    Text(if (isBookmarked) "★" else "☆", fontSize = 14.sp)
-                                }
-                                IconButton(onClick = {
-                                    viewModel.copyVerse(context, reference, item.verse.text)
-                                }, modifier = Modifier.size(32.dp)) {
-                                    Text("📋", fontSize = 14.sp)
-                                }
-                                IconButton(onClick = {
-                                    viewModel.shareVerse(context, reference, item.verse.text)
-                                }, modifier = Modifier.size(32.dp)) {
-                                    Text("🔗", fontSize = 14.sp)
+
+                                // Action row
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                                    IconButton(onClick = {
+                                        highlightRef = reference
+                                        highlightText = item.verse.text
+                                        showHighlightDialog = true
+                                    }, modifier = Modifier.size(32.dp)) {
+                                        Text("🎨", fontSize = 14.sp)
+                                    }
+                                    IconButton(onClick = {
+                                        viewModel.toggleFavorite(reference, item.verse.text)
+                                    }, modifier = Modifier.size(32.dp)) {
+                                        val isFav = reference in uiState.favoriteRefs
+                                        Text(if (isFav) "★" else "☆", fontSize = 14.sp)
+                                    }
+                                    IconButton(onClick = {
+                                        viewModel.toggleBookmark(reference, item.verse.text)
+                                    }, modifier = Modifier.size(32.dp)) {
+                                        Text(if (isBookmarked) "🔖" else "🏳️", fontSize = 14.sp)
+                                    }
+                                    IconButton(onClick = {
+                                        viewModel.toggleBookmark(reference, item.verse.text)
+                                    }.takeIf { false } ?: {
+                                        viewModel.copyVerse(context, reference, item.verse.text)
+                                    }, modifier = Modifier.size(32.dp)) {
+                                        Text("📋", fontSize = 14.sp)
+                                    }
+                                    IconButton(onClick = {
+                                        viewModel.shareVerse(context, reference, item.verse.text)
+                                    }, modifier = Modifier.size(32.dp)) {
+                                        Text("🔗", fontSize = 14.sp)
+                                    }
                                 }
                             }
                         }
-                    }
-                    is ChapterContent.LineBreak -> Spacer(modifier = Modifier.height(12.dp))
-                    is ChapterContent.HebrewSubtitle -> {
-                        Text(
-                            item.text,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Light,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
+                        is ChapterContent.LineBreak -> Spacer(modifier = Modifier.height(12.dp))
+                        is ChapterContent.HebrewSubtitle -> {
+                            Text(
+                                item.text,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Light,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }

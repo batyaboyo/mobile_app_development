@@ -9,6 +9,13 @@ data class BibleBook(
     val isOldTestament: Boolean get() = order <= 39
 }
 
+data class JournalEntry(
+    val id: Long,
+    val title: String,
+    val content: String,
+    val timestamp: Long
+)
+
 data class Translation(
     val id: String,
     val name: String,

@@ -51,6 +51,9 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector,
     data object Prayer : Screen("prayer", "Prayer", Icons.Outlined.SelfImprovement, Icons.Filled.SelfImprovement)
     data object About : Screen("about", "About", Icons.Outlined.Info, Icons.Filled.Info)
     data object Progress : Screen("progress", "Progress", Icons.Outlined.BarChart, Icons.Filled.BarChart)
+    data object Comfort : Screen("comfort", "Comfort", Icons.AutoMirrored.Outlined.LibraryBooks, Icons.AutoMirrored.Filled.LibraryBooks)
+    data object Journal : Screen("journal", "Journal", Icons.AutoMirrored.Outlined.Notes, Icons.AutoMirrored.Filled.Notes)
+    data object Favorites : Screen("favorites", "Favorites", Icons.Outlined.Favorite, Icons.Filled.Favorite)
 }
 
 val bottomNavItems = listOf(Screen.Home, Screen.Bible, Screen.Study, Screen.About)
@@ -120,7 +123,10 @@ fun TheWordApp() {
                     )
                     val isChildOfStudy = screen == Screen.Study && (
                         currentRoute == Screen.Bookmarks.route || 
-                        currentRoute == Screen.Quiz.route
+                        currentRoute == Screen.Quiz.route ||
+                        currentRoute == Screen.Comfort.route ||
+                        currentRoute == Screen.Journal.route ||
+                        currentRoute == Screen.Favorites.route
                     )
                     
                     val selected = currentDestination?.hierarchy?.any { 
@@ -211,7 +217,10 @@ fun TheWordApp() {
             composable(Screen.Study.route) {
                 com.theword.app.ui.study.StudyScreen(
                     onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) },
-                    onNavigateToBookmarks = { navController.navigate(Screen.Bookmarks.route) }
+                    onNavigateToBookmarks = { navController.navigate(Screen.Bookmarks.route) },
+                    onNavigateToComfort = { navController.navigate(Screen.Comfort.route) },
+                    onNavigateToFavorites = { navController.navigate(Screen.Favorites.route) },
+                    onNavigateToJournal = { navController.navigate(Screen.Journal.route) }
                 )
             }
             composable(Screen.Bookmarks.route) {
@@ -245,6 +254,22 @@ fun TheWordApp() {
             composable(Screen.Progress.route) {
                 val vm: ProgressViewModel = viewModel(factory = ProgressViewModel.Factory)
                 ProgressScreen(vm, onBack = { navController.popBackStack() })
+            }
+            composable(Screen.Comfort.route) {
+                com.theword.app.ui.study.ComfortScreen(
+                    onNavigateToChapter = { bookId, chapter ->
+                        navController.navigate(Screen.Bible.route + "?bookId=$bookId&chapter=$chapter")
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Journal.route) {
+                val vm: com.theword.app.ui.study.JournalViewModel = viewModel(factory = com.theword.app.ui.study.JournalViewModel.Factory)
+                com.theword.app.ui.study.JournalScreen(vm, onBack = { navController.popBackStack() })
+            }
+            composable(Screen.Favorites.route) {
+                val vm: BookmarksViewModel = viewModel(factory = BookmarksViewModel.Factory)
+                BookmarksScreen(vm, initialCollection = "Favorites", onNavigateToBible = { navController.navigate(Screen.Bible.route) })
             }
         }
     }

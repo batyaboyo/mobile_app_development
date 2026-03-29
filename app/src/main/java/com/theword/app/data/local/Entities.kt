@@ -34,3 +34,41 @@ data class QuizResultEntity(
     val score: Int,
     val total: Int
 )
+
+@Entity(tableName = "bible_translations_cache")
+data class TranslationCacheEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val shortName: String,
+    val language: String,
+    val lastUpdated: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "bible_books_cache")
+data class BookCacheEntity(
+    @PrimaryKey val id: String, // composite: translationId_bookId
+    val translationId: String,
+    val bookId: String,
+    val name: String,
+    val totalChapters: Int,
+    val order: Int,
+    val lastUpdated: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "bible_chapters_cache")
+data class ChapterCacheEntity(
+    @PrimaryKey val id: String, // composite: translationId_bookId_chapter
+    val translationId: String,
+    val bookId: String,
+    val chapter: Int,
+    val contentJson: String, // We'll store the List<ChapterContent> as JSON
+    val lastUpdated: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "journal_entries")
+data class JournalEntryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val content: String,
+    val timestamp: Long = System.currentTimeMillis()
+)

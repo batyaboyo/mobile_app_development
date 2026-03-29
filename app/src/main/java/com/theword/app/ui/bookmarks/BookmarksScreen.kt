@@ -20,11 +20,19 @@ import java.util.*
 @Composable
 fun BookmarksScreen(
     viewModel: BookmarksViewModel,
+    initialCollection: String? = null,
     onNavigateToBible: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val filteredBookmarks by viewModel.filteredBookmarks.collectAsState(initial = emptyList())
     val context = LocalContext.current
+    
+    // Set initial collection if provided
+    LaunchedEffect(initialCollection) {
+        if (initialCollection != null) {
+            viewModel.selectCollection(initialCollection)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Header

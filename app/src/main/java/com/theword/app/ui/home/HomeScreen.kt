@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.text.selection.SelectionContainer
 
 @Composable
 fun HomeScreen(
@@ -42,96 +43,137 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(top = 8.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
     ) {
-        Text(
-            text = currentDate,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(bottom = 16.dp, start = 4.dp)
-        )
+        // App Header
+        Column(modifier = Modifier.padding(top = 16.dp, start = 20.dp, end = 20.dp, bottom = 8.dp)) {
+            Text(
+                text = currentDate,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.secondary,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "Welcome Back",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
 
-        HeroVerseCard(uiState, onNavigateToBible, onRetry = { viewModel.loadDailyContent() })
+        // Limited Offline Banner
+        if (uiState.error == "offline_limited") {
+            Card(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.CloudOff, 
+                        contentDescription = null, 
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Limited Offline View. Connect to sync new content.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
+        }
+
+        // Hero Verse Card
+        Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+            HeroVerseCard(uiState, onNavigateToBible, onRetry = { viewModel.loadDailyContent() })
+        }
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         
         Text(
             text = "Daily Spiritual Feed", 
             style = MaterialTheme.typography.titleMedium, 
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
         )
 
-        // Cards instead of tabs
-        if (uiState.dailyDevotion != null) {
-            DailyContentCard(
-                title = "Daily Devotion",
-                subtitle = uiState.dailyDevotion!!.title,
-                snippet = uiState.dailyDevotion!!.text,
-                icon = Icons.Filled.HistoryEdu,
-                onClick = onNavigateToDevotion
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            if (uiState.dailyDevotion != null) {
+                DailyContentCard(
+                    title = "Daily Devotion",
+                    subtitle = uiState.dailyDevotion!!.title,
+                    snippet = uiState.dailyDevotion!!.text,
+                    icon = Icons.Filled.HistoryEdu,
+                    onClick = onNavigateToDevotion
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-        if (uiState.dailyStory != null) {
-            DailyContentCard(
-                title = "Bible Story",
-                subtitle = uiState.dailyStory!!.title,
-                snippet = uiState.dailyStory!!.snippet,
-                icon = Icons.Filled.AutoStories,
-                onClick = { onNavigateToStories(uiState.dailyStory!!.id) }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+            if (uiState.dailyStory != null) {
+                DailyContentCard(
+                    title = "Bible Story",
+                    subtitle = uiState.dailyStory!!.title,
+                    snippet = uiState.dailyStory!!.snippet,
+                    icon = Icons.Filled.AutoStories,
+                    onClick = { onNavigateToStories(uiState.dailyStory!!.id) }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-        if (uiState.dailyPrayer != null) {
-            val calendar = Calendar.getInstance()
-            val isEvening = calendar.get(Calendar.HOUR_OF_DAY) >= 17
-            val index = calendar.get(Calendar.DAY_OF_YEAR) // Matches HomeViewModel logic
-            
-            DailyContentCard(
-                title = "Daily Prayer",
-                subtitle = uiState.dailyPrayer!!.title,
-                snippet = uiState.dailyPrayer!!.text,
-                icon = Icons.Filled.SelfImprovement,
-                onClick = { onNavigateToPrayer(isEvening, index) }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+            if (uiState.dailyPrayer != null) {
+                val calendar = Calendar.getInstance()
+                val isEvening = calendar.get(Calendar.HOUR_OF_DAY) >= 17
+                val index = calendar.get(Calendar.DAY_OF_YEAR)
+                
+                DailyContentCard(
+                    title = "Daily Prayer",
+                    subtitle = uiState.dailyPrayer!!.title,
+                    snippet = uiState.dailyPrayer!!.text,
+                    icon = Icons.Filled.SelfImprovement,
+                    onClick = { onNavigateToPrayer(isEvening, index) }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-        if (uiState.dailyPsalm != null) {
-            DailyContentCard(
-                title = "Daily Psalm",
-                subtitle = uiState.dailyPsalm!!.reference,
-                snippet = uiState.dailyPsalm!!.text,
-                icon = Icons.Filled.MusicNote,
-                onClick = { showContentPopup = uiState.dailyPsalm }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+            if (uiState.dailyPsalm != null) {
+                DailyContentCard(
+                    title = "Daily Psalm",
+                    subtitle = uiState.dailyPsalm!!.reference,
+                    snippet = uiState.dailyPsalm!!.text,
+                    icon = Icons.Filled.MusicNote,
+                    onClick = { showContentPopup = uiState.dailyPsalm }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-        if (uiState.dailyProverb != null) {
-            DailyContentCard(
-                title = "Daily Proverb",
-                subtitle = uiState.dailyProverb!!.reference,
-                snippet = uiState.dailyProverb!!.text,
-                icon = Icons.Filled.FormatQuote,
-                onClick = { showContentPopup = uiState.dailyProverb }
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+            if (uiState.dailyProverb != null) {
+                DailyContentCard(
+                    title = "Daily Proverb",
+                    subtitle = uiState.dailyProverb!!.reference,
+                    snippet = uiState.dailyProverb!!.text,
+                    icon = Icons.Filled.FormatQuote,
+                    onClick = { showContentPopup = uiState.dailyProverb }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-        // Added Reading Progress card to use the onNavigateToProgress parameter
-        DailyContentCard(
-            title = "Personal Growth",
-            subtitle = "Reading Progress",
-            snippet = "Track your spiritual journey and daily streaks.",
-            icon = Icons.Filled.BarChart,
-            onClick = onNavigateToProgress
-        )
+            DailyContentCard(
+                title = "Personal Growth",
+                subtitle = "Reading Progress",
+                snippet = "Track your spiritual journey and daily streaks.",
+                icon = Icons.Filled.BarChart,
+                onClick = onNavigateToProgress
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 
     // Popup for Psalms and Proverbs
@@ -190,15 +232,17 @@ fun DailyContentDialog(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    Text(
-                        text = "\"${content.text}\"",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontStyle = FontStyle.Italic,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 32.sp
-                    )
+                    SelectionContainer {
+                        Text(
+                            text = "\"${content.text}\"",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 32.sp
+                        )
+                    }
                     
                     Spacer(modifier = Modifier.height(32.dp))
                     
@@ -304,36 +348,59 @@ fun HeroVerseCard(
                             CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
-                    uiState.error != null -> {
-                        Text("Unable to load daily verse.", color = MaterialTheme.colorScheme.errorContainer)
+                    uiState.error != null && uiState.error != "offline_limited" -> {
+                        Text("Unable to load daily verse.", color = MaterialTheme.colorScheme.onPrimary)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimary, contentColor = MaterialTheme.colorScheme.primary)) {
+                        Button(
+                            onClick = onRetry, 
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.onPrimary, 
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
                             Text("Retry")
                         }
                     }
-                    uiState.dailyVerse != null -> {
-                        Text(
-                            "\"${uiState.dailyVerse.text}\"",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontStyle = FontStyle.Italic
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            "— ${uiState.dailyVerse.reference}",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
-                        )
+                    else -> {
+                        // Show content (even if offline_limited, we might have cached values)
+                        if (uiState.dailyVerse != null) {
+                            SelectionContainer {
+                                Column {
+                                    Text(
+                                        "\"${uiState.dailyVerse.text}\"",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        fontStyle = FontStyle.Italic
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Text(
+                                        "— ${uiState.dailyVerse.reference}",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
+                            FilledTonalButton(
+                                onClick = { 
+                                    onNavigateToBible(uiState.dailyVerse.bookId, uiState.dailyVerse.chapter) 
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Text("Read Full Chapter")
+                            }
+                        } else if (uiState.error == "offline_limited") {
+                            Text(
+                                "Verse not cached. Please connect to sync.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                            )
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                FilledTonalButton(
-                    onClick = { 
-                        onNavigateToBible(uiState.dailyVerse?.bookId, uiState.dailyVerse?.chapter) 
-                    }
-                ) {
-                    Text("Read Full Chapter")
                 }
             }
         }

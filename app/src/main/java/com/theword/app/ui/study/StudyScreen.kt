@@ -33,16 +33,19 @@ data class StudyFeature(
 @Composable
 fun StudyScreen(
     onNavigateToQuiz: () -> Unit,
-    onNavigateToBookmarks: () -> Unit
+    onNavigateToBookmarks: () -> Unit,
+    onNavigateToComfort: () -> Unit,
+    onNavigateToFavorites: () -> Unit,
+    onNavigateToJournal: () -> Unit
 ) {
     val context = LocalContext.current
     val comingSoon: () -> Unit = { Toast.makeText(context, "Coming Soon!", Toast.LENGTH_SHORT).show() }
     val features = listOf(
-        StudyFeature("Daily Quiz", "Test your scripture knowledge", Icons.Filled.Quiz, onNavigateToQuiz),
-        StudyFeature("Bookmarks", "Access your saved verses", Icons.Filled.Bookmark, onNavigateToBookmarks),
-        StudyFeature("Favorites", "Verses you've starred", Icons.Filled.Favorite, comingSoon, comingSoon = true),
-        StudyFeature("Comfort", "Verses organized by emotion", Icons.Filled.SelfImprovement, comingSoon, comingSoon = true),
-        StudyFeature("Notes", "Personal reflections and diaries", Icons.AutoMirrored.Filled.Notes, comingSoon, comingSoon = true)
+        StudyFeature("Daily Quiz", "Test your scripture knowledge", Icons.Default.Quiz, onNavigateToQuiz),
+        StudyFeature("Bookmarks", "Access your saved verses", Icons.Default.Bookmark, onNavigateToBookmarks),
+        StudyFeature("Favorites", "Verses you've starred", Icons.Default.Favorite, onNavigateToFavorites),
+        StudyFeature("Comfort", "Verses organized by emotion", Icons.Default.SelfImprovement, onNavigateToComfort),
+        StudyFeature("Notes", "Personal reflections and diaries", Icons.AutoMirrored.Filled.Notes, onNavigateToJournal)
     )
 
     Column(modifier = Modifier.fillMaxSize()) {

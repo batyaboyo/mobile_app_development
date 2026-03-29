@@ -22,7 +22,9 @@ data class QuizUiState(
     val showReview: Boolean = false,
     val alreadyTaken: Boolean = false,
     val previousScore: Int = 0,
-    val previousTotal: Int = 0
+    val previousTotal: Int = 0,
+    val streak: Int = 0,
+    val totalPoints: Int = 0
 )
 
 class QuizViewModel(private val repository: BibleRepository) : ViewModel() {
@@ -35,6 +37,7 @@ class QuizViewModel(private val repository: BibleRepository) : ViewModel() {
 
     init {
         checkExistingQuiz()
+        calculateStreakAndPoints()
     }
 
     private fun checkExistingQuiz() {
@@ -51,6 +54,62 @@ class QuizViewModel(private val repository: BibleRepository) : ViewModel() {
             } else {
                 startNewQuiz()
             }
+        }
+    }
+
+    private fun calculateStreakAndPoints() {
+        viewModelScope.launch {
+            val allResults = repository.getAllQuizResults()
+            val totalPoints = allResults.sumOf { it.score }
+            
+            // Streak calculation
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val dates = allResults.mapNotNull { 
+                try { sdf.parse(it.dateKey) } catch (e: Exception) { null } 
+            }.sortedDescending()
+            
+            var currentStreak = 0
+            if (dates.isNotEmpty()) {
+                val calendar = Calendar.getInstance()
+                
+                // Start from today or yesterday
+                val today = Calendar.getInstance().apply { 
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                
+                val latestQuizDate = Calendar.getInstance().apply { 
+                    time = dates[0]
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                
+                // If the latest quiz was today or yesterday, we can have a streak
+                val diffDays = ((today.timeInMillis - latestQuizDate.timeInMillis) / (24 * 60 * 60 * 1000)).toInt()
+                
+                if (diffDays <= 1) {
+                    currentStreak = 1
+                    for (i in 0 until dates.size - 1) {
+                        val d1 = Calendar.getInstance().apply { time = dates[i] }
+                        val d2 = Calendar.getInstance().apply { time = dates[i+1] }
+                        
+                        // Check if d2 is exactly one day before d1
+                        d1.add(Calendar.DAY_OF_YEAR, -1)
+                        if (d1.get(Calendar.YEAR) == d2.get(Calendar.YEAR) && 
+                            d1.get(Calendar.DAY_OF_YEAR) == d2.get(Calendar.DAY_OF_YEAR)) {
+                            currentStreak++
+                        } else {
+                            break
+                        }
+                    }
+                }
+            }
+            
+            _uiState.update { it.copy(streak = currentStreak, totalPoints = totalPoints) }
         }
     }
 
@@ -103,6 +162,7 @@ class QuizViewModel(private val repository: BibleRepository) : ViewModel() {
         viewModelScope.launch {
             val score = answers.count { it?.correct == true }
             repository.saveQuizResult(dateKey, "", "", score, answers.size)
+            calculateStreakAndPoints() // Refresh streak/points
         }
     }
 

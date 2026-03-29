@@ -22,6 +22,7 @@ data class BibleUiState(
     val selectedChapter: Int = 0,
     val chapterContent: List<ChapterContent> = emptyList(),
     val bookmarkedRefs: Set<String> = emptySet(),
+    val favoriteRefs: Set<String> = emptySet(),
     val highlightsMap: Map<String, Highlight> = emptyMap(),
     val isLoading: Boolean = false,
     val error: String? = null
@@ -62,7 +63,10 @@ class BibleViewModel(private val repository: BibleRepository) : ViewModel() {
     private fun observeBookmarks() {
         viewModelScope.launch {
             repository.getAllBookmarks().collect { bookmarks ->
-                _uiState.update { it.copy(bookmarkedRefs = bookmarks.map { b -> b.reference }.toSet()) }
+                _uiState.update { it.copy(
+                    bookmarkedRefs = bookmarks.map { b -> b.reference }.toSet(),
+                    favoriteRefs = bookmarks.filter { b -> b.collection == "Favorites" }.map { b -> b.reference }.toSet()
+                ) }
             }
         }
     }
@@ -169,6 +173,12 @@ class BibleViewModel(private val repository: BibleRepository) : ViewModel() {
     fun toggleBookmark(reference: String, text: String) {
         viewModelScope.launch {
             repository.toggleBookmark(reference, text)
+        }
+    }
+
+    fun toggleFavorite(reference: String, text: String) {
+        viewModelScope.launch {
+            repository.toggleFavorite(reference, text)
         }
     }
 

@@ -1,5 +1,8 @@
 package com.theword.app.data.repository
 
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.theword.app.data.api.BibleApiService
 import com.theword.app.data.api.ContentItemDto
 import com.theword.app.data.local.*
@@ -14,7 +17,18 @@ class BibleRepository(
     private val db: AppDatabase,
     val prefs: PreferencesManager
 ) {
-    // In-memory cache
+    private val moshi = Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())
+        .build()
+    
+    // Type adapter for ChapterContent list
+    private val chapterListType = Types.newParameterizedType(
+        List::class.java, 
+        Types.newParameterizedType(Map::class.java, String::class.java, Any::class.java)
+    )
+    private val chapterAdapter = moshi.adapter<List<Map<String, Any>>>(chapterListType)
+    
+    // In-memory cache for session
     private val translationsCache = ConcurrentHashMap<String, List<Translation>>()
     private val booksCache = ConcurrentHashMap<String, List<BibleBook>>()
     private val chapterCache: MutableMap<String, List<ChapterContent>> = Collections.synchronizedMap(
@@ -30,7 +44,9 @@ class BibleRepository(
 
     suspend fun getTranslations(): List<Translation> {
         translationsCache["all"]?.let { return it }
-        return try {
+        
+        // Try network
+        try {
             val response = api.getTranslations()
             val all = response.translations ?: emptyList()
             val english = all
@@ -41,10 +57,25 @@ class BibleRepository(
                     val idx = priority.indexOf(it.id)
                     if (idx >= 0) idx else 100
                 })
+            
+            // Background save to local DB
+            db.bibleCacheDao().insertTranslations(english.map {
+                TranslationCacheEntity(it.id, it.name, it.shortName, it.language)
+            })
+            
             translationsCache["all"] = english
-            english
+            return english
         } catch (e: Exception) {
-            listOf(
+            // Fallback to local DB cache
+            val cached = db.bibleCacheDao().getTranslations()
+            if (cached.isNotEmpty()) {
+                val list = cached.map { Translation(it.id, it.name, it.shortName, it.language) }
+                translationsCache["all"] = list
+                return list
+            }
+            
+            // Hardcoded defaults if nothing else works
+            return listOf(
                 Translation("BSB", "Berean Standard Bible", "BSB", "eng"),
                 Translation("ENGWEBP", "World English Bible", "WEB", "eng"),
                 Translation("eng_bbe", "Bible in Basic English", "BBE", "eng")
@@ -71,15 +102,29 @@ class BibleRepository(
 
     suspend fun getBooks(translationId: String): List<BibleBook> {
         booksCache[translationId]?.let { return it }
-        return try {
+        
+        try {
             val response = api.getBooks(translationId)
             val books = (response.books ?: emptyList()).map {
                 BibleBook(it.id, it.name ?: it.commonName ?: it.id, it.numberOfChapters, it.order)
             }
+            
+            // Save to local cache
+            db.bibleCacheDao().insertBooks(books.map {
+                BookCacheEntity("${translationId}_${it.id}", translationId, it.id, it.name, it.chapters, it.order)
+            })
+            
             booksCache[translationId] = books
-            books
+            return books
         } catch (e: Exception) {
-            getFallbackBooks()
+            // Try local cache
+            val cached = db.bibleCacheDao().getBooks(translationId)
+            if (cached.isNotEmpty()) {
+                val list = cached.map { BibleBook(it.bookId, it.name, it.totalChapters, it.order) }
+                booksCache[translationId] = list
+                return list
+            }
+            return getFallbackBooks()
         }
     }
 
@@ -88,7 +133,8 @@ class BibleRepository(
     suspend fun getChapter(translationId: String, bookId: String, chapter: Int): List<ChapterContent> {
         val key = "$translationId|$bookId|$chapter"
         chapterCache[key]?.let { return it }
-        return try {
+        
+        try {
             val response = api.getChapter(translationId, bookId, chapter)
             val footnotes = (response.chapter?.footnotes ?: emptyList()).associateBy { it.noteId }
             val content = (response.chapter?.content ?: emptyList()).mapNotNull { item ->
@@ -117,10 +163,68 @@ class BibleRepository(
                     else -> null
                 }
             }
+            
+            // Save to local cache as JSON
+            db.bibleCacheDao().insertChapter(
+                ChapterCacheEntity(
+                    id = "${translationId}_${bookId}_$chapter",
+                    translationId = translationId,
+                    bookId = bookId,
+                    chapter = chapter,
+                    contentJson = chapterAdapter.toJson(content.map { it.toMap() })
+                )
+            )
+            
             chapterCache[key] = content
-            content
+            return content
         } catch (e: Exception) {
-            emptyList()
+            // Try local cache
+            val cached = db.bibleCacheDao().getChapter(translationId, bookId, chapter)
+            if (cached != null) {
+                try {
+                    val list = deserializeChapterContent(cached.contentJson)
+                    chapterCache[key] = list
+                    return list
+                } catch (jsonEx: Exception) {
+                    return emptyList()
+                }
+            }
+            return emptyList()
+        }
+    }
+
+    // Helper to serialize ChapterContent manually for Moshi
+    private fun ChapterContent.toMap(): Map<String, Any> {
+        return when (this) {
+            is ChapterContent.Heading -> mapOf("type" to "Heading", "text" to text)
+            is ChapterContent.VerseContent -> mapOf(
+                "type" to "VerseContent",
+                "verse" to mapOf(
+                    "number" to verse.number,
+                    "text" to verse.text
+                )
+            )
+            is ChapterContent.LineBreak -> mapOf("type" to "LineBreak")
+            is ChapterContent.HebrewSubtitle -> mapOf("type" to "HebrewSubtitle", "text" to text)
+        }
+    }
+
+    private fun deserializeChapterContent(json: String): List<ChapterContent> {
+        val rawList = chapterAdapter.fromJson(json) ?: return emptyList()
+        
+        return rawList.mapNotNull { map ->
+            when (map["type"]) {
+                "Heading" -> ChapterContent.Heading(map["text"] as String)
+                "VerseContent" -> {
+                    val verseMap = map["verse"] as Map<String, Any>
+                    val number = (verseMap["number"] as Double).toInt() // Moshi parses numbers as Double by default
+                    val text = verseMap["text"] as String
+                    ChapterContent.VerseContent(Verse(number, text, listOf(VersePart.Text(text))))
+                }
+                "LineBreak" -> ChapterContent.LineBreak()
+                "HebrewSubtitle" -> ChapterContent.HebrewSubtitle(map["text"] as String)
+                else -> null
+            }
         }
     }
 
@@ -160,14 +264,21 @@ class BibleRepository(
     suspend fun isBookmarked(reference: String): Boolean =
         db.bookmarkDao().getBookmark(reference) != null
 
-    suspend fun toggleBookmark(reference: String, text: String): Boolean {
+    suspend fun toggleBookmark(reference: String, text: String) {
         val existing = db.bookmarkDao().getBookmark(reference)
-        return if (existing != null) {
+        if (existing != null) {
             db.bookmarkDao().deleteByReference(reference)
-            false
         } else {
             db.bookmarkDao().insertBookmark(BookmarkEntity(reference, text))
-            true
+        }
+    }
+
+    suspend fun toggleFavorite(reference: String, text: String) {
+        val existing = db.bookmarkDao().getBookmark(reference)
+        if (existing != null && existing.collection == "Favorites") {
+            db.bookmarkDao().deleteByReference(reference)
+        } else {
+            db.bookmarkDao().insertBookmark(BookmarkEntity(reference, text, collection = "Favorites"))
         }
     }
 
@@ -223,6 +334,24 @@ class BibleRepository(
         db.quizResultDao().insertResult(
             QuizResultEntity(dateKey, questionsJson, answersJson, score, total)
         )
+    }
+
+    suspend fun getAllQuizResults(): List<QuizResultEntity> =
+        db.quizResultDao().getAllResults()
+
+    // ---- Journal ----
+
+    fun getAllJournalEntries(): Flow<List<JournalEntry>> =
+        db.journalDao().getAllEntries().map { list ->
+            list.map { JournalEntry(it.id, it.title, it.content, it.timestamp) }
+        }
+
+    suspend fun saveJournalEntry(title: String, content: String, id: Long = 0) {
+        db.journalDao().insertEntry(JournalEntryEntity(id, title, content))
+    }
+
+    suspend fun deleteJournalEntry(id: Long) {
+        db.journalDao().deleteEntry(id)
     }
 
     // ---- Helpers ----
