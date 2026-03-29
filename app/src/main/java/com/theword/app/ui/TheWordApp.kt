@@ -52,7 +52,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector,
     data object About : Screen("about", "About", Icons.Outlined.Info, Icons.Filled.Info)
     data object Progress : Screen("progress", "Progress", Icons.Outlined.BarChart, Icons.Filled.BarChart)
     data object Comfort : Screen("comfort", "Comfort", Icons.AutoMirrored.Outlined.LibraryBooks, Icons.AutoMirrored.Filled.LibraryBooks)
-    data object Journal : Screen("journal", "Journal", Icons.AutoMirrored.Outlined.Notes, Icons.AutoMirrored.Filled.Notes)
+    data object Journal : Screen("journal", "Journal", Icons.Outlined.Notes, Icons.Filled.Notes)
     data object Favorites : Screen("favorites", "Favorites", Icons.Outlined.Favorite, Icons.Filled.Favorite)
 }
 
