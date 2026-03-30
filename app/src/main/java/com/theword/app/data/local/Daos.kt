@@ -94,6 +94,18 @@ interface BibleCacheDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChapter(chapter: ChapterCacheEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChapters(chapters: List<ChapterCacheEntity>)
+
+    @Query("UPDATE bible_translations_cache SET isDownloaded = :isDownloaded WHERE id = :id")
+    suspend fun markTranslationDownloaded(id: String, isDownloaded: Boolean)
+
+    @Query("SELECT isDownloaded FROM bible_translations_cache WHERE id = :id")
+    suspend fun isTranslationDownloaded(id: String): Boolean?
+
+    @Query("SELECT COUNT(*) FROM bible_chapters_cache WHERE translationId = :translationId")
+    suspend fun getChapterCount(translationId: String): Int
 }
 
 @Dao

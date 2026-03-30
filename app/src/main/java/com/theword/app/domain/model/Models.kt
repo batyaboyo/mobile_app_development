@@ -20,7 +20,8 @@ data class Translation(
     val id: String,
     val name: String,
     val shortName: String,
-    val language: String
+    val language: String,
+    val isDownloaded: Boolean = false
 )
 
 data class Commentary(
@@ -32,19 +33,41 @@ data class Verse(
     val number: Int,
     val text: String,
     val parts: List<VersePart> = emptyList()
-)
+) {
+    fun toMap() = mapOf(
+        "number" to number,
+        "text" to text,
+        "parts" to parts.map { it.toMap() }
+    )
+}
 
 sealed class VersePart {
-    data class Text(val text: String) : VersePart()
-    data class Poem(val text: String, val indent: Int) : VersePart()
-    data class Footnote(val caller: String, val text: String) : VersePart()
+    abstract fun toMap(): Map<String, Any>
+    data class Text(val text: String) : VersePart() {
+        override fun toMap() = mapOf("type" to "text", "text" to text)
+    }
+    data class Poem(val text: String, val indent: Int) : VersePart() {
+        override fun toMap() = mapOf("type" to "poem", "text" to text, "indent" to indent)
+    }
+    data class Footnote(val caller: String, val text: String) : VersePart() {
+        override fun toMap() = mapOf("type" to "footnote", "caller" to caller, "text" to text)
+    }
 }
 
 sealed class ChapterContent {
-    data class Heading(val text: String) : ChapterContent()
-    data class VerseContent(val verse: Verse) : ChapterContent()
-    data class LineBreak(val id: Int = 0) : ChapterContent()
-    data class HebrewSubtitle(val text: String) : ChapterContent()
+    abstract fun toMap(): Map<String, Any>
+    data class Heading(val text: String) : ChapterContent() {
+        override fun toMap() = mapOf("type" to "heading", "text" to text)
+    }
+    data class VerseContent(val verse: Verse) : ChapterContent() {
+        override fun toMap() = mapOf("type" to "verse", "verse" to verse.toMap())
+    }
+    data class LineBreak(val id: Int = 0) : ChapterContent() {
+        override fun toMap() = mapOf("type" to "line_break")
+    }
+    data class HebrewSubtitle(val text: String) : ChapterContent() {
+        override fun toMap() = mapOf("type" to "hebrew_subtitle", "text" to text)
+    }
 }
 
 data class Bookmark(

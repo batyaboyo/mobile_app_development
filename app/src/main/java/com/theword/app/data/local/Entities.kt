@@ -41,7 +41,8 @@ data class TranslationCacheEntity(
     val name: String,
     val shortName: String,
     val language: String,
-    val lastUpdated: Long = System.currentTimeMillis()
+    val lastUpdated: Long = System.currentTimeMillis(),
+    val isDownloaded: Boolean = false
 )
 
 @Entity(tableName = "bible_books_cache")

@@ -16,7 +16,7 @@ import androidx.room.RoomDatabase
         ChapterCacheEntity::class,
         JournalEntryEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,6 +29,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun journalDao(): JournalDao
 
     companion object {
+        val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                // Empty migration since no schema changes occurred between v4 and v5
+                // This establishes the pattern for future updates
+            }
+        }
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -39,7 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "theword_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_4_5)
                     .build()
                 INSTANCE = instance
                 instance

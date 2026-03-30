@@ -144,8 +144,8 @@ fun TheWordApp() {
                         label = { Text(screen.label) },
                         selected = selected,
                         onClick = {
-                            if (screen.route == Screen.Home.route) {
-                                // Hard reset to home when clicking the Home tab from any sub-screen
+                            if (screen.route == Screen.Home.route || screen.route == Screen.Study.route) {
+                                // Hard reset to home or study when clicking the tab from any sub-screen
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = false
@@ -232,11 +232,7 @@ fun TheWordApp() {
                 QuizScreen(vm)
             }
             composable("devotion") {
-                // Share the HomeViewModel from the Home backstack entry
-                val homeEntry = remember(navBackStackEntry) {
-                    navController.getBackStackEntry(Screen.Home.route)
-                }
-                val vm: HomeViewModel = viewModel(viewModelStoreOwner = homeEntry, factory = HomeViewModel.Factory)
+                val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
                 com.theword.app.ui.home.DevotionScreen(viewModel = vm, onBack = { navController.popBackStack() })
             }
             composable(Screen.Stories.route + "?storyId={storyId}") { backStackEntry ->

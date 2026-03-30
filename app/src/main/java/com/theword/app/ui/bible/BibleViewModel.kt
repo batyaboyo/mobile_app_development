@@ -25,6 +25,7 @@ data class BibleUiState(
     val favoriteRefs: Set<String> = emptySet(),
     val highlightsMap: Map<String, Highlight> = emptyMap(),
     val isLoading: Boolean = false,
+    val isSyncing: Boolean = false,
     val error: String? = null
 )
 
@@ -142,30 +143,51 @@ class BibleViewModel(private val repository: BibleRepository) : ViewModel() {
     fun changeVersion(versionId: String) {
         viewModelScope.launch {
             repository.prefs.setBibleVersion(versionId)
-            _uiState.update { it.copy(currentVersion = versionId, isLoading = true) }
+            _uiState.update { it.copy(currentVersion = versionId) }
+            loadTranslationData(versionId)
+        }
+    }
+
+    private suspend fun loadTranslationData(versionId: String) {
+        _uiState.update { it.copy(isLoading = true) }
+        try {
+            val books = repository.getBooks(versionId)
+            val willReloadChapter = _uiState.value.navState == BibleNavState.VERSES && _uiState.value.selectedBook != null
+            
+            _uiState.update { 
+                it.copy(
+                    books = books, 
+                    isLoading = if (willReloadChapter) it.isLoading else false 
+                ) 
+            }
+            
+            // Reload current chapter if viewing one
+            if (willReloadChapter) {
+                val selectedBookId = _uiState.value.selectedBook?.id
+                val book = if (selectedBookId != null) books.find { it.id == selectedBookId } else null
+                if (book != null) {
+                    _uiState.update { it.copy(selectedBook = book) }
+                    selectChapter(_uiState.value.selectedChapter)
+                } else {
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isLoading = false, error = e.message) }
+        }
+    }
+
+    fun syncCurrentTranslation() {
+        val versionId = _uiState.value.currentVersion
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSyncing = true) }
             try {
-                val books = repository.getBooks(versionId)
-                val willReloadChapter = _uiState.value.navState == BibleNavState.VERSES && _uiState.value.selectedBook != null
-                
-                _uiState.update { 
-                    it.copy(
-                        books = books, 
-                        isLoading = if (willReloadChapter) it.isLoading else false 
-                    ) 
-                }
-                
-                // Reload current chapter if viewing one
-                if (willReloadChapter) {
-                    val book = books.find { it.id == _uiState.value.selectedBook!!.id }
-                    if (book != null) {
-                        _uiState.update { it.copy(selectedBook = book) }
-                        selectChapter(_uiState.value.selectedChapter)
-                    } else {
-                        _uiState.update { it.copy(isLoading = false) }
-                    }
-                }
+                repository.syncTranslation(versionId)
+                // Refresh translations to update UI flags
+                val translations = repository.getTranslations()
+                _uiState.update { it.copy(translations = translations, isSyncing = false) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
+                _uiState.update { it.copy(isSyncing = false, error = e.message) }
             }
         }
     }

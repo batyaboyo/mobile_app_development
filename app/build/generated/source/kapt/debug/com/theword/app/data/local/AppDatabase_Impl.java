@@ -39,19 +39,19 @@ public final class AppDatabase_Impl extends AppDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(3) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(4) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `bookmarks` (`reference` TEXT NOT NULL, `text` TEXT NOT NULL, `collection` TEXT, `bookmarkedAt` INTEGER NOT NULL, PRIMARY KEY(`reference`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `highlights` (`reference` TEXT NOT NULL, `color` TEXT NOT NULL, `note` TEXT, PRIMARY KEY(`reference`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `reading_progress` (`id` TEXT NOT NULL, `bookId` TEXT NOT NULL, `chapter` INTEGER NOT NULL, `readAt` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `quiz_results` (`dateKey` TEXT NOT NULL, `questionsJson` TEXT NOT NULL, `answersJson` TEXT NOT NULL, `score` INTEGER NOT NULL, `total` INTEGER NOT NULL, PRIMARY KEY(`dateKey`))");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `bible_translations_cache` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `shortName` TEXT NOT NULL, `language` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `bible_translations_cache` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `shortName` TEXT NOT NULL, `language` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, `isDownloaded` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `bible_books_cache` (`id` TEXT NOT NULL, `translationId` TEXT NOT NULL, `bookId` TEXT NOT NULL, `name` TEXT NOT NULL, `totalChapters` INTEGER NOT NULL, `order` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `bible_chapters_cache` (`id` TEXT NOT NULL, `translationId` TEXT NOT NULL, `bookId` TEXT NOT NULL, `chapter` INTEGER NOT NULL, `contentJson` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `journal_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `timestamp` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9dad6daf7a8128039eee1150b3f44e5f')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cb9117c1c268f85442dca4b2ca529ebe')");
       }
 
       @Override
@@ -163,12 +163,13 @@ public final class AppDatabase_Impl extends AppDatabase {
                   + " Expected:\n" + _infoQuizResults + "\n"
                   + " Found:\n" + _existingQuizResults);
         }
-        final HashMap<String, TableInfo.Column> _columnsBibleTranslationsCache = new HashMap<String, TableInfo.Column>(5);
+        final HashMap<String, TableInfo.Column> _columnsBibleTranslationsCache = new HashMap<String, TableInfo.Column>(6);
         _columnsBibleTranslationsCache.put("id", new TableInfo.Column("id", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsBibleTranslationsCache.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsBibleTranslationsCache.put("shortName", new TableInfo.Column("shortName", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsBibleTranslationsCache.put("language", new TableInfo.Column("language", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsBibleTranslationsCache.put("lastUpdated", new TableInfo.Column("lastUpdated", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBibleTranslationsCache.put("isDownloaded", new TableInfo.Column("isDownloaded", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysBibleTranslationsCache = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesBibleTranslationsCache = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoBibleTranslationsCache = new TableInfo("bible_translations_cache", _columnsBibleTranslationsCache, _foreignKeysBibleTranslationsCache, _indicesBibleTranslationsCache);
@@ -227,7 +228,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "9dad6daf7a8128039eee1150b3f44e5f", "bcf9069fb82db73237217c8d23082f51");
+    }, "cb9117c1c268f85442dca4b2ca529ebe", "bd2601cf1dfbffd0f0c029e23f0c2bf5");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

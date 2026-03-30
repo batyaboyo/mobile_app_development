@@ -65,8 +65,7 @@ public final class QuizResultDao_Impl implements QuizResultDao {
   }
 
   @Override
-  public Object insertResult(final QuizResultEntity result,
-      final Continuation<? super Unit> $completion) {
+  public Object insertResult(final QuizResultEntity result, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -80,12 +79,11 @@ public final class QuizResultDao_Impl implements QuizResultDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object getResult(final String dateKey,
-      final Continuation<? super QuizResultEntity> $completion) {
+  public Object getResult(final String dateKey, final Continuation<? super QuizResultEntity> arg1) {
     final String _sql = "SELECT * FROM quiz_results WHERE dateKey = ? LIMIT 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -140,11 +138,11 @@ public final class QuizResultDao_Impl implements QuizResultDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object getTotalQuizzesTaken(final Continuation<? super Integer> $completion) {
+  public Object getTotalQuizzesTaken(final Continuation<? super Integer> arg0) {
     final String _sql = "SELECT COUNT(*) FROM quiz_results";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -172,11 +170,11 @@ public final class QuizResultDao_Impl implements QuizResultDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @Override
-  public Object getAllResults(final Continuation<? super List<QuizResultEntity>> $completion) {
+  public Object getAllResults(final Continuation<? super List<QuizResultEntity>> arg0) {
     final String _sql = "SELECT * FROM quiz_results ORDER BY dateKey DESC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
@@ -225,7 +223,7 @@ public final class QuizResultDao_Impl implements QuizResultDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg0);
   }
 
   @NonNull

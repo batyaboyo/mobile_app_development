@@ -9,13 +9,19 @@ import com.theword.app.data.local.*
 import com.theword.app.domain.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import com.theword.app.data.api.CompleteTranslationResponse
+import android.content.Context
+import com.theword.app.data.embedded.BundledBibleProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 class BibleRepository(
     private val api: BibleApiService,
     private val db: AppDatabase,
-    val prefs: PreferencesManager
+    val prefs: PreferencesManager,
+    private val bundledProvider: BundledBibleProvider
 ) {
     private val moshi = Moshi.Builder()
         .addLast(KotlinJsonAdapterFactory())
@@ -44,42 +50,63 @@ class BibleRepository(
 
     suspend fun getTranslations(): List<Translation> {
         translationsCache["all"]?.let { return it }
-        
-        // Try network
+
+        val sortComparator = compareBy<Translation> {
+            val priority = listOf("BSB", "eng_kjv", "eng_kja", "ENGWEBP", "eng_web", "eng_bbe", "eng_wbs", "eng_webc")
+            val idx = priority.indexOf(it.id)
+            if (idx >= 0) idx else 100
+        }
+
+        // Start with bundled translations (always available, persistent)
+        val merged = mutableMapOf<String, Translation>()
+        bundledProvider.getBundledTranslations().forEach { merged[it.id] = it }
+
+        // Merge with DB translations (user-downloaded & API-discovered)
+        val cached = db.bibleCacheDao().getTranslations()
+        cached.forEach { entity ->
+            merged[entity.id] = Translation(
+                entity.id, entity.name, entity.shortName, entity.language,
+                entity.isDownloaded || bundledProvider.isBundled(entity.id)
+            )
+        }
+
+        if (cached.isNotEmpty()) {
+            val list = merged.values.sortedWith(sortComparator)
+            translationsCache["all"] = list
+            return list
+        }
+
+        // DB empty — try network to discover additional translations
         try {
             val response = api.getTranslations()
             val all = response.translations ?: emptyList()
             val english = all
                 .filter { it.language == "eng" || it.languageEnglishName == "English" }
                 .map { Translation(it.id, it.name ?: it.englishName ?: it.id, it.shortName ?: it.id, it.language ?: "eng") }
-                .sortedWith(compareBy {
-                    val priority = listOf("BSB", "ENGWEBP", "eng_web", "eng_bbe", "eng_wbs", "eng_webc")
-                    val idx = priority.indexOf(it.id)
-                    if (idx >= 0) idx else 100
-                })
-            
-            // Background save to local DB
+
             db.bibleCacheDao().insertTranslations(english.map {
                 TranslationCacheEntity(it.id, it.name, it.shortName, it.language)
             })
-            
-            translationsCache["all"] = english
-            return english
-        } catch (e: Exception) {
-            // Fallback to local DB cache
-            val cached = db.bibleCacheDao().getTranslations()
-            if (cached.isNotEmpty()) {
-                val list = cached.map { Translation(it.id, it.name, it.shortName, it.language) }
-                translationsCache["all"] = list
-                return list
+
+            // Restore isDownloaded for translations that have cached chapter data
+            for (t in english) {
+                val chapterCount = db.bibleCacheDao().getChapterCount(t.id)
+                if (chapterCount > 0) {
+                    db.bibleCacheDao().markTranslationDownloaded(t.id, true)
+                }
             }
-            
-            // Hardcoded defaults if nothing else works
-            return listOf(
-                Translation("BSB", "Berean Standard Bible", "BSB", "eng"),
-                Translation("ENGWEBP", "World English Bible", "WEB", "eng"),
-                Translation("eng_bbe", "Bible in Basic English", "BBE", "eng")
-            )
+
+            val updatedFromDb = db.bibleCacheDao().getTranslations()
+            val result = updatedFromDb.map {
+                Translation(it.id, it.name, it.shortName, it.language, it.isDownloaded)
+            }.sortedWith(sortComparator)
+            translationsCache["all"] = result
+            return result
+        } catch (e: Exception) {
+            // Network failed — return bundled translations (always available)
+            val list = merged.values.sortedWith(sortComparator)
+            translationsCache["all"] = list
+            return list
         }
     }
 
@@ -103,6 +130,22 @@ class BibleRepository(
     suspend fun getBooks(translationId: String): List<BibleBook> {
         booksCache[translationId]?.let { return it }
         
+        // Try Room cache first
+        val cached = db.bibleCacheDao().getBooks(translationId)
+        if (cached.isNotEmpty()) {
+            val list = cached.map { BibleBook(it.bookId, it.name, it.totalChapters, it.order) }
+            booksCache[translationId] = list
+            return list
+        }
+
+        // Try persistent bundled Bible data from assets
+        val bundledBooks = bundledProvider.getBooks(translationId)
+        if (bundledBooks != null) {
+            booksCache[translationId] = bundledBooks
+            return bundledBooks
+        }
+
+        // Try network
         try {
             val response = api.getBooks(translationId)
             val books = (response.books ?: emptyList()).map {
@@ -117,13 +160,6 @@ class BibleRepository(
             booksCache[translationId] = books
             return books
         } catch (e: Exception) {
-            // Try local cache
-            val cached = db.bibleCacheDao().getBooks(translationId)
-            if (cached.isNotEmpty()) {
-                val list = cached.map { BibleBook(it.bookId, it.name, it.totalChapters, it.order) }
-                booksCache[translationId] = list
-                return list
-            }
             return getFallbackBooks()
         }
     }
@@ -134,6 +170,26 @@ class BibleRepository(
         val key = "$translationId|$bookId|$chapter"
         chapterCache[key]?.let { return it }
         
+        // Try Room cache first
+        val cached = db.bibleCacheDao().getChapter(translationId, bookId, chapter)
+        if (cached != null) {
+            try {
+                val list = deserializeChapterContent(cached.contentJson)
+                chapterCache[key] = list
+                return list
+            } catch (jsonEx: Exception) {
+                // Ignore and proceed
+            }
+        }
+
+        // Try persistent bundled Bible data from assets
+        val bundledContent = bundledProvider.getChapter(translationId, bookId, chapter)
+        if (bundledContent != null) {
+            chapterCache[key] = bundledContent
+            return bundledContent
+        }
+
+        // Try network
         try {
             val response = api.getChapter(translationId, bookId, chapter)
             val footnotes = (response.chapter?.footnotes ?: emptyList()).associateBy { it.noteId }
@@ -178,17 +234,6 @@ class BibleRepository(
             chapterCache[key] = content
             return content
         } catch (e: Exception) {
-            // Try local cache
-            val cached = db.bibleCacheDao().getChapter(translationId, bookId, chapter)
-            if (cached != null) {
-                try {
-                    val list = deserializeChapterContent(cached.contentJson)
-                    chapterCache[key] = list
-                    return list
-                } catch (jsonEx: Exception) {
-                    return emptyList()
-                }
-            }
             return emptyList()
         }
     }
@@ -354,7 +399,177 @@ class BibleRepository(
         db.journalDao().deleteEntry(id)
     }
 
+    // ---- Offline Sync ----
+
+    suspend fun syncTranslation(translationId: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val complete = api.getCompleteTranslation(translationId)
+                saveCompleteTranslation(complete)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    suspend fun initializeBundledBibles(context: Context) = withContext(Dispatchers.IO) {
+        try {
+            val assetManager = context.assets
+            val bibleFiles = assetManager.list("bibles") ?: emptyArray()
+
+            for (fileName in bibleFiles) {
+                if (!fileName.endsWith(".json")) continue
+
+                try {
+                    val jsonString = assetManager.open("bibles/$fileName").bufferedReader().use { it.readText() }
+                    val response = moshi.adapter(CompleteTranslationResponse::class.java).fromJson(jsonString)
+
+                    val t = response?.translation ?: continue
+                    val translationId = t.id
+
+                    // Check if chapters are already loaded (not just if the ID exists)
+                    val existingCount = db.bibleCacheDao().getChapterCount(translationId)
+                    if (existingCount > 0) continue // Already loaded, skip
+
+                    // Insert translation metadata — marked as downloaded
+                    db.bibleCacheDao().insertTranslations(listOf(
+                        TranslationCacheEntity(
+                            id = translationId,
+                            name = t.name ?: t.englishName ?: translationId,
+                            shortName = t.shortName ?: translationId,
+                            language = t.language ?: "eng",
+                            isDownloaded = true
+                        )
+                    ))
+
+                    // Insert books
+                    val bookEntities = (response.books ?: emptyList()).map { b ->
+                        BookCacheEntity(
+                            id = "${translationId}_${b.id}",
+                            translationId = translationId,
+                            bookId = b.id,
+                            name = b.name ?: b.commonName ?: b.id,
+                            totalChapters = b.numberOfChapters,
+                            order = b.order
+                        )
+                    }
+                    db.bibleCacheDao().insertBooks(bookEntities)
+
+                    // Insert chapters in batches to avoid memory pressure
+                    val chapterEntities = mutableListOf<ChapterCacheEntity>()
+                    (response.books ?: emptyList()).forEach { book ->
+                        (book.chapters ?: emptyList()).forEach { chapterDto ->
+                            val ch = chapterDto.chapter ?: return@forEach
+                            val chNum = ch.number
+                            val footnotes = (ch.footnotes ?: emptyList()).associateBy { it.noteId }
+                            val content = (ch.content ?: emptyList()).mapNotNull { item ->
+                                mapContentItemToDomain(item, footnotes)
+                            }
+                            chapterEntities.add(
+                                ChapterCacheEntity(
+                                    id = "${translationId}_${book.id}_$chNum",
+                                    translationId = translationId,
+                                    bookId = book.id,
+                                    chapter = chNum,
+                                    contentJson = chapterAdapter.toJson(content.map { it.toMap() })
+                                )
+                            )
+                            if (chapterEntities.size >= 100) {
+                                db.bibleCacheDao().insertChapters(chapterEntities.toList())
+                                chapterEntities.clear()
+                            }
+                        }
+                    }
+                    if (chapterEntities.isNotEmpty()) {
+                        db.bibleCacheDao().insertChapters(chapterEntities)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        } catch (_: Exception) {
+            // Pre-population failed; BundledBibleProvider serves as persistent fallback
+        }
+    }
+
+    private suspend fun saveCompleteTranslation(complete: CompleteTranslationResponse) {
+        val t = complete.translation ?: return
+        val translationId = t.id
+        
+        // Save books
+        val bookEntities = (complete.books ?: emptyList()).map { b ->
+            BookCacheEntity("${translationId}_${b.id}", translationId, b.id, b.name ?: b.commonName ?: b.id, b.numberOfChapters, b.order)
+        }
+        db.bibleCacheDao().insertBooks(bookEntities)
+
+        // Save chapters
+        val chapterEntities = mutableListOf<ChapterCacheEntity>()
+        complete.books?.forEach { book ->
+            book.chapters?.forEachIndexed { index, chapterDto ->
+                val chNum = chapterDto.chapter?.number ?: (index + 1)
+                val footnotes = (chapterDto.chapter?.footnotes ?: emptyList()).associateBy { it.noteId }
+                
+                // Convert content
+                val content = (chapterDto.chapter?.content ?: emptyList()).mapNotNull { item ->
+                    mapContentItemToDomain(item, footnotes)
+                }
+
+                chapterEntities.add(
+                    ChapterCacheEntity(
+                        id = "${translationId}_${book.id}_$chNum",
+                        translationId = translationId,
+                        bookId = book.id,
+                        chapter = chNum,
+                        contentJson = chapterAdapter.toJson(content.map { it.toMap() })
+                    )
+                )
+                
+                // Batch insert every 100 chapters to avoid memory issues
+                if (chapterEntities.size >= 100) {
+                    db.bibleCacheDao().insertChapters(chapterEntities.toList())
+                    chapterEntities.clear()
+                }
+            }
+        }
+        
+        if (chapterEntities.isNotEmpty()) {
+            db.bibleCacheDao().insertChapters(chapterEntities)
+        }
+
+        // Mark as downloaded
+        db.bibleCacheDao().markTranslationDownloaded(translationId, true)
+        
+        // Clear caches
+        translationsCache.remove("all")
+        booksCache.remove(translationId)
+    }
+
     // ---- Helpers ----
+
+    private fun mapContentItemToDomain(
+        item: com.theword.app.data.api.ContentItemDto,
+        footnotes: Map<Int, com.theword.app.data.api.FootnoteDto>
+    ): ChapterContent? {
+        return when (item.type) {
+            "heading" -> ChapterContent.Heading(extractTextFromContent(item.content))
+            "verse" -> {
+                val number = item.number ?: return null
+                val parts = parseVerseParts(item.content, footnotes)
+                val plainText = parts.joinToString("") {
+                    when (it) {
+                        is VersePart.Text -> it.text
+                        is VersePart.Poem -> it.text
+                        is VersePart.Footnote -> ""
+                        else -> ""
+                    }
+                }.trim()
+                ChapterContent.VerseContent(Verse(number, plainText, parts))
+            }
+            "line_break" -> ChapterContent.LineBreak()
+            "hebrew_subtitle" -> ChapterContent.HebrewSubtitle(extractTextFromContent(item.content))
+            else -> null
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun extractTextFromContent(content: Any?): String {

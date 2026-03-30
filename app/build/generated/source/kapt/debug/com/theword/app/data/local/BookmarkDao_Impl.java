@@ -106,7 +106,7 @@ public final class BookmarkDao_Impl implements BookmarkDao {
 
   @Override
   public Object insertBookmark(final BookmarkEntity bookmark,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -120,12 +120,12 @@ public final class BookmarkDao_Impl implements BookmarkDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object deleteBookmark(final BookmarkEntity bookmark,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -139,12 +139,11 @@ public final class BookmarkDao_Impl implements BookmarkDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteByReference(final String reference,
-      final Continuation<? super Unit> $completion) {
+  public Object deleteByReference(final String reference, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -169,12 +168,12 @@ public final class BookmarkDao_Impl implements BookmarkDao {
           __preparedStmtOfDeleteByReference.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
   public Object updateCollection(final String reference, final String collection,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg2) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -205,7 +204,7 @@ public final class BookmarkDao_Impl implements BookmarkDao {
           __preparedStmtOfUpdateCollection.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg2);
   }
 
   @Override
@@ -322,7 +321,7 @@ public final class BookmarkDao_Impl implements BookmarkDao {
 
   @Override
   public Object getBookmark(final String reference,
-      final Continuation<? super BookmarkEntity> $completion) {
+      final Continuation<? super BookmarkEntity> arg1) {
     final String _sql = "SELECT * FROM bookmarks WHERE reference = ? LIMIT 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -374,7 +373,7 @@ public final class BookmarkDao_Impl implements BookmarkDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @NonNull

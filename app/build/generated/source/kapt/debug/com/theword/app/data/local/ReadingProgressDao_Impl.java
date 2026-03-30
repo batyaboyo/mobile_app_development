@@ -60,7 +60,7 @@ public final class ReadingProgressDao_Impl implements ReadingProgressDao {
 
   @Override
   public Object markChapterRead(final ReadingProgressEntity progress,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -74,7 +74,7 @@ public final class ReadingProgressDao_Impl implements ReadingProgressDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override

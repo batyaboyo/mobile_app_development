@@ -37,13 +37,15 @@ fun BibleScreen(viewModel: BibleViewModel, onBack: () -> Unit = {}) {
             VersionSelector(
                 translations = uiState.translations,
                 currentVersion = uiState.currentVersion,
-                onVersionChange = { viewModel.changeVersion(it) }
+                onVersionChange = { viewModel.changeVersion(it) },
+                isSyncing = uiState.isSyncing,
+                onSync = { viewModel.syncCurrentTranslation() }
             )
         }
 
         when (uiState.navState) {
             BibleNavState.BOOKS -> BooksList(uiState.books, uiState.isLoading, onBack) { viewModel.selectBook(it) }
-            BibleNavState.CHAPTERS -> ChapterGrid(uiState.selectedBook!!, viewModel)
+            BibleNavState.CHAPTERS -> uiState.selectedBook?.let { ChapterGrid(it, viewModel) }
             BibleNavState.VERSES -> VerseDisplay(uiState, viewModel)
         }
     }
@@ -53,14 +55,44 @@ fun BibleScreen(viewModel: BibleViewModel, onBack: () -> Unit = {}) {
 private fun VersionSelector(
     translations: List<Translation>,
     currentVersion: String,
-    onVersionChange: (String) -> Unit
+    onVersionChange: (String) -> Unit,
+    isSyncing: Boolean,
+    onSync: () -> Unit
 ) {
     var showSheet by remember { mutableStateOf(false) }
     val current = translations.find { it.id == currentVersion }
 
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        OutlinedButton(onClick = { showSheet = true }, modifier = Modifier.fillMaxWidth()) {
-            Text("${current?.shortName ?: currentVersion} — ${current?.name ?: ""}")
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(
+                onClick = { showSheet = true },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("${current?.shortName ?: currentVersion} — ${current?.name ?: ""}")
+            }
+            
+            if (current != null && !current.isDownloaded) {
+                Spacer(modifier = Modifier.width(8.dp))
+                if (isSyncing) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                } else {
+                    IconButton(onClick = onSync) {
+                        Icon(Icons.Default.Download, "Download for offline use", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            } else if (current?.isDownloaded == true) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(Icons.Default.CloudDone, "Offline ready", tint = Color(0xFF4CAF50), modifier = Modifier.size(20.dp))
+            }
+        }
+        
+        if (current != null && !current.isDownloaded && !isSyncing) {
+            Text(
+                "Version is available online. Tap download for offline use.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+            )
         }
     }
 
@@ -68,6 +100,11 @@ private fun VersionSelector(
         ModalBottomSheet(
             onDismissRequest = { showSheet = false }
         ) {
+            Text(
+                "Select Bible Version",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
@@ -76,8 +113,19 @@ private fun VersionSelector(
                     val t = translations[i]
                     val isSelected = t.id == currentVersion
                     ListItem(
-                        headlineContent = { Text("${t.shortName} — ${t.name}", fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
-                        leadingContent = { if (isSelected) Text("✓", color = MaterialTheme.colorScheme.primary) },
+                        headlineContent = { 
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "${t.shortName} — ${t.name}", 
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (t.isDownloaded) {
+                                    Icon(Icons.Default.CheckCircle, "Downloaded", tint = Color(0xFF4CAF50), modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        },
+                        leadingContent = { if (isSelected) Icon(Icons.Default.Check, "Selected", tint = MaterialTheme.colorScheme.primary) },
                         modifier = Modifier.clickable {
                             onVersionChange(t.id)
                             showSheet = false

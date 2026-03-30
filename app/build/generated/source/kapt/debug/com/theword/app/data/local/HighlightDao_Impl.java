@@ -75,7 +75,7 @@ public final class HighlightDao_Impl implements HighlightDao {
 
   @Override
   public Object insertHighlight(final HighlightEntity highlight,
-      final Continuation<? super Unit> $completion) {
+      final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -89,12 +89,11 @@ public final class HighlightDao_Impl implements HighlightDao {
           __db.endTransaction();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
-  public Object deleteHighlight(final String reference,
-      final Continuation<? super Unit> $completion) {
+  public Object deleteHighlight(final String reference, final Continuation<? super Unit> arg1) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
       @NonNull
@@ -119,7 +118,7 @@ public final class HighlightDao_Impl implements HighlightDao {
           __preparedStmtOfDeleteHighlight.release(_stmt);
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @Override
@@ -174,7 +173,7 @@ public final class HighlightDao_Impl implements HighlightDao {
 
   @Override
   public Object getHighlight(final String reference,
-      final Continuation<? super HighlightEntity> $completion) {
+      final Continuation<? super HighlightEntity> arg1) {
     final String _sql = "SELECT * FROM highlights WHERE reference = ? LIMIT 1";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
@@ -223,7 +222,7 @@ public final class HighlightDao_Impl implements HighlightDao {
           _statement.release();
         }
       }
-    }, $completion);
+    }, arg1);
   }
 
   @NonNull

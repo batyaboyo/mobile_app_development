@@ -93,6 +93,31 @@ data class FootnoteDto(
     @Json(name = "text") val text: String? = null
 )
 
+// ---- Complete Translation ----
+
+@JsonClass(generateAdapter = false)
+data class CompleteTranslationResponse(
+    @Json(name = "translation") val translation: TranslationDto? = null,
+    @Json(name = "books") val books: List<CompleteBookDto>? = null
+)
+
+@JsonClass(generateAdapter = false)
+data class CompleteBookDto(
+    @Json(name = "id") val id: String = "",
+    @Json(name = "name") val name: String? = null,
+    @Json(name = "commonName") val commonName: String? = null,
+    @Json(name = "title") val title: String? = null,
+    @Json(name = "order") val order: Int = 0,
+    @Json(name = "numberOfChapters") val numberOfChapters: Int = 0,
+    @Json(name = "chapters") val chapters: List<CompleteChapterDto>? = null
+)
+
+@JsonClass(generateAdapter = false)
+data class CompleteChapterDto(
+    @Json(name = "numberOfVerses") val numberOfVerses: Int = 0,
+    @Json(name = "chapter") val chapter: ChapterDto? = null
+)
+
 // ---- Commentary Chapter ----
 
 @JsonClass(generateAdapter = false)
