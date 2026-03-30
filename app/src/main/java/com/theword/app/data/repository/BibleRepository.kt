@@ -227,7 +227,7 @@ class BibleRepository(
                     translationId = translationId,
                     bookId = bookId,
                     chapter = chapter,
-                    contentJson = chapterAdapter.toJson(content.map { it.toMap() })
+                    contentJson = chapterAdapter.toJson(content.map { it.toCacheMap() })
                 )
             )
             
@@ -239,7 +239,7 @@ class BibleRepository(
     }
 
     // Helper to serialize ChapterContent manually for Moshi
-    private fun ChapterContent.toMap(): Map<String, Any> {
+    private fun ChapterContent.toCacheMap(): Map<String, Any> {
         return when (this) {
             is ChapterContent.Heading -> mapOf("type" to "Heading", "text" to text)
             is ChapterContent.VerseContent -> mapOf(
@@ -258,16 +258,17 @@ class BibleRepository(
         val rawList = chapterAdapter.fromJson(json) ?: return emptyList()
         
         return rawList.mapNotNull { map ->
-            when (map["type"]) {
-                "Heading" -> ChapterContent.Heading(map["text"] as String)
-                "VerseContent" -> {
+            val type = (map["type"] as? String)?.lowercase()
+            when (type) {
+                "heading" -> ChapterContent.Heading(map["text"] as String)
+                "verse", "versecontent" -> {
                     val verseMap = map["verse"] as Map<String, Any>
                     val number = (verseMap["number"] as Double).toInt() // Moshi parses numbers as Double by default
                     val text = verseMap["text"] as String
                     ChapterContent.VerseContent(Verse(number, text, listOf(VersePart.Text(text))))
                 }
-                "LineBreak" -> ChapterContent.LineBreak()
-                "HebrewSubtitle" -> ChapterContent.HebrewSubtitle(map["text"] as String)
+                "linebreak", "line_break" -> ChapterContent.LineBreak()
+                "hebrewsubtitle", "hebrew_subtitle" -> ChapterContent.HebrewSubtitle(map["text"] as String)
                 else -> null
             }
         }
@@ -471,7 +472,7 @@ class BibleRepository(
                                     translationId = translationId,
                                     bookId = book.id,
                                     chapter = chNum,
-                                    contentJson = chapterAdapter.toJson(content.map { it.toMap() })
+                                    contentJson = chapterAdapter.toJson(content.map { it.toCacheMap() })
                                 )
                             )
                             if (chapterEntities.size >= 100) {
@@ -520,7 +521,7 @@ class BibleRepository(
                         translationId = translationId,
                         bookId = book.id,
                         chapter = chNum,
-                        contentJson = chapterAdapter.toJson(content.map { it.toMap() })
+                        contentJson = chapterAdapter.toJson(content.map { it.toCacheMap() })
                     )
                 )
                 

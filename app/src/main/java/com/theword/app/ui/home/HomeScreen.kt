@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
+
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -210,9 +212,9 @@ fun DailyContentDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp), // More rounded (premium)
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 8.dp
+            tonalElevation = 12.dp
         ) {
             Box(
                 modifier = Modifier
@@ -220,28 +222,37 @@ fun DailyContentDialog(
                     .background(gradientBrush)
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
                         text = content.reference,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
-                        fontWeight = FontWeight.SemiBold
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
                     )
                     
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     
-                    SelectionContainer {
-                        Text(
-                            text = "\"${content.text}\"",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold,
-                            fontStyle = FontStyle.Italic,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 32.sp
-                        )
+                    // Added scrollable area for long text
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .sizeIn(maxHeight = 400.dp) // Prevent dialog from growing too large
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        SelectionContainer {
+                            Text(
+                                text = "“${content.text}”",
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    lineHeight = 34.sp,
+                                    letterSpacing = (-0.5).sp
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(32.dp))
@@ -252,14 +263,18 @@ fun DailyContentDialog(
                             containerColor = MaterialTheme.colorScheme.onPrimary,
                             contentColor = MaterialTheme.colorScheme.primary
                         ),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                     ) {
+                        Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text("Read Full Chapter", fontWeight = FontWeight.Bold)
                     }
                     
                     TextButton(
                         onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         colors = ButtonDefaults.textButtonColors(
                             contentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                         )
@@ -282,28 +297,47 @@ fun DailyContentCard(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(20.dp), // Softer corners
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(20.dp))
             Column {
-                Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
-                Text(subtitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    title, 
+                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.5.sp), 
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(subtitle, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     snippet,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f),
+                    lineHeight = 20.sp
                 )
             }
         }
@@ -367,16 +401,20 @@ fun HeroVerseCard(
                             SelectionContainer {
                                 Column {
                                     Text(
-                                        "\"${uiState.dailyVerse.text}\"",
-                                        style = MaterialTheme.typography.headlineSmall,
+                                        "“${uiState.dailyVerse.text}”",
+                                        style = MaterialTheme.typography.headlineMedium.copy(
+                                            lineHeight = 38.sp,
+                                            letterSpacing = (-1).sp
+                                        ),
                                         color = MaterialTheme.colorScheme.onPrimary,
-                                        fontWeight = FontWeight.Bold,
+                                        fontWeight = FontWeight.ExtraBold,
                                         fontStyle = FontStyle.Italic
                                     )
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
                                     Text(
                                         "— ${uiState.dailyVerse.reference}",
-                                        style = MaterialTheme.typography.titleMedium,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Medium,
                                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                                     )
                                 }

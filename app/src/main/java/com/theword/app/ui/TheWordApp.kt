@@ -36,22 +36,20 @@ import kotlinx.coroutines.launch
 
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
-import androidx.compose.material.icons.automirrored.filled.LibraryBooks
-import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import java.util.Calendar
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
     data object Home : Screen("home", "Home", Icons.Outlined.Home, Icons.Filled.Home)
     data object Bible : Screen("bible", "Bible", Icons.AutoMirrored.Outlined.MenuBook, Icons.AutoMirrored.Filled.MenuBook)
-    data object Study : Screen("study", "Study", Icons.AutoMirrored.Outlined.LibraryBooks, Icons.AutoMirrored.Filled.LibraryBooks)
+    data object Study : Screen("study", "Study", Icons.Outlined.LibraryBooks, Icons.Filled.LibraryBooks)
     data object Bookmarks : Screen("bookmarks", "Bookmarks", Icons.Outlined.Bookmark, Icons.Filled.Bookmark)
     data object Quiz : Screen("quiz", "Quiz", Icons.Outlined.Quiz, Icons.Filled.Quiz)
     data object Stories : Screen("stories", "Stories", Icons.Outlined.AutoStories, Icons.Filled.AutoStories)
     data object Prayer : Screen("prayer", "Prayer", Icons.Outlined.SelfImprovement, Icons.Filled.SelfImprovement)
     data object About : Screen("about", "About", Icons.Outlined.Info, Icons.Filled.Info)
     data object Progress : Screen("progress", "Progress", Icons.Outlined.BarChart, Icons.Filled.BarChart)
-    data object Comfort : Screen("comfort", "Comfort", Icons.AutoMirrored.Outlined.LibraryBooks, Icons.AutoMirrored.Filled.LibraryBooks)
+    data object Comfort : Screen("comfort", "Comfort", Icons.Outlined.LibraryBooks, Icons.Filled.LibraryBooks)
     data object Journal : Screen("journal", "Journal", Icons.Outlined.Notes, Icons.Filled.Notes)
     data object Favorites : Screen("favorites", "Favorites", Icons.Outlined.Favorite, Icons.Filled.Favorite)
 }
