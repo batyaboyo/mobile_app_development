@@ -515,6 +515,14 @@ object PrayerData {
             verseRef = "James 1:5",
             text = "Heavenly Father, I am standing at a crossroads today, and I honestly don't know which way to go. I am faced with choices that feel weightier than my understanding, and I am weary of relying on my own limited perspective. Your Word says that if I lack wisdom, I should simply ask. So here I am, asking. I am asking for the 'generous' wisdom that only You can provide.\n\nI don't just want cleverness or a strategic advantage; I want Your heart and Your mind on these matters. Help me to see beyond the immediate and the temporary. Give me the discernment to distinguish between what is good and what is best. I want my choices today to align with Your Kingdom and to reflect Your character. Quiet the noise of 'expert' opinions and my own internal panic, and let me hear the steady voice of Your Spirit.\n\nThank You that You don't 'find fault' with my confusion. You don't mock my lack of clarity. Instead, You welcome me into Your presence and You promise to guide me. I am choosing to trust Your promise today more than my own feelings of uncertainty. I step out into this day with a quiet confidence, knowing that You are the Architect of my path and that You will lead me in the way I should go. My life is in Your hands.",
             closing = "Give me Your wisdom today, in Jesus' name, Amen."
+        ),
+        Prayer(
+            time = "morning",
+            title = "A Morning Prayer for a Heart of Gratitude",
+            verse = "Give thanks in all circumstances; for this is God’s will for you in Christ Jesus.",
+            verseRef = "1 Thessalonians 5:18",
+            text = "Heavenly Father, I am choosing to start this day with a deliberate 'Thank You.' Before I review my to-do list, before I worry about my challenges, and before I ask for anything else, I want to acknowledge Your goodness. I thank You for the breath in my lungs, the roof over my head, and the fresh mercy that greeted me when I woke up. I am grateful for the 'all circumstances' that You have promised to work together for my good.\n\nHelp me to have 'gratitude goggles' today. Let me see the small miracles that I often overlook—the kindness of a stranger, the beauty of a sunset, the strength to do my work, and the peace of Your presence. I refuse to let the things I *don't* have steal the joy of the things I *do* have. I am rich because I am Your child. I am wealthy because I have the Gospel. I am successful because my identity is secure in Your love.\n\nEven in the difficult parts of this day, I will look for a reason to give thanks. Not for the pain, but in the midst of it, knowing that You are with me and that You are producing something eternal in me. Gratitude is my weapon against bitterness and my shield against entitlement. I choose to be a person who overflows with thankfulness. Let my life be a continuous song of praise to the One who has given me everything.",
+            closing = "Thank You for everything today, in Jesus' name, Amen."
         )
     )
 
@@ -1150,6 +1158,22 @@ object PrayerData {
             verseRef = "Psalm 51:10",
             text = "Holy Father, as I reflect on this day, I am aware of the ways I have strayed from Your path. I see the moments where my ego took the lead, where my words were sharp, and where my priorities were misplaced. I don't want to carry this weight of guilt into my sleep. I come to You now, asking for the miracle of a 'pure heart.'\n\nI cannot clean my own soul. I cannot manufacture my own righteousness. Only You can create something new out of my brokenness. I ask for Your forgiveness for the sins I am aware of and for the ones I've been blind to. Wash me thoroughly from my iniquity. But more than just being 'clean,' I want to be 'steadfast.' I want a spirit that is unshakeable in its devotion to You. Renew me from the inside out.\n\nThank You for the mercy that is new every morning, but also available every night. Thank You that I can lay down my failures at the foot of the cross and wake up to a fresh start. I rest tonight in the finished work of Jesus, not in my own performance. Give me the grace to walk in Your ways tomorrow with a heart that is fully Yours. I am choosing to stay in Your love.",
             closing = "Create in me a clean heart tonight, in Jesus' name, Amen."
+        ),
+        Prayer(
+            time = "evening",
+            title = "An Evening Prayer for Those in a Storm",
+            verse = "He got up, rebuked the wind and said to the waves, 'Quiet! Be still!' Then the wind died down and it was completely calm.",
+            verseRef = "Mark 4:39",
+            text = "Lord of the Wind and the Sea, I lift up those who feel like their lives are currently being tossed by a violent storm. The waves of circumstance are crashing over them, and they feel like they are sinking. Fear is shouting louder than faith. I ask for Your supernatural presence to enter their 'boat' tonight. Speak clearly into their chaos and command the wind and the waves to 'Quiet! Be still!'\n\nRemind them that even when You seem to be 'sleeping' in the back of the boat, You are fully aware and completely in control. You are not surprised by the gale, and You are not limited by the storm. Give them the courage to stop looking at the waves and to start looking at the One Who rebuked them. Grant them a peace that doesn't make sense—a calm that exists even while the clouds are still dark.\n\nLet them experience the security of being held by the Commander of the storm. May they wake up tomorrow to a 'complete calm' in their souls, if not yet in their circumstances. Protect them through the night hours. Be their anchor that holds in the deep water. I trust that because You are in the boat with them, they will not go down. They are safe in Your care.",
+            closing = "Peace, be still tonight, in Jesus' name, Amen."
+        ),
+        Prayer(
+            time = "evening",
+            title = "An Evening Prayer for a Mind Set on Eternity",
+            verse = "Set your minds on things above, not on earthly things.",
+            verseRef = "Colossians 3:2",
+            text = "Father, as I horizontalize myself for sleep tonight, I want to upwardize my focus. My mind has been cluttered all day with 'earthly things'—with deadlines, and bills, and social media, and the temporary dramas of life. It's so easy to live as if this world is all there is. But tonight, I want to set my mind on things above. I want to recalibrate my heart to the frequency of eternity.\n\nHelp me to view my day through the lens of Your eternal Kingdom. Remind me that my struggles are 'light and momentary' compared to the 'eternal glory' that is being produced. Give me the wisdom to invest in what lasts—in love, in truth, in people, and in my relationship with You. Remove the anxiety that comes from trying to find ultimate security in temporary things. I am a citizen of Heaven, and my real life is 'hidden with Christ in God.'\n\nAs I sleep, protect my imagination from the distractions of the world. Let my rest be a radical act of trust in Your eternal plan. May I wake up tomorrow with a renewed perspective, seeking first Your Kingdom and Your righteousness. I choose to live for the things that will survive the fire. I choose to find my joy in the things that are eternal. You are my forever treasure.",
+            closing = "My heart is set on Heaven tonight, in Jesus' name, Amen."
         )
     )
 }
