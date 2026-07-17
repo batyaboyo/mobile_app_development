@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme colors for night mode -->
+    
+    <!-- Primary Colors - Lighter green for dark backgrounds -->
+    <color name="md_theme_dark_primary">#6BDB9A</color>
+    <color name="md_theme_dark_onPrimary">#003920</color>
+    <color name="md_theme_dark_primaryContainer">#00532D</color>
+    <color name="md_theme_dark_onPrimaryContainer">#A7F5C8</color>
+    
+    <!-- Secondary Colors - Lighter yellow for dark backgrounds -->
+    <color name="md_theme_dark_secondary">#E4CE52</color>
+    <color name="md_theme_dark_onSecondary">#3A3000</color>
+    <color name="md_theme_dark_secondaryContainer">#5A4A00</color>
+    <color name="md_theme_dark_onSecondaryContainer">#FFE96D</color>
+    
+    <!-- Tertiary Colors - Lighter red for dark backgrounds -->
+    <color name="md_theme_dark_tertiary">#FFB4AB</color>
+    <color name="md_theme_dark_onTertiary">#690005</color>
+    <color name="md_theme_dark_tertiaryContainer">#93000A</color>
+    <color name="md_theme_dark_onTertiaryContainer">#FFDAD6</color>
+    
+    <!-- Background - Dark with light text -->
+    <color name="md_theme_dark_background">#1B1C18</color>
+    <color name="md_theme_dark_onBackground">#E4E3DD</color>
+    
+    <!-- Surface - Dark surfaces with light text -->
+    <color name="md_theme_dark_surface">#1B1C18</color>
+    <color name="md_theme_dark_onSurface">#E4E3DD</color>
+    <color name="md_theme_dark_surfaceVariant">#424940</color>
+    <color name="md_theme_dark_onSurfaceVariant">#C2C9BF</color>
+    
+    <!-- Outline -->
+    <color name="md_theme_dark_outline">#8C9388</color>
+    
+    <!-- Error -->
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_onError">#690005</color>
+    <color name="md_theme_dark_errorContainer">#93000A</color>
+    <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
+    
+    <!-- Additional utility colors for dark theme -->
+    <color name="text_primary_dark">#E4E3DD</color>
+    <color name="text_secondary_dark">#C2C9BF</color>
+    <color name="text_hint_dark">#8C9388</color>
+    <color name="divider_dark">#424940</color>
+    <color name="card_background_dark">#242521</color>
+    <color name="overlay_dark">#80000000</color>
+</resources>

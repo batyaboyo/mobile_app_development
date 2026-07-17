@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Primary Colors - Uganda inspired (green from flag) -->
+    <color name="md_theme_light_primary">#00753D</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#A7F5C8</color>
+    <color name="md_theme_light_onPrimaryContainer">#002110</color>
+    
+    <!-- Secondary Colors - Golden yellow -->
+    <color name="md_theme_light_secondary">#9C8700</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#FFE96D</color>
+    <color name="md_theme_light_onSecondaryContainer">#2E2600</color>
+    
+    <!-- Tertiary Colors - Red accent -->
+    <color name="md_theme_light_tertiary">#BA1A1A</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#FFDAD6</color>
+    <color name="md_theme_light_onTertiaryContainer">#410002</color>
+    
+    <!-- Background - Pure white for maximum contrast -->
+    <color name="md_theme_light_background">#FFFFFF</color>
+    <color name="md_theme_light_onBackground">#000000</color>
+    
+    <!-- Surface - White surfaces with black text -->
+    <color name="md_theme_light_surface">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#000000</color>
+    <color name="md_theme_light_surfaceVariant">#F5F5F5</color>
+    <color name="md_theme_light_onSurfaceVariant">#212121</color>
+    
+    <!-- Outline - Dark for clear borders -->
+    <color name="md_theme_light_outline">#757575</color>
+    
+    <!-- Error - High contrast red -->
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+    
+    <!-- Text colors - Very dark for maximum readability -->
+    <color name="text_primary">#000000</color>
+    <color name="text_secondary">#424242</color>
+    <color name="text_hint">#757575</color>
+    <color name="divider">#E0E0E0</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="overlay_dark">#80000000</color>
+</resources>

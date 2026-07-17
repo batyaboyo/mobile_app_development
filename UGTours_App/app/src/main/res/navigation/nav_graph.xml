@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_login">
+
+    <fragment
+        android:id="@+id/navigation_login"
+        android:name="com.ugtours.ui.auth.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_login_to_home"
+            app:destination="@id/navigation_home"
+            app:popUpTo="@id/navigation_login"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_login_to_register"
+            app:destination="@id/navigation_register" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_register"
+        android:name="com.ugtours.ui.auth.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register" />
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.ugtours.ui.home.HomeFragment"
+        android:label="@string/nav_home" />
+
+    <fragment
+        android:id="@+id/navigation_attractions"
+        android:name="com.ugtours.ui.attractions.AttractionsListFragment"
+        android:label="@string/nav_attractions" />
+
+    <fragment
+        android:id="@+id/navigation_favorites"
+        android:name="com.ugtours.ui.favorites.FavoritesFragment"
+        android:label="@string/nav_favorites" />
+
+    <fragment
+        android:id="@+id/navigation_bookings"
+        android:name="com.ugtours.ui.bookings.BookingsFragment"
+        android:label="Bookings" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.ugtours.ui.profile.ProfileFragment"
+        android:label="Profile" />
+
+    <fragment
+        android:id="@+id/navigation_about"
+        android:name="com.ugtours.ui.about.AboutFragment"
+        android:label="@string/nav_about" />
+
+    <fragment
+        android:id="@+id/navigation_settings"
+        android:name="com.ugtours.ui.settings.SettingsFragment"
+        android:label="Settings" />
+
+</navigation>

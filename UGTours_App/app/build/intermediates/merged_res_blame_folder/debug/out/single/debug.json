@@ -1,0 +1,234 @@
+[
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\navigation_nav_graph.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\navigation\\nav_graph.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_accommodation_icon_bg.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\accommodation_icon_bg.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_arrow_back.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_arrow_back.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_placeholder_attraction.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\placeholder_attraction.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_home.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_home.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_item_featured_attraction.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_featured_attraction.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_settings.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_home.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_home.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_about.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_about.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-hdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\menu_attraction_detail_menu.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\menu\\attraction_detail_menu.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_favorite_filled.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_favorite_filled.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-xxxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_search.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_search.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_register.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_register.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_category_card_bg.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\category_card_bg.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_favorites.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_favorites.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_login.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_login.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_item_attraction.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_attraction.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_attractions_list.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_attractions_list.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\menu_drawer_menu.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\menu\\drawer_menu.xml"
+    },
+    {
+        "merged": "com.ugtours.app-merged_res-57:/navigation_nav_graph.xml.flat",
+        "source": "com.ugtours.app-main-59:/navigation/nav_graph.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_nav_header.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\nav_header.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-xhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_item_booking.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_booking.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_launcher_foreground.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_launcher_foreground.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_item_category.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_category.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-xxxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_item_accommodation.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_accommodation.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_location.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_location.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_item_feature.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_feature.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_activity_attraction_detail.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\activity_attraction_detail.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-xhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_explore.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_explore.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_gradient_overlay.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\gradient_overlay.xml"
+    },
+    {
+        "merged": "com.ugtours.app-merged_res-57:/layout_fragment_profile.xml.flat",
+        "source": "com.ugtours.app-main-59:/layout/fragment_profile.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_profile.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_profile.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_item_image_slider.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\item_image_slider.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_dialog_create_booking.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\dialog_create_booking.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-mdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-mdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_hero_gradient.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\hero_gradient.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\xml_data_extraction_rules.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\xml\\data_extraction_rules.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-mdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_indicator_active.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\indicator_active.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_favorite.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_favorite.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\menu_bottom_nav_menu.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\menu\\bottom_nav_menu.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_indicator_inactive.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\indicator_inactive.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_bookings.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_bookings.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-hdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-hdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "com.ugtours.app-merged_res-57:/menu_drawer_menu.xml.flat",
+        "source": "com.ugtours.app-main-59:/menu/drawer_menu.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\layout_fragment_profile.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\layout\\fragment_profile.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\mipmap-xxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\drawable_ic_calendar.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\drawable\\ic_calendar.xml"
+    },
+    {
+        "merged": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-merged_res-57:\\xml_backup_rules.xml.flat",
+        "source": "C:\\Users\\batzt\\.gradle\\daemon\\9.0-milestone-1\\com.ugtours.app-main-59:\\xml\\backup_rules.xml"
+    }
+]
